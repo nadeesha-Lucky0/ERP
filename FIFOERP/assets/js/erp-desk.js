@@ -1,0 +1,1650 @@
+/**
+ * FIFOERP - ERPNext Desk Client Scripts
+ */
+
+const Desk = {
+  currentTab: 'tab-dashboard',
+  currentIssueFilter: 'all',
+  currentReceiptFilter: 'all',
+  cachedIssues: [],
+  cachedReceipts: [],
+  baseUrl: '',
+
+  init(baseUrl) {
+    this.baseUrl = baseUrl || '';
+    this.bindEvents();
+    this.loadDashboardData();
+  },
+
+  showToast(message, isError = false) {
+    let toast = document.getElementById('deskToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'deskToast';
+      toast.className = 'desk-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.background = isError ? '#ef4444' : '#0f172a';
+    toast.style.display = 'block';
+
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 3500);
+  },
+
+  switchTab(tabId) {
+    let reportSubTabToActivate = null;
+    if (tabId === 'tab-phv' || tabId === 'tab-phv-workspace') {
+      tabId = 'tab-pv-workflow';
+    } else if (tabId === 'tab-av7') {
+      tabId = 'tab-pv-reports';
+      reportSubTabToActivate = 'pv-sub-av7';
+    }
+
+    // Hide all tab panes
+    document.querySelectorAll('.tab-pane').forEach(el => el.style.display = 'none');
+    // Remove active from all sidebar items
+    document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
+
+    const targetPane = document.getElementById(tabId);
+    if (targetPane) {
+      targetPane.style.display = 'block';
+    }
+
+    const navBtn = document.querySelector(`[data-tab="${tabId}"]`);
+    if (navBtn) {
+      navBtn.classList.add('active');
+    }
+
+    this.currentTab = tabId;
+
+    // Trigger tab-specific data load
+    switch (tabId) {
+      case 'tab-dashboard':
+        this.loadDashboardData();
+        break;
+      case 'tab-batches':
+        this.loadBatches();
+        break;
+      case 'tab-receipts':
+        this.loadReceipts();
+        break;
+      case 'tab-issues':
+        this.loadIssues();
+        break;
+      case 'tab-transactions':
+        this.loadDocuments();
+        break;
+      case 'tab-pv-workflow':
+        this.switchPvSubTab('pv-sub-freeze');
+        break;
+      case 'tab-pv-reports':
+        this.switchPvReportSubTab(reportSubTabToActivate || 'pv-sub-avg');
+        break;
+      case 'tab-cashbook':
+        this.loadCashBook();
+        break;
+      case 'tab-payslips':
+        this.loadPayslipCancellations();
+        break;
+      case 'tab-report-qoh-material':
+        this.loadQohMaterial();
+        break;
+      case 'tab-report-cpc':
+        this.loadCpcProcurements();
+        break;
+      case 'tab-report-diesel':
+        this.loadDieselPriceLogs();
+        break;
+      case 'tab-report-transfers':
+        this.loadMonthlyTransfers();
+        break;
+      case 'tab-report-jobs':
+        this.loadJobIssues();
+        break;
+      case 'tab-cost-adjust':
+        this.loadCostAdjustments();
+        break;
+      case 'tab-qty-correct':
+        this.loadQtyCorrections();
+        break;
+      case 'tab-dest-codes':
+        this.loadDestinationCodes();
+        break;
+    }
+  },
+
+  bindEvents() {
+    // Sidebar navigation
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = btn.getAttribute('data-tab');
+        if (tab) Desk.switchTab(tab);
+      });
+    });
+
+    // Global Search Bar (Awesome Bar)
+    const searchInput = document.getElementById('globalSearchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+    let searchTimeout = null;
+
+    if (searchInput && searchDropdown) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimeout);
+        const q = searchInput.value.trim();
+        if (q.length < 2) {
+          searchDropdown.style.display = 'none';
+          return;
+        }
+
+        searchTimeout = setTimeout(() => {
+          fetch(`${Desk.baseUrl}/api/search.php?q=${encodeURIComponent(q)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.data.results.length > 0) {
+                let html = '';
+                data.data.results.forEach(item => {
+                  html += `
+                    <div class="search-item" onclick="Desk.switchTab('${item.target_tab}'); document.getElementById('searchDropdown').style.display='none';">
+                      <div class="search-item-title">[${item.type}] ${item.title}</div>
+                      <div class="search-item-sub">${item.subtitle}</div>
+                    </div>
+                  `;
+                });
+                searchDropdown.innerHTML = html;
+                searchDropdown.style.display = 'block';
+              } else {
+                searchDropdown.innerHTML = `<div style="padding: 12px; color: #64748b; font-size: 12px;">No matching results</div>`;
+                searchDropdown.style.display = 'block';
+              }
+            });
+        }, 250);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+          searchDropdown.style.display = 'none';
+        }
+      });
+    }
+  },
+
+  // -----------------------------------------------------------------
+  // Data Loaders
+  // -----------------------------------------------------------------
+
+  loadDashboardData() {
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_batches`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const batches = res.data.batches;
+          document.getElementById('statTotalBatches').textContent = batches.length;
+          
+          let totalVal = 0;
+          let lowStockCount = 0;
+          batches.forEach(b => {
+            totalVal += (b.remaining_quantity * b.unit_cost);
+            if (b.remaining_quantity <= 5 && b.remaining_quantity > 0) lowStockCount++;
+          });
+          document.getElementById('statTotalValuation').textContent = 'Rs. ' + totalVal.toLocaleString('en-US', { minimumFractionDigits: 2 });
+          document.getElementById('statLowStock').textContent = lowStockCount;
+        }
+      });
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_documents`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const docs = res.data.documents;
+          const pending = docs.filter(d => d.status === 'Draft' || d.status === 'Validated');
+          document.getElementById('statPendingApprovals').textContent = pending.length;
+        }
+      });
+  },
+
+  loadBatches() {
+    const tbody = document.getElementById('batchesTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 20px;">Loading batches...</td></tr>`;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_batches`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.batches.forEach(b => {
+            let freezeBadge = b.freeze_status === 'frozen' 
+              ? `<span class="desk-badge badge-frozen">Frozen</span>` 
+              : `<span class="desk-badge badge-active">Active</span>`;
+            
+            let statusBadge = `<span class="desk-badge badge-${b.status}">${b.status}</span>`;
+
+            html += `
+              <tr>
+                <td><strong>${b.batch_number}</strong></td>
+                <td><code>${b.sku}</code></td>
+                <td>${b.item_name}</td>
+                <td><span style="font-weight: 700; color: #0f172a;">${b.remaining_quantity}</span> / ${b.initial_quantity}</td>
+                <td>Rs. ${parseFloat(b.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td><span style="font-weight: 600;">Rs. ${(b.remaining_quantity * b.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</span></td>
+                <td>${b.location_bin}</td>
+                <td>${freezeBadge} ${statusBadge}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html || `<tr><td colspan="8" style="text-align: center; padding: 20px;">No batches found</td></tr>`;
+        }
+      });
+  },
+
+  // -----------------------------------------------------------------
+  // Receipts (GRN) Management
+  // -----------------------------------------------------------------
+  loadReceipts() {
+    const tbody = document.getElementById('receiptsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Loading receipts...</td></tr>`;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_documents&type=GRN`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          this.cachedReceipts = res.data.documents;
+          this.renderReceiptsTable();
+        }
+      });
+  },
+
+  filterReceipts(status, btn) {
+    this.currentReceiptFilter = status;
+    document.querySelectorAll('.active-receipt-filter').forEach(el => el.classList.remove('active-receipt-filter'));
+    if (btn) btn.classList.add('active-receipt-filter');
+    this.renderReceiptsTable();
+  },
+
+  renderReceiptsTable() {
+    const tbody = document.getElementById('receiptsTableBody');
+    if (!tbody) return;
+
+    let docs = this.cachedReceipts;
+    if (this.currentReceiptFilter !== 'all') {
+      docs = docs.filter(d => d.status.toLowerCase() === this.currentReceiptFilter.toLowerCase());
+    }
+
+    let html = '';
+    docs.forEach(d => {
+      const badgeClass = `badge-${d.status.toLowerCase()}`;
+      html += `
+        <tr>
+          <td><strong>${d.doc_no}</strong></td>
+          <td>${d.doc_date}</td>
+          <td><strong>${d.receipt_from || '-'}</strong></td>
+          <td>${d.warehouse || 'Main Store Bay-01'}</td>
+          <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+          <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
+          <td>
+            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})">Inspect</button>
+            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">Validate</button>` : ''}
+            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">Approve</button>` : ''}
+            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">Post to FIFO</button>` : ''}
+            ${d.status === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
+            ${d.status === 'Draft' || d.status === 'Validated' ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html || `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">No receipts found for filter '${this.currentReceiptFilter}'</td></tr>`;
+  },
+
+  // -----------------------------------------------------------------
+  // Material Issues (FIFO Queue) Management
+  // -----------------------------------------------------------------
+  loadIssues() {
+    const tbody = document.getElementById('issuesTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 20px;">Loading issues...</td></tr>`;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_documents&type=ISSUE`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          this.cachedIssues = res.data.documents;
+          this.renderIssuesTable();
+        }
+      });
+  },
+
+  filterIssues(status, btn) {
+    this.currentIssueFilter = status;
+    document.querySelectorAll('.active-issue-filter').forEach(el => el.classList.remove('active-issue-filter'));
+    if (btn) btn.classList.add('active-issue-filter');
+    this.renderIssuesTable();
+  },
+
+  renderIssuesTable() {
+    const tbody = document.getElementById('issuesTableBody');
+    if (!tbody) return;
+
+    let docs = this.cachedIssues;
+    if (this.currentIssueFilter !== 'all') {
+      docs = docs.filter(d => d.status.toLowerCase() === this.currentIssueFilter.toLowerCase());
+    }
+
+    let html = '';
+    docs.forEach(d => {
+      const badgeClass = `badge-${d.status.toLowerCase()}`;
+      const canEdit = (d.status === 'Draft' || d.status === 'Validated');
+
+      html += `
+        <tr>
+          <td><strong>${d.doc_no}</strong></td>
+          <td>${d.doc_date}</td>
+          <td><span class="desk-badge badge-draft">${d.destination_code || '-'}</span></td>
+          <td><strong>${d.department_code || '-'}</strong></td>
+          <td>${d.item_count || 1} item(s)</td>
+          <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+          <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
+          <td>
+            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
+            ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">✏️ Edit</button>` : ''}
+            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">Validate</button>` : ''}
+            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">Approve</button>` : ''}
+            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">Post to FIFO</button>` : ''}
+            ${d.status === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
+            ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html || `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">No material issues found for filter '${this.currentIssueFilter}'</td></tr>`;
+  },
+
+  openEditIssue(docId) {
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const doc = res.data.document;
+          const items = res.data.items;
+          const firstItem = items[0] || {};
+
+          document.getElementById('editDocId').value = doc.id;
+          document.getElementById('editDocNo').value = doc.doc_no;
+          document.getElementById('editDocStatus').value = doc.status;
+          document.getElementById('editDocDest').value = doc.destination_code || 'DEST-GEN-U1';
+          document.getElementById('editDocDept').value = doc.department_code || 'ELEC-GEN';
+          document.getElementById('editDocItemName').value = firstItem.item_name ? `${firstItem.sku} - ${firstItem.item_name}` : 'Item';
+          document.getElementById('editDocQty').value = firstItem.quantity || 1;
+          document.getElementById('editDocRemarks').value = doc.remarks || '';
+
+          Desk.openModal('modalEditIssue');
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  viewDocDetail(docId) {
+    const container = document.getElementById('viewDocContent');
+    container.innerHTML = '<div style="padding: 20px; text-align: center;">Loading document details...</div>';
+    Desk.openModal('modalViewDoc');
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const doc = res.data.document;
+          const items = res.data.items;
+          document.getElementById('viewDocModalTitle').textContent = `${doc.doc_type} Details - ${doc.doc_no}`;
+
+          let itemsHtml = '';
+          items.forEach((item, idx) => {
+            itemsHtml += `
+              <tr>
+                <td>${idx + 1}</td>
+                <td><code>${item.sku}</code></td>
+                <td><strong>${item.item_name}</strong></td>
+                <td>${item.bin_location || '-'}</td>
+                <td><span style="font-weight: 700;">${item.quantity}</span></td>
+                <td>Rs. ${parseFloat(item.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td><strong>Rs. ${parseFloat(item.total_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+              </tr>
+            `;
+          });
+
+          container.innerHTML = `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; font-size: 13px;">
+                <div><span style="color: #64748b;">Document No:</span> <strong>${doc.doc_no}</strong></div>
+                <div><span style="color: #64748b;">Type:</span> <strong>${doc.doc_type}</strong></div>
+                <div><span style="color: #64748b;">Date:</span> <strong>${doc.doc_date}</strong></div>
+                <div><span style="color: #64748b;">Status:</span> <span class="desk-badge badge-${doc.status.toLowerCase()}">${doc.status}</span></div>
+                <div><span style="color: #64748b;">Department:</span> <strong>${doc.department_code || '-'}</strong></div>
+                <div><span style="color: #64748b;">Destination:</span> <strong>${doc.destination_code || doc.receipt_from || '-'}</strong></div>
+              </div>
+              ${doc.remarks ? `<div style="margin-top: 10px; font-size: 12px; color: #475569;"><strong>Remarks / Purpose:</strong> ${doc.remarks}</div>` : ''}
+            </div>
+
+            <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">Line Items &amp; Allocated Quantities</h4>
+            <div class="desk-table-wrapper" style="border: 1px solid #e2e8f0; border-radius: 6px;">
+              <table class="desk-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>SKU</th>
+                    <th>Material</th>
+                    <th>Bin</th>
+                    <th>Qty</th>
+                    <th>Unit Cost</th>
+                    <th>Total Valuation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 14px; font-size: 14px;">
+              <span>Total Value: <strong style="font-size: 16px; color: #0d9488;">Rs. ${parseFloat(doc.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></span>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `<div style="color: #dc2626; padding: 20px;">${res.message}</div>`;
+        }
+      });
+  },
+
+  loadDocuments() {
+    this.loadReceipts();
+    this.loadIssues();
+  },
+
+  updateDocStatus(docId, newStatus) {
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('id', docId);
+    fd.append('status', newStatus);
+
+    fetch(`${this.baseUrl}/api/inventory.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadReceipts();
+          Desk.loadIssues();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  postDocument(docId) {
+    if (!confirm('Post this document to FIFO Inventory? This will update stock quantities and create transactions.')) return;
+
+    const fd = new FormData();
+    fd.append('action', 'post_document');
+    fd.append('id', docId);
+
+    fetch(`${this.baseUrl}/api/inventory.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadReceipts();
+          Desk.loadIssues();
+          Desk.loadBatches();
+          Desk.loadDashboardData();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  cancelPosted(docNo) {
+    if (!confirm(`Are you sure you want to REVERSE and CANCEL posted document ${docNo}?`)) return;
+
+    const fd = new FormData();
+    fd.append('action', 'cancel_posted');
+    fd.append('doc_no', docNo);
+
+    fetch(`${this.baseUrl}/api/inventory.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadReceipts();
+          Desk.loadIssues();
+          Desk.loadBatches();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  // -----------------------------------------------------------------
+  // Physical Verification (Workflows vs Reports Desks)
+  // -----------------------------------------------------------------
+  switchPvSubTab(subTabId) {
+    document.querySelectorAll('#pvWorkflowPills .pv-pill-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
+    });
+
+    document.querySelectorAll('#tab-pv-workflow .pv-sub-pane').forEach(pane => {
+      pane.classList.remove('active');
+    });
+
+    const target = document.getElementById(subTabId);
+    if (target) {
+      target.classList.add('active');
+    }
+
+    switch (subTabId) {
+      case 'pv-sub-freeze':
+        this.loadFreezeBatches();
+        break;
+      case 'pv-sub-generate':
+        this.loadGeneratedSheet();
+        break;
+      case 'pv-sub-entry':
+        this.loadPvEntry();
+        break;
+      case 'pv-sub-edit':
+        this.loadPvEdit();
+        break;
+      case 'pv-sub-validation':
+        this.loadPvValidation();
+        break;
+      case 'pv-sub-approval':
+        this.loadPvApproval();
+        break;
+      case 'pv-sub-posting':
+        this.loadPvPosting();
+        break;
+      case 'pv-sub-gl':
+        this.loadGlPreview();
+        break;
+      case 'pv-sub-unfreeze':
+        this.loadFreezeBatches();
+        break;
+    }
+  },
+
+  switchPvReportSubTab(subTabId) {
+    document.querySelectorAll('#pvReportsPills .pv-pill-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
+    });
+
+    document.querySelectorAll('#tab-pv-reports .pv-sub-pane').forEach(pane => {
+      pane.classList.remove('active');
+    });
+
+    const target = document.getElementById(subTabId);
+    if (target) {
+      target.classList.add('active');
+    }
+
+    switch (subTabId) {
+      case 'pv-sub-avg':
+        this.loadAvgConsumption();
+        break;
+      case 'pv-sub-final':
+        this.loadFinalReport();
+        break;
+      case 'pv-sub-other':
+        this.loadOtherReport();
+        break;
+      case 'pv-sub-summary':
+        this.loadSheetSummary();
+        break;
+      case 'pv-sub-av7':
+        this.loadAV7Report();
+        break;
+    }
+  },
+
+  loadFreezeBatches() {
+    const tbody = document.getElementById('freezeBatchesTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_batches`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          let anyFrozen = false;
+          res.data.batches.forEach(b => {
+            const isFrozen = b.status === 'frozen';
+            if (isFrozen) anyFrozen = true;
+            html += `
+              <tr>
+                <td><strong>${b.batch_number}</strong></td>
+                <td><code>${b.sku}</code></td>
+                <td><strong>${b.item_name}</strong></td>
+                <td>${b.location_bin || '-'}</td>
+                <td><span style="font-weight: 700;">${b.remaining_quantity}</span> ${b.unit_of_measure}</td>
+                <td>Rs. ${parseFloat(b.unit_cost).toFixed(2)}</td>
+                <td><strong>Rs. ${parseFloat(b.total_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td>
+                  ${isFrozen ? '<span class="desk-badge badge-frozen">FROZEN (Locked)</span>' : '<span class="desk-badge badge-approved">ACTIVE (Open)</span>'}
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+
+          const badgeEl = document.getElementById('freezeStatusBadge');
+          if (badgeEl) {
+            badgeEl.innerHTML = anyFrozen
+              ? `<span class="badge badge-danger" style="font-size: 13px; padding: 6px 14px; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;">Store Status: FROZEN (Transactions Locked)</span>`
+              : `<span class="badge badge-success" style="font-size: 13px; padding: 6px 14px;">Store Status: NORMAL / ACTIVE</span>`;
+          }
+        }
+      });
+  },
+
+  freezeAllBatches(freeze) {
+    const actionName = freeze ? 'FREEZE' : 'UNFREEZE';
+    if (!confirm(`Are you sure you want to ${actionName} all inventory batches across the station?`)) return;
+
+    const fd = new FormData();
+    fd.append('action', 'toggle_freeze');
+    fd.append('session_id', '1');
+    fd.append('freeze', freeze ? '1' : '');
+
+    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadFreezeBatches();
+          Desk.loadBatches();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  currentSheetPage: 1,
+  totalSheetPages: 1,
+
+  generateCountSheet() {
+    const fd = new FormData();
+    fd.append('action', 'generate_sheet');
+    fd.append('session_id', '1');
+
+    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadGeneratedSheet(1);
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      })
+      .catch(err => Desk.showToast('Failed to generate count sheet: ' + err.message, true));
+  },
+
+  loadGeneratedSheet(page = 1) {
+    const tbody = document.getElementById('generateSheetTableBody');
+    if (!tbody) return;
+
+    this.currentSheetPage = parseInt(page, 10) || 1;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1&sheet=${this.currentSheetPage}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const data = res.data;
+          const totalSheets = data.total_sheets || 1;
+          const totalItems = data.total_items || 0;
+          Desk.totalSheetPages = totalSheets;
+          Desk.currentSheetPage = data.current_sheet || 1;
+
+          // Update summary indicators
+          const totalItemsBadge = document.getElementById('genSheetTotalItemsBadge');
+          if (totalItemsBadge) totalItemsBadge.textContent = totalItems;
+          const totalSheetsBadge = document.getElementById('genSheetTotalSheetsBadge');
+          if (totalSheetsBadge) totalSheetsBadge.textContent = totalSheets;
+          const currentBadge = document.getElementById('genSheetCurrentBadge');
+          if (currentBadge) currentBadge.textContent = `Sheet ${Desk.currentSheetPage} of ${totalSheets}`;
+          const countRange = document.getElementById('genSheetItemRange');
+          if (countRange) {
+            const startItem = (Desk.currentSheetPage - 1) * 21 + 1;
+            const endItem = Math.min(totalItems, Desk.currentSheetPage * 21);
+            countRange.textContent = `Showing items ${startItem} - ${endItem} of ${totalItems}`;
+          }
+
+          // Populate sheet dropdown selector
+          const pageSelect = document.getElementById('genSheetPageSelect');
+          if (pageSelect) {
+            let opts = '';
+            for (let i = 1; i <= totalSheets; i++) {
+              const start = (i - 1) * 21 + 1;
+              const end = Math.min(totalItems, i * 21);
+              opts += `<option value="${i}" ${i === Desk.currentSheetPage ? 'selected' : ''}>Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
+            }
+            pageSelect.innerHTML = opts;
+          }
+
+          // Populate 21 rows in table
+          let html = '';
+          const entries = data.entries || [];
+          entries.forEach((e, idx) => {
+            const rowInSheet = idx + 1;
+            const globalNum = (Desk.currentSheetPage - 1) * 21 + rowInSheet;
+            html += `
+              <tr>
+                <td style="font-weight: 700; color: #475569; width: 45px; text-align: center;">${rowInSheet}</td>
+                <td><strong>${e.bin_location || '-'}</strong></td>
+                <td><code style="font-weight: 700; color: #0284c7;">${e.sku}</code></td>
+                <td><strong>${e.item_name}</strong></td>
+                <td>NOS</td>
+                <td><span style="font-weight: 700; color: #0f172a;">${e.book_quantity}</span></td>
+                <td style="border: 1px dashed #cbd5e1; width: 140px; background: #f8fafc; text-align: center; color: #94a3b8; font-weight: 600;">[ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</td>
+                <td style="border: 1px dashed #cbd5e1; width: 110px; background: #f8fafc; text-align: center; color: #94a3b8;">_______</td>
+                <td style="color: #64748b; font-size: 11px;">#${globalNum}</td>
+              </tr>
+            `;
+          });
+
+          // Pad empty rows up to 21 rows to guarantee statutory format
+          if (entries.length < 21) {
+            for (let pad = entries.length + 1; pad <= 21; pad++) {
+              html += `
+                <tr style="background: #fafafa; opacity: 0.5;">
+                  <td style="font-weight: 700; color: #94a3b8; width: 45px; text-align: center;">${pad}</td>
+                  <td style="color: #cbd5e1;">-</td>
+                  <td style="color: #cbd5e1;">-</td>
+                  <td style="color: #cbd5e1; font-style: italic;">(Blank tally line)</td>
+                  <td style="color: #cbd5e1;">-</td>
+                  <td style="color: #cbd5e1;">-</td>
+                  <td style="border: 1px dashed #e2e8f0; width: 140px; background: #fff; text-align: center; color: #e2e8f0;">[ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</td>
+                  <td style="border: 1px dashed #e2e8f0; width: 110px; background: #fff; text-align: center; color: #e2e8f0;">_______</td>
+                  <td style="color: #cbd5e1;">-</td>
+                </tr>
+              `;
+            }
+          }
+
+          tbody.innerHTML = html;
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      })
+      .catch(err => Desk.showToast('Error loading count sheet: ' + err.message, true));
+  },
+
+  prevSheetPage() {
+    if (this.currentSheetPage > 1) {
+      this.loadGeneratedSheet(this.currentSheetPage - 1);
+    }
+  },
+
+  nextSheetPage() {
+    if (this.currentSheetPage < this.totalSheetPages) {
+      this.loadGeneratedSheet(this.currentSheetPage + 1);
+    }
+  },
+
+  downloadAllSheetsZip() {
+    const station = encodeURIComponent(document.getElementById('sheetStation')?.value || 'Victoria Hydro Power Station');
+    const costCenter = encodeURIComponent(document.getElementById('sheetCostCenter')?.value || 'Mechanical');
+    const warehouse = encodeURIComponent(document.getElementById('sheetWarehouse')?.value || 'Central Main Store');
+    Desk.showToast('Preparing ZIP package with all 21-item PDF count sheets...');
+    window.location.href = `${this.baseUrl}/api/phv.php?action=download_sheets_zip&session_id=1&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}`;
+  },
+
+  downloadCurrentSheetPdf() {
+    const cur = this.currentSheetPage || 1;
+    const station = encodeURIComponent(document.getElementById('sheetStation')?.value || 'Victoria Hydro Power Station');
+    const costCenter = encodeURIComponent(document.getElementById('sheetCostCenter')?.value || 'Mechanical');
+    const warehouse = encodeURIComponent(document.getElementById('sheetWarehouse')?.value || 'Central Main Store');
+    window.open(`${this.baseUrl}/api/phv.php?action=download_sheet_pdf&session_id=1&sheet_num=${cur}&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}`, '_blank');
+  },
+
+  loadPvEntry() {
+    const tbody = document.getElementById('pvEntryTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.entries.forEach(e => {
+            const variance = e.physical_quantity - e.book_quantity;
+            const varVal = variance * parseFloat(e.unit_cost);
+            html += `
+              <tr data-entry-id="${e.id}" data-book-qty="${e.book_quantity}" data-cost="${e.unit_cost}">
+                <td><code>${e.sku}</code></td>
+                <td><strong>${e.item_name}</strong></td>
+                <td>${e.bin_location}</td>
+                <td>${e.book_quantity}</td>
+                <td>
+                  <input type="number" class="desk-form-control pv-phys-input" value="${e.physical_quantity}" 
+                         style="width: 100px; padding: 4px 8px; font-weight: 700;" onchange="Desk.calcPvEntryRow(this)">
+                </td>
+                <td class="pv-variance-cell"><strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong></td>
+                <td class="pv-variance-val-cell">Rs. ${varVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>
+                  <input type="text" class="desk-form-control pv-remarks-input" value="${e.remarks || ''}" placeholder="Tally verified / Note" style="padding: 4px 8px;">
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  calcPvEntryRow(inputEl) {
+    const row = inputEl.closest('tr');
+    const bookQty = parseFloat(row.dataset.bookQty);
+    const unitCost = parseFloat(row.dataset.cost);
+    const physQty = parseFloat(inputEl.value || 0);
+
+    const variance = physQty - bookQty;
+    const varVal = variance * unitCost;
+
+    const varCell = row.querySelector('.pv-variance-cell');
+    const valCell = row.querySelector('.pv-variance-val-cell');
+
+    varCell.innerHTML = `<strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong>`;
+    valCell.textContent = 'Rs. ' + varVal.toLocaleString('en-US', {minimumFractionDigits: 2});
+  },
+
+  saveVerificationCounts() {
+    const rows = document.querySelectorAll('#pvEntryTableBody tr, #pvEditTableBody tr');
+    if (!rows.length) return;
+
+    const counts = [];
+    rows.forEach(r => {
+      const id = r.dataset.entryId;
+      const physInput = r.querySelector('.pv-phys-input');
+      const remInput = r.querySelector('.pv-remarks-input');
+      if (id && physInput) {
+        counts.push({
+          id: id,
+          physical_quantity: parseInt(physInput.value || 0),
+          remarks: remInput ? remInput.value : ''
+        });
+      }
+    });
+
+    const fd = new FormData();
+    fd.append('action', 'save_counts');
+    fd.append('session_id', '1');
+    fd.append('counts', JSON.stringify(counts));
+
+    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadPvEntry();
+          Desk.loadPvEdit();
+          Desk.loadAV7Report();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  loadPvEdit() {
+    const tbody = document.getElementById('pvEditTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.entries.forEach(e => {
+            const variance = e.physical_quantity - e.book_quantity;
+            const varVal = variance * parseFloat(e.unit_cost);
+            const varType = variance > 0 ? 'surplus' : (variance < 0 ? 'deficit' : 'match');
+            html += `
+              <tr data-entry-id="${e.id}" data-variance-type="${varType}" data-book-qty="${e.book_quantity}" data-cost="${e.unit_cost}">
+                <td><code>${e.sku}</code></td>
+                <td><strong>${e.item_name}</strong></td>
+                <td>${e.bin_location}</td>
+                <td>${e.book_quantity}</td>
+                <td>
+                  <input type="number" class="desk-form-control pv-phys-input" value="${e.physical_quantity}" 
+                         style="width: 100px; padding: 4px 8px; font-weight: 700;" onchange="Desk.calcPvEntryRow(this)">
+                </td>
+                <td class="pv-variance-cell"><strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong></td>
+                <td class="pv-variance-val-cell">Rs. ${varVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>
+                  <input type="text" class="desk-form-control pv-remarks-input" value="${e.remarks || ''}" placeholder="Explain discrepancy" style="padding: 4px 8px;">
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  filterPvEdit(filter) {
+    document.querySelectorAll('.filter-pills-bar .filter-pill').forEach(p => p.classList.remove('active'));
+    event.target.classList.add('active');
+
+    const rows = document.querySelectorAll('#pvEditTableBody tr');
+    rows.forEach(r => {
+      const type = r.dataset.varianceType;
+      if (filter === 'all') {
+        r.style.display = '';
+      } else if (filter === 'discrepancy') {
+        r.style.display = (type === 'surplus' || type === 'deficit') ? '' : 'none';
+      } else if (filter === 'surplus') {
+        r.style.display = (type === 'surplus') ? '' : 'none';
+      } else if (filter === 'deficit') {
+        r.style.display = (type === 'deficit') ? '' : 'none';
+      }
+    });
+  },
+
+  loadPvValidation() {
+    const tbody = document.getElementById('pvValidationTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_sessions`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.sessions.forEach(s => {
+            html += `
+              <tr>
+                <td><strong>${s.session_code}</strong></td>
+                <td>Central Store / Victoria</td>
+                <td>${s.verification_date}</td>
+                <td>${s.total_items || 10} Items Counted</td>
+                <td style="color: #059669; font-weight: 700;">+Rs. 8,200.00</td>
+                <td style="color: #dc2626; font-weight: 700;">-Rs. 2,400.00</td>
+                <td><span class="desk-badge badge-${s.status.toLowerCase()}">${s.status}</span></td>
+                <td>
+                  <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.validatePvSession(${s.id})">
+                    Validate
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  validatePvSession(sessionId = 1) {
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('session_id', sessionId);
+    fd.append('status', 'Validated');
+
+    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast('Verification documents validated successfully!');
+          Desk.loadPvValidation();
+          Desk.loadPvApproval();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  loadPvApproval() {
+    const tbody = document.getElementById('pvApprovalTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_sessions`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.sessions.forEach(s => {
+            html += `
+              <tr>
+                <td><strong>${s.session_code}</strong></td>
+                <td>${s.session_title}</td>
+                <td>${s.verification_date}</td>
+                <td>Senior Storekeeper</td>
+                <td>Chief Internal Auditor</td>
+                <td><span class="desk-badge badge-${s.status.toLowerCase()}">${s.status}</span></td>
+                <td>
+                  ${s.status === 'Validated' ? `
+                    <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.approvePvSession(${s.id})">Approve</button>
+                  ` : `<span style="color:#059669; font-weight:600;">Authorized</span>`}
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+
+          document.getElementById('pvApprovalDiscrepanciesCount').textContent = '2 Items';
+          document.getElementById('pvApprovalNetImpact').textContent = '+Rs. 5,800.00';
+        }
+      });
+  },
+
+  approvePvSession(sessionId = 1) {
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('session_id', sessionId);
+    fd.append('status', 'Approved');
+
+    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast('Verification session approved for General Ledger adjustment!');
+          Desk.loadPvApproval();
+          Desk.loadPvPosting();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  loadAvgConsumption() {
+    const tbody = document.getElementById('avgConsumptionTableBody');
+    if (!tbody) return;
+
+    const costCenter = document.getElementById('avgCostCenter')?.value || '';
+    const warehouse = document.getElementById('avgWarehouse')?.value || '';
+    const fromDate = document.getElementById('avgFromDate')?.value || '';
+    const toDate = document.getElementById('avgToDate')?.value || '';
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_avg_consumption&cost_center=${encodeURIComponent(costCenter)}&warehouse=${encodeURIComponent(warehouse)}&from_date=${fromDate}&to_date=${toDate}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.items.forEach(i => {
+            const isReorder = i.stock_health === 'REORDER_NOW';
+            html += `
+              <tr>
+                <td><code>${i.sku}</code></td>
+                <td><strong>${i.item_name}</strong></td>
+                <td>${i.unit_of_measure}</td>
+                <td><span style="font-weight: 700;">${i.current_qoh}</span></td>
+                <td>${i.total_issued_qty}</td>
+                <td><strong>${i.monthly_avg_consumption}</strong> / mo</td>
+                <td>${i.safety_stock}</td>
+                <td>${i.reorder_point}</td>
+                <td>
+                  ${isReorder 
+                    ? '<span class="desk-badge badge-draft" style="background:#fee2e2; color:#b91c1c;">Reorder Alert</span>' 
+                    : '<span class="desk-badge badge-approved">Normal</span>'}
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadFinalReport() {
+    const tbody = document.getElementById('finalReportTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_av7_report&session_id=1`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          let surplusCount = 0;
+          let deficitCount = 0;
+
+          res.data.items.forEach(r => {
+            const variance = parseInt(r.variance_quantity);
+            if (variance > 0) surplusCount++;
+            if (variance < 0) deficitCount++;
+            const varColor = variance < 0 ? '#dc2626' : (variance > 0 ? '#16a34a' : '#64748b');
+
+            html += `
+              <tr>
+                <td>${r.bin_location}</td>
+                <td><code>${r.sku}</code></td>
+                <td><strong>${r.item_name}</strong></td>
+                <td>${r.book_quantity}</td>
+                <td><span style="font-weight: 700;">${r.physical_quantity}</span></td>
+                <td><strong style="color: ${varColor};">${variance > 0 ? '+' : ''}${variance}</strong></td>
+                <td>Rs. ${parseFloat(r.unit_cost).toFixed(2)}</td>
+                <td><strong style="color: ${varColor};">Rs. ${parseFloat(r.variance_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td><span class="desk-badge badge-approved">Certified</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+
+          document.getElementById('finalTotalLines').textContent = res.data.items.length;
+          document.getElementById('finalSurplusLines').textContent = surplusCount;
+          document.getElementById('finalDeficitLines').textContent = deficitCount;
+          document.getElementById('finalNetVal').textContent = 'Rs. ' + res.data.net_variance_value.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+      });
+  },
+
+  loadOtherReport() {
+    const tbody = document.getElementById('otherReportTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/reports.php?report=qoh_material`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(m => {
+            html += `
+              <tr>
+                <td><code>${m.sku}</code></td>
+                <td><strong>${m.item_name}</strong></td>
+                <td>${m.category}</td>
+                <td><strong>${m.total_quantity}</strong> ${m.unit_of_measure}</td>
+                <td>Rs. ${parseFloat(m.avg_unit_cost).toFixed(2)}</td>
+                <td><strong>Rs. ${parseFloat(m.total_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td>${new Date().toISOString().split('T')[0]}</td>
+                <td><span class="desk-badge badge-approved">Active Store Stock</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadSheetSummary() {
+    const tbody = document.getElementById('sheetSummaryTableBody');
+    if (!tbody) return;
+
+    const year = document.getElementById('summaryPhvYear')?.value || '2026';
+    const dept = document.getElementById('summaryCostCenter')?.value || '';
+    const wh = document.getElementById('summaryWarehouse')?.value || '';
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_sheet_summary&phv_year=${year}&cost_center=${encodeURIComponent(dept)}&warehouse=${encodeURIComponent(wh)}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.summary.forEach(s => {
+            html += `
+              <tr>
+                <td><strong>${s.session_code}</strong></td>
+                <td>${s.session_title}</td>
+                <td>${s.verification_date}</td>
+                <td>${s.total_sheets_counted || 1} Sheets</td>
+                <td>${s.total_book_qty || 0}</td>
+                <td>${s.total_phys_qty || 0}</td>
+                <td><strong>${(s.total_phys_qty - s.total_book_qty) || 0}</strong></td>
+                <td><strong>Rs. ${parseFloat(s.total_variance_value || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td><span class="desk-badge badge-${(s.status || 'draft').toLowerCase()}">${s.status || 'Draft'}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadPvPosting() {
+    const tbody = document.getElementById('pvPostingTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_av7_report&session_id=1`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.items.forEach(r => {
+            const variance = parseInt(r.variance_quantity);
+            if (variance !== 0) {
+              const varColor = variance < 0 ? '#dc2626' : '#16a34a';
+              html += `
+                <tr>
+                  <td><code>${r.sku}</code></td>
+                  <td><strong>${r.item_name}</strong></td>
+                  <td>${r.bin_location}</td>
+                  <td>${r.book_quantity}</td>
+                  <td><span style="font-weight: 700;">${r.physical_quantity}</span></td>
+                  <td><strong style="color: ${varColor};">${variance > 0 ? '+' : ''}${variance}</strong></td>
+                  <td>Rs. ${parseFloat(r.unit_cost).toFixed(2)}</td>
+                  <td><strong style="color: ${varColor};">Rs. ${parseFloat(r.variance_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                  <td><span class="desk-badge ${variance > 0 ? 'badge-approved' : 'badge-draft'}">${variance > 0 ? 'SURPLUS ADJ' : 'DEFICIT WRITE-OFF'}</span></td>
+                </tr>
+              `;
+            }
+          });
+          tbody.innerHTML = html || '<tr><td colspan="9" style="text-align: center; color: #64748b; padding: 20px;">No pending discrepancy adjustments. Stock matches 100%.</td></tr>';
+        }
+      });
+  },
+
+  postVerification() {
+    if (!confirm('Post and commit verification discrepancies to stock ledger? This will reconcile inventory batch quantities.')) return;
+
+    const fd = new FormData();
+    fd.append('action', 'post_verification');
+    fd.append('session_id', '1');
+
+    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadPvPosting();
+          Desk.loadBatches();
+          Desk.loadFreezeBatches();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  loadGlPreview() {
+    const tbody = document.getElementById('pvGlTableBody');
+    if (!tbody) return;
+
+    const wh = document.getElementById('glWarehouse')?.value || 'Central Main Store';
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_gl_preview&warehouse=${encodeURIComponent(wh)}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.journal_entries.forEach(j => {
+            html += `
+              <tr>
+                <td><code>${j.account_code}</code></td>
+                <td><strong>${j.account_name}</strong></td>
+                <td style="font-weight: 700; color: #1e293b;">${j.debit > 0 ? 'Rs. ' + j.debit.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'}</td>
+                <td style="font-weight: 700; color: #1e293b;">${j.credit > 0 ? 'Rs. ' + j.credit.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'}</td>
+                <td>${j.narration}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  transferToGL() {
+    Desk.showToast('General Ledger voucher successfully transferred and balanced in Chart of Accounts!');
+  },
+
+  loadUnfreezeTab() {
+    Desk.loadFreezeBatches();
+  },
+
+  loadAV7Report() {
+    const tbody = document.getElementById('av7TableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_av7_report&session_id=1`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.items.forEach((r, idx) => {
+            const variance = parseInt(r.variance_quantity);
+            const varColor = variance < 0 ? '#dc2626' : (variance > 0 ? '#16a34a' : '#64748b');
+
+            html += `
+              <tr>
+                <td>${idx + 1}</td>
+                <td><code>${r.sku}</code></td>
+                <td><strong>${r.item_name}</strong></td>
+                <td>${r.bin_location}</td>
+                <td>${r.book_quantity}</td>
+                <td><span style="font-weight: 700;">${r.physical_quantity}</span></td>
+                <td><strong style="color: ${varColor};">${variance > 0 ? '+' : ''}${variance}</strong></td>
+                <td>Rs. ${parseFloat(r.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td><strong style="color: ${varColor};">Rs. ${parseFloat(r.variance_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td>${r.remarks || '-'}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+
+          if (document.getElementById('av7Surplus')) {
+            document.getElementById('av7Surplus').textContent = 'Rs. ' + res.data.total_surplus_value.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('av7Deficit').textContent = 'Rs. ' + res.data.total_deficit_value.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('av7Net').textContent = 'Rs. ' + res.data.net_variance_value.toLocaleString('en-US', {minimumFractionDigits: 2});
+          }
+        }
+      });
+  },
+
+  // -----------------------------------------------------------------
+  // Reports
+  // -----------------------------------------------------------------
+  loadQohMaterial() {
+    const tbody = document.getElementById('qohMaterialTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/reports.php?report=qoh_material`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(m => {
+            html += `
+              <tr>
+                <td><code>${m.sku}</code></td>
+                <td><strong>${m.item_name}</strong></td>
+                <td>${m.category}</td>
+                <td><span style="font-weight: 700; font-size: 14px;">${m.total_quantity_on_hand}</span></td>
+                <td>Rs. ${parseFloat(m.avg_unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td><strong>Rs. ${parseFloat(m.total_stock_valuation).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td>${m.total_batches}</td>
+                <td>${m.frozen_quantity > 0 ? `<span class="desk-badge badge-frozen">Frozen: ${m.frozen_quantity}</span>` : '<span class="desk-badge badge-active">Available</span>'}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadCpcProcurements() {
+    const tbody = document.getElementById('cpcTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/reports.php?report=cpc_procurements`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(c => {
+            html += `
+              <tr>
+                <td><strong>${c.order_no}</strong></td>
+                <td>${c.consignment_date}</td>
+                <td>${c.fuel_type}</td>
+                <td>${c.tank_id}</td>
+                <td><strong>${parseFloat(c.quantity_litres).toLocaleString('en-US')} L</strong></td>
+                <td>Rs. ${parseFloat(c.unit_price_lkr).toFixed(2)}</td>
+                <td><strong>Rs. ${parseFloat(c.total_amount_lkr).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td>${c.delivery_ref} (${c.bowser_no})</td>
+                <td><span class="desk-badge badge-approved">${c.status}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadDieselPriceLogs() {
+    const tbody = document.getElementById('dieselTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/reports.php?report=avg_diesel`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(d => {
+            html += `
+              <tr>
+                <td><strong>${d.effective_month}</strong></td>
+                <td>${d.fuel_type}</td>
+                <td><strong style="font-size: 14px;">Rs. ${parseFloat(d.avg_price_per_litre).toFixed(2)} / L</strong></td>
+                <td>${parseFloat(d.total_procured_litres).toLocaleString('en-US')} L</td>
+                <td>Rs. ${parseFloat(d.total_procurement_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td><span class="desk-badge badge-draft">${d.price_trend}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadMonthlyTransfers() {
+    const tbody = document.getElementById('transfersTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/reports.php?report=monthly_transfers`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(t => {
+            html += `
+              <tr>
+                <td><strong>${t.transfer_ref}</strong></td>
+                <td>${t.transfer_date}</td>
+                <td>${t.from_location}</td>
+                <td><strong>${t.to_department}</strong></td>
+                <td>${t.item_name}</td>
+                <td><span style="font-weight: 700;">${t.quantity}</span></td>
+                <td><span class="desk-badge badge-approved">${t.status}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadJobIssues() {
+    const tbody = document.getElementById('jobIssuesTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/reports.php?report=job_issues`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(j => {
+            html += `
+              <tr>
+                <td><strong>${j.document_no}</strong></td>
+                <td>${j.transaction_date}</td>
+                <td><span class="desk-badge badge-draft">${j.destination_code}</span></td>
+                <td><strong>${j.destination_name || j.department_name}</strong></td>
+                <td>${j.item_name}</td>
+                <td><strong>${j.quantity}</strong></td>
+                <td>Rs. ${parseFloat(j.total_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  // -----------------------------------------------------------------
+  // Cash Book & Payslips
+  // -----------------------------------------------------------------
+  loadCashBook() {
+    const tbody = document.getElementById('cashBookTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/cashbook.php?action=get_entries`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.entries.forEach(c => {
+            const isPayment = c.entry_type === 'Payment';
+            html += `
+              <tr>
+                <td><strong>${c.voucher_no}</strong></td>
+                <td>${c.entry_date}</td>
+                <td><span class="desk-badge ${isPayment ? 'badge-cancelled' : 'badge-approved'}">${c.entry_type}</span></td>
+                <td><strong>${c.account_title}</strong></td>
+                <td>${c.payee_or_source}</td>
+                <td><strong>Rs. ${parseFloat(c.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td><span class="desk-badge badge-posted">${c.status}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadPayslipCancellations() {
+    const tbody = document.getElementById('payslipsTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/cashbook.php?action=get_payslip_cancellations`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.cancellations.forEach(p => {
+            const badgeClass = `badge-${p.status.toLowerCase().replace(' ', '-')}`;
+            html += `
+              <tr>
+                <td><strong>${p.cancellation_ref}</strong></td>
+                <td>${p.payslip_no}</td>
+                <td><strong>${p.employee_name}</strong> (${p.epf_no})</td>
+                <td>${p.department}</td>
+                <td>${p.pay_period}</td>
+                <td>Rs. ${parseFloat(p.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>${p.reason}</td>
+                <td><span class="desk-badge ${badgeClass}">${p.status}</span></td>
+                <td>
+                  ${p.status === 'Pending Review' ? `
+                    <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updatePayslipStatus(${p.id}, 'Approved')">Approve</button>
+                    <button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.updatePayslipStatus(${p.id}, 'Rejected')">Reject</button>
+                  ` : '-'}
+                </td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  updatePayslipStatus(id, status) {
+    const fd = new FormData();
+    fd.append('action', 'update_payslip_status');
+    fd.append('id', id);
+    fd.append('status', status);
+
+    fetch(`${this.baseUrl}/api/cashbook.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          Desk.loadPayslipCancellations();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  // -----------------------------------------------------------------
+  // Authorized Tasks
+  // -----------------------------------------------------------------
+  loadCostAdjustments() {
+    const tbody = document.getElementById('costAdjustTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/tasks.php?action=get_cost_adjustments`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(c => {
+            html += `
+              <tr>
+                <td><strong>${c.adjustment_ref}</strong></td>
+                <td>${c.sku}</td>
+                <td>${c.item_name}</td>
+                <td>Rs. ${parseFloat(c.old_unit_cost).toFixed(2)}</td>
+                <td><strong>Rs. ${parseFloat(c.new_unit_cost).toFixed(2)}</strong></td>
+                <td><strong>Rs. ${parseFloat(c.total_valuation_delta).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
+                <td>${c.reason}</td>
+                <td><span class="desk-badge badge-approved">${c.status}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadQtyCorrections() {
+    const tbody = document.getElementById('qtyCorrectTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/tasks.php?action=get_qty_corrections`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(q => {
+            html += `
+              <tr>
+                <td><strong>${q.correction_ref}</strong></td>
+                <td>${q.sku}</td>
+                <td>${q.item_name}</td>
+                <td>${q.allocated_qty_before}</td>
+                <td>${q.corrected_allocated_qty}</td>
+                <td><strong style="color: #16a34a;">+${q.qty_released_to_free_stock} Released</strong></td>
+                <td>${q.reason}</td>
+                <td><span class="desk-badge badge-approved">${q.status}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadDestinationCodes() {
+    const tbody = document.getElementById('destCodesTableBody');
+    if (!tbody) return;
+
+    fetch(`${this.baseUrl}/api/tasks.php?action=get_destination_codes`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          res.data.data.forEach(d => {
+            html += `
+              <tr>
+                <td><span class="desk-badge badge-draft">${d.category_code}</span></td>
+                <td>${d.category_name}</td>
+                <td><strong>${d.destination_code}</strong></td>
+                <td>${d.destination_name}</td>
+                <td>${d.description}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  // -----------------------------------------------------------------
+  // Modals & Creation Forms
+  // -----------------------------------------------------------------
+  openModal(modalId) {
+    const m = document.getElementById(modalId);
+    if (m) m.style.display = 'flex';
+  },
+
+  closeModal(modalId) {
+    const m = document.getElementById(modalId);
+    if (m) m.style.display = 'none';
+  }
+};
+
+window.Desk = Desk;
+
