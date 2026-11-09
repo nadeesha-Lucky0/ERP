@@ -92,42 +92,10 @@ require_once __DIR__ . '/views/layouts/header.php';
          PANE 1: Home Dashboard Workspace
          ============================================================ -->
     <div id="tab-dashboard" class="tab-pane">
-      <div class="workspace-header">
+      <div class="workspace-header" style="margin-bottom: 16px;">
         <div class="workspace-title-box">
-          <h1>Victoria Power Station - Home Desk</h1>
-          <div class="workspace-subtitle">FIFO Inventory & Operations Central Workspace</div>
-        </div>
-        <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewGrn')">
-            <?= Icon::get('plus', 13) ?> New GRN
-          </button>
-          <button class="desk-btn desk-btn-default" onclick="Desk.openModal('modalNewIssue')">
-            <?= Icon::get('plus', 13) ?> New Issue
-          </button>
-        </div>
-      </div>
-
-      <!-- Stat Cards Grid -->
-      <div class="workspace-cards-grid">
-        <div class="desk-stat-card">
-          <div class="stat-card-title">Total Active Batches</div>
-          <div class="stat-card-value" id="statTotalBatches">10</div>
-          <div class="stat-card-desc">Active FIFO queue stock items</div>
-        </div>
-        <div class="desk-stat-card">
-          <div class="stat-card-title">Stock Valuation</div>
-          <div class="stat-card-value" id="statTotalValuation" style="color: #0d9488;">Rs. 0.00</div>
-          <div class="stat-card-desc">Total remaining inventory asset value</div>
-        </div>
-        <div class="desk-stat-card">
-          <div class="stat-card-title">Pending Approvals</div>
-          <div class="stat-card-value" id="statPendingApprovals" style="color: #0284c7;">0</div>
-          <div class="stat-card-desc">GRN & Issues awaiting review</div>
-        </div>
-        <div class="desk-stat-card">
-          <div class="stat-card-title">Low Stock Reorders</div>
-          <div class="stat-card-value" id="statLowStock" style="color: #dc2626;">0</div>
-          <div class="stat-card-desc">Critical power plant spares below threshold</div>
+          <h1>Home Desk</h1>
+          <div class="workspace-subtitle">Cumulative Transaction Values &amp; Financial Ledger Overview</div>
         </div>
       </div>
 
@@ -334,58 +302,6 @@ require_once __DIR__ . '/views/layouts/header.php';
               </tfoot>
             </table>
           </div>
-        </div>
-      </div>
-
-
-      <!-- Quick Shortcuts Grid -->
-      <div class="desk-card">
-        <div class="desk-card-header">
-          <div class="desk-card-title">Quick Workspace Shortcuts</div>
-        </div>
-        <div style="padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px;">
-          <button class="desk-btn desk-btn-default" style="justify-content: flex-start; padding: 12px 16px; gap: 12px;" onclick="Desk.switchTab('tab-batches')">
-            <span style="color: var(--primary);"><?= Icon::get('package', 18) ?></span>
-            <div style="text-align: left;">
-              <div style="font-weight: 600;">Active Batches</div>
-              <div style="font-size: 11px; color: #64748b;">View FIFO stock queue</div>
-            </div>
-          </button>
-          <button class="desk-btn desk-btn-default" style="justify-content: flex-start; padding: 12px 16px; gap: 12px;" onclick="Desk.switchTab('tab-transactions')">
-            <span style="color: var(--primary);"><?= Icon::get('file-text', 18) ?></span>
-            <div style="text-align: left;">
-              <div style="font-weight: 600;">Receipts & Issues</div>
-              <div style="font-size: 11px; color: #64748b;">Workflow & approvals</div>
-            </div>
-          </button>
-          <button class="desk-btn desk-btn-default" style="justify-content: flex-start; padding: 12px 16px; gap: 12px;" onclick="Desk.switchTab('tab-phv')">
-            <span style="color: var(--primary);"><?= Icon::get('check-square', 18) ?></span>
-            <div style="text-align: left;">
-              <div style="font-weight: 600;">Freeze & PHV</div>
-              <div style="font-size: 11px; color: #64748b;">Store board of survey</div>
-            </div>
-          </button>
-          <button class="desk-btn desk-btn-default" style="justify-content: flex-start; padding: 12px 16px; gap: 12px;" onclick="Desk.switchTab('tab-av7')">
-            <span style="color: var(--primary);"><?= Icon::get('file-check', 18) ?></span>
-            <div style="text-align: left;">
-              <div style="font-weight: 600;">AV 7 Summary</div>
-              <div style="font-size: 11px; color: #64748b;">Official stores format</div>
-            </div>
-          </button>
-          <button class="desk-btn desk-btn-default" style="justify-content: flex-start; padding: 12px 16px; gap: 12px;" onclick="Desk.switchTab('tab-report-cpc')">
-            <span style="color: var(--primary);"><?= Icon::get('droplet', 18) ?></span>
-            <div style="text-align: left;">
-              <div style="font-weight: 600;">CPC Procurements</div>
-              <div style="font-size: 11px; color: #64748b;">Bulk fuel consignments</div>
-            </div>
-          </button>
-          <button class="desk-btn desk-btn-default" style="justify-content: flex-start; padding: 12px 16px; gap: 12px;" onclick="Desk.switchTab('tab-cashbook')">
-            <span style="color: var(--primary);"><?= Icon::get('wallet', 18) ?></span>
-            <div style="text-align: left;">
-              <div style="font-weight: 600;">Cash Book</div>
-              <div style="font-size: 11px; color: #64748b;">Vouchers & petty cash</div>
-            </div>
-          </button>
         </div>
       </div>
     </div>
