@@ -34,7 +34,7 @@ try {
     $stmt2 = $db->prepare("
         SELECT CONCAT(doc_type, ' Document') as type, doc_no as title,
                CONCAT('Status: ', status, ' | Total: Rs. ', FORMAT(invoice_total, 2)) as subtitle,
-               'tab-transactions' as target_tab
+               CASE WHEN doc_type = 'GRN' THEN 'tab-receipts' ELSE 'tab-issues' END as target_tab
         FROM unposted_documents
         WHERE location_id = :loc AND (doc_no LIKE :d1 OR receipt_from LIKE :d2 OR remarks LIKE :d3)
         LIMIT 5

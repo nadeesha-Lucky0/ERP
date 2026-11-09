@@ -465,10 +465,14 @@ function submitNewGrn() {
       if (r.success) {
         Desk.showToast(r.message);
         Desk.closeModal('modalNewGrn');
-        Desk.switchTab('tab-transactions');
+        Desk.switchTab('tab-receipts');
+        Desk.loadReceipts();
       } else {
         Desk.showToast(r.message, true);
       }
+    })
+    .catch(err => {
+      Desk.showToast('Network error while saving GRN', true);
     });
 }
 
@@ -497,10 +501,14 @@ function submitNewIssue() {
       if (r.success) {
         Desk.showToast(r.message);
         Desk.closeModal('modalNewIssue');
-        Desk.switchTab('tab-transactions');
+        Desk.switchTab('tab-issues');
+        Desk.loadIssues();
       } else {
         Desk.showToast(r.message, true);
       }
+    })
+    .catch(err => {
+      Desk.showToast('Network error while saving Issue', true);
     });
 }
 

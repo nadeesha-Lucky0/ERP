@@ -13,7 +13,17 @@ const Desk = {
   init(baseUrl) {
     this.baseUrl = baseUrl || '';
     this.bindEvents();
-    this.loadDashboardData();
+
+    // Auto-restore active tab from URL hash or sessionStorage on refresh
+    const hashTab = window.location.hash ? window.location.hash.replace('#', '') : '';
+    const storedTab = sessionStorage.getItem('fifoerp_active_tab');
+    const targetTab = hashTab || storedTab || 'tab-dashboard';
+
+    if (targetTab && targetTab !== 'tab-dashboard' && document.getElementById(targetTab)) {
+      this.switchTab(targetTab);
+    } else {
+      this.loadDashboardData();
+    }
   },
 
   showToast(message, isError = false) {
@@ -47,6 +57,8 @@ const Desk = {
     } else if (tabId === 'tab-report-qoh-material') {
       tabId = 'tab-qoh';
       qohSubTabToActivate = 'qoh-sub-material';
+    } else if (tabId === 'tab-transactions') {
+      tabId = 'tab-receipts';
     }
 
     // Hide all tab panes
@@ -54,7 +66,13 @@ const Desk = {
     // Remove active from all sidebar items
     document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
 
-    const targetPane = document.getElementById(tabId);
+    let targetPane = document.getElementById(tabId);
+    if (!targetPane) {
+      console.warn(`Tab '${tabId}' not found. Falling back to 'tab-dashboard'.`);
+      tabId = 'tab-dashboard';
+      targetPane = document.getElementById(tabId);
+    }
+
     if (targetPane) {
       targetPane.style.display = 'block';
     }
@@ -65,6 +83,10 @@ const Desk = {
     }
 
     this.currentTab = tabId;
+    try {
+      sessionStorage.setItem('fifoerp_active_tab', tabId);
+      history.replaceState(null, '', '#' + tabId);
+    } catch (e) {}
 
     // Trigger tab-specific data load
     switch (tabId) {
