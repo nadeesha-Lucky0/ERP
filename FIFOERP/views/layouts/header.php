@@ -9,6 +9,7 @@ $currentUser = Auth::user();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= APP_SHORT_NAME ?> | <?= APP_SYSTEM_NAME ?> - Enterprise FIFO Portal</title>
+  <meta name="csrf-token" content="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
   <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/erp-desk.css?v=<?= time() ?>">
   <link rel="icon" type="image/png" href="<?= BASE_PATH ?>/assets/images/EGL-NEW.png">
 </head>

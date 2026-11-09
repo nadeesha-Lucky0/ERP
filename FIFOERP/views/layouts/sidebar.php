@@ -81,5 +81,11 @@ use App\Helpers\Icon;
     <span class="sidebar-icon"><?= Icon::get('hash') ?></span>
     <span>Allocated Qty Correction</span>
   </button>
+
+  <div class="sidebar-section-title">Administration</div>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-admin">
+    <span class="sidebar-icon"><?= Icon::get('settings') ?></span>
+    <span>Admin Management</span>
+  </button>
 </aside>
 

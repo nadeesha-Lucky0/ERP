@@ -78,3 +78,15 @@ A direct cross-reference mapping the legacy FIFO system menus and tabs to their 
 | :--- | :--- | :--- |
 | **Cost Adjustments** | Cost Adjustments | Sidebar &rarr; `Authorized Tasks` &rarr; `Cost Adjustments` |
 | **Allocated Qty Correction** | Allocated Qty Correction | Sidebar &rarr; `Authorized Tasks` &rarr; `Allocated Qty Correction` |
+
+---
+
+### 7. Administration & Governance
+
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
+| :--- | :--- | :--- |
+| **Power Stations & Locations** | Admin Management | Sidebar &rarr; `Admin Management` &rarr; Sub-tab: `Power Stations & Locations` |
+| **Departments & Stores** | Admin Management | Sidebar &rarr; `Admin Management` &rarr; Sub-tab: `Departments & Stores` |
+| **User Accounts** | Admin Management | Sidebar &rarr; `Admin Management` &rarr; Sub-tab: `User Accounts` |
+| **User Roles & Designations** | Admin Management | Sidebar &rarr; `Admin Management` &rarr; Sub-tab: `User Roles & Codes` |
+| **Permissions & Access Matrix** | Admin Management | Sidebar &rarr; `Admin Management` &rarr; Sub-tab: `Permissions & Access Matrix` |

@@ -35,6 +35,17 @@ class Auth {
         }
     }
 
+    public static function requireAdmin(): void {
+        self::requireLogin();
+        if (!self::isAdmin()) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+                Response::error('Access restricted to administrators.', [], 403);
+            }
+            header("Location: " . BASE_PATH . "/index.php");
+            exit;
+        }
+    }
+
     public static function attempt(string $username, string $password): bool {
         $db = Database::getConnection();
         

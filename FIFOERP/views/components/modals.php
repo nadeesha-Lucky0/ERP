@@ -441,6 +441,461 @@
   </div>
 </div>
 
+<!-- ============================================================
+     ADMIN MODAL 1: CREATE LOCATION
+     ============================================================ -->
+<div id="createLocationModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 480px;">
+    <div class="desk-modal-header">
+      <h3>Add Power Station / Location</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('createLocationModal')">&times;</button>
+    </div>
+    <form id="createLocationForm" onsubmit="event.preventDefault(); Desk.submitCreateLocation();">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <div class="desk-modal-body">
+        <div class="desk-form-group">
+          <label>Station / Location Name *</label>
+          <input type="text" id="createLocName" name="name" class="desk-form-control" placeholder="e.g. Victoria Power Station" required>
+        </div>
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Station Code *</label>
+            <input type="text" id="createLocCode" name="code" class="desk-form-control" placeholder="e.g. 833 / VIC-01" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Status</label>
+            <select id="createLocStatus" name="status" class="desk-form-control">
+              <option value="active" selected>Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('createLocationModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Save Location</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 2: EDIT LOCATION
+     ============================================================ -->
+<div id="editLocationModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 480px;">
+    <div class="desk-modal-header">
+      <h3>Edit Power Station / Location</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('editLocationModal')">&times;</button>
+    </div>
+    <form id="editLocationForm" onsubmit="event.preventDefault(); Desk.submitEditLocation();">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" id="editLocId" name="id">
+      <div class="desk-modal-body">
+        <div class="desk-form-group">
+          <label>Station / Location Name *</label>
+          <input type="text" id="editLocName" name="name" class="desk-form-control" required>
+        </div>
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Station Code *</label>
+            <input type="text" id="editLocCode" name="code" class="desk-form-control" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Status</label>
+            <select id="editLocStatus" name="status" class="desk-form-control">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('editLocationModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Update Location</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 3: CREATE DEPARTMENT
+     ============================================================ -->
+<div id="createDepartmentModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 520px;">
+    <div class="desk-modal-header">
+      <h3>Add Department / Store</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('createDepartmentModal')">&times;</button>
+    </div>
+    <form id="createDepartmentForm" onsubmit="event.preventDefault(); Desk.submitCreateDepartment();">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <div class="desk-modal-body">
+        <div class="desk-form-group">
+          <label>Power Station / Location *</label>
+          <select id="createDeptLocationId" name="location_id" class="desk-form-control" required>
+            <option value="" disabled selected>-- Select Station --</option>
+            <?php foreach (($locations ?? []) as $loc): ?>
+              <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?> (<?= htmlspecialchars($loc['code']) ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="desk-form-group">
+          <label>Department / Store Name *</label>
+          <input type="text" id="createDeptName" name="name" class="desk-form-control" placeholder="e.g. Electrical Generation" required>
+        </div>
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Department Code *</label>
+            <input type="text" id="createDeptCode" name="code" class="desk-form-control" placeholder="e.g. ELEC-GEN" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Status</label>
+            <select id="createDeptStatus" name="status" class="desk-form-control">
+              <option value="active" selected>Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('createDepartmentModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Save Department</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 4: EDIT DEPARTMENT
+     ============================================================ -->
+<div id="editDepartmentModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 520px;">
+    <div class="desk-modal-header">
+      <h3>Edit Department / Store</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('editDepartmentModal')">&times;</button>
+    </div>
+    <form id="editDepartmentForm" onsubmit="event.preventDefault(); Desk.submitEditDepartment();">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" id="editDeptId" name="id">
+      <div class="desk-modal-body">
+        <div class="desk-form-group">
+          <label>Power Station / Location *</label>
+          <select id="editDeptLocationId" name="location_id" class="desk-form-control" required>
+            <?php foreach (($locations ?? []) as $loc): ?>
+              <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?> (<?= htmlspecialchars($loc['code']) ?>)</option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="desk-form-group">
+          <label>Department / Store Name *</label>
+          <input type="text" id="editDeptName" name="name" class="desk-form-control" required>
+        </div>
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Department Code *</label>
+            <input type="text" id="editDeptCode" name="code" class="desk-form-control" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Status</label>
+            <select id="editDeptStatus" name="status" class="desk-form-control">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('editDepartmentModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Update Department</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 5: CREATE USER
+     ============================================================ -->
+<div id="createUserModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 560px;">
+    <div class="desk-modal-header">
+      <h3>Add New User Account</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('createUserModal')">&times;</button>
+    </div>
+    <form id="createUserForm" onsubmit="event.preventDefault(); Desk.submitCreateUser();">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <div class="desk-modal-body">
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Power Station / Location *</label>
+            <select id="createUserLocId" name="location_id" class="desk-form-control" required>
+              <option value="" disabled selected>-- Select Station --</option>
+              <?php foreach (($locations ?? []) as $loc): ?>
+                <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="desk-form-group">
+            <label>Department *</label>
+            <input type="text" id="createUserDept" name="department" class="desk-form-control" placeholder="e.g. Mechanical Maintenance" required>
+          </div>
+        </div>
+
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>User Role / Designation *</label>
+            <select id="createUserRoleId" name="role_id" class="desk-form-control" required>
+              <option value="" disabled selected>-- Select Role --</option>
+              <?php foreach (($allRoles ?? []) as $r): ?>
+                <?php if ($r['name'] !== 'super_admin' && (int)$r['id'] !== 1): ?>
+                  <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['display_name']) ?></option>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="desk-form-group">
+            <label>Account Status</label>
+            <select id="createUserStatus" name="status" class="desk-form-control">
+              <option value="active" selected>Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Full Name *</label>
+            <input type="text" id="createUserFullName" name="full_name" class="desk-form-control" placeholder="e.g. Mahinda Jayasinghe" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Username *</label>
+            <input type="text" id="createUserUsername" name="username" class="desk-form-control" placeholder="e.g. 832sk" required>
+          </div>
+        </div>
+
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Corporate Email *</label>
+            <input type="email" id="createUserEmail" name="email" class="desk-form-control" placeholder="e.g. mj@egl.lk" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Initial Password *</label>
+            <input type="password" id="createUserPassword" name="password" class="desk-form-control" placeholder="Minimum 6 characters" required>
+          </div>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('createUserModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 6: EDIT USER
+     ============================================================ -->
+<div id="editUserModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 560px;">
+    <div class="desk-modal-header">
+      <h3>Edit User Account</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('editUserModal')">&times;</button>
+    </div>
+    <form id="editUserForm" onsubmit="event.preventDefault(); Desk.submitEditUser();">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" id="editUserId" name="id">
+      <div class="desk-modal-body">
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Power Station / Location *</label>
+            <select id="editUserLocId" name="location_id" class="desk-form-control" required>
+              <?php foreach (($locations ?? []) as $loc): ?>
+                <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="desk-form-group">
+            <label>Department *</label>
+            <input type="text" id="editUserDept" name="department" class="desk-form-control" required>
+          </div>
+        </div>
+
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>User Role / Designation *</label>
+            <select id="editUserRoleId" name="role_id" class="desk-form-control" required>
+              <?php foreach (($allRoles ?? []) as $r): ?>
+                <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['display_name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="desk-form-group">
+            <label>Account Status</label>
+            <select id="editUserStatus" name="status" class="desk-form-control">
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Full Name *</label>
+            <input type="text" id="editUserFullName" name="full_name" class="desk-form-control" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Username</label>
+            <input type="text" id="editUserUsername" name="username" class="desk-form-control" readonly style="background: #f1f5f9; cursor: not-allowed;">
+          </div>
+        </div>
+
+        <div class="desk-form-row">
+          <div class="desk-form-group">
+            <label>Corporate Email *</label>
+            <input type="email" id="editUserEmail" name="email" class="desk-form-control" required>
+          </div>
+          <div class="desk-form-group">
+            <label>Reset Password (leave empty to keep)</label>
+            <input type="password" id="editUserPassword" name="password" class="desk-form-control" placeholder="New password">
+          </div>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('editUserModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 7: CREATE ROLE
+     ============================================================ -->
+<div id="createRoleModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
+    <div class="desk-modal-header">
+      <h3>Define New Role &amp; Permissions</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('createRoleModal')">&times;</button>
+    </div>
+    <form id="createRoleForm" onsubmit="event.preventDefault(); Desk.submitCreateRole();" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <div class="desk-modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
+        <div class="desk-form-row">
+          <div class="desk-form-group" style="flex: 2;">
+            <label>Role Name / Designation *</label>
+            <input type="text" id="createRoleDisplayName" name="display_name" class="desk-form-control" placeholder="e.g. Assistant Storekeeper" required>
+          </div>
+          <div class="desk-form-group" style="flex: 1;">
+            <label>Role Code *</label>
+            <input type="text" id="createRoleCode" name="code" class="desk-form-control" placeholder="e.g. ASK" style="text-transform: uppercase;" required>
+          </div>
+        </div>
+
+        <div style="margin: 16px 0 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+          <div>
+            <strong style="font-size: 0.88rem; color: #0f172a;">Fixed Tab Access Permissions</strong>
+            <div style="font-size: 0.74rem; color: #64748b;">Set which navigation tabs are enabled (ON) for this role</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.toggleAllRolePerms('createRoleForm', true)">Select All</button>
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.toggleAllRolePerms('createRoleForm', false)">Deselect All</button>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <?php foreach (($permissionCategories ?? []) as $categoryName => $perms): ?>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px;">
+              <div style="font-size: 0.78rem; font-weight: 700; color: #650b2b; text-transform: uppercase; margin-bottom: 8px;"><?= htmlspecialchars($categoryName) ?></div>
+              <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
+                <?php foreach ($perms as $permKey => $permMeta): ?>
+                  <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 6px 10px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.82rem; color: #1e293b;"><?= htmlspecialchars($permMeta['label']) ?></div>
+                    </div>
+                    <label class="matrix-switch" style="margin: 0; flex-shrink: 0;">
+                      <input type="checkbox" name="permissions[<?= htmlspecialchars($permKey) ?>]" value="1" class="create-role-perm" checked>
+                      <span class="matrix-slider"></span>
+                    </label>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('createRoleModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Define Role</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN MODAL 8: EDIT ROLE
+     ============================================================ -->
+<div id="editRoleModal" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
+    <div class="desk-modal-header">
+      <h3>Edit Role &amp; Tab Permissions</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('editRoleModal')">&times;</button>
+    </div>
+    <form id="editRoleForm" onsubmit="event.preventDefault(); Desk.submitEditRole();" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" id="editRoleId" name="id">
+      <div class="desk-modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
+        <div class="desk-form-row">
+          <div class="desk-form-group" style="flex: 2;">
+            <label>Role Name / Designation *</label>
+            <input type="text" id="editRoleDisplayName" name="display_name" class="desk-form-control" required>
+          </div>
+          <div class="desk-form-group" style="flex: 1;">
+            <label>Role Code *</label>
+            <input type="text" id="editRoleCode" name="code" class="desk-form-control" style="text-transform: uppercase;" required>
+          </div>
+        </div>
+
+        <div style="margin: 16px 0 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
+          <div>
+            <strong style="font-size: 0.88rem; color: #0f172a;">Fixed Tab Access Permissions</strong>
+            <div style="font-size: 0.74rem; color: #64748b;">Configure which tabs are enabled (ON) for this role</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.toggleAllRolePerms('editRoleForm', true)">Select All</button>
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.toggleAllRolePerms('editRoleForm', false)">Deselect All</button>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <?php foreach (($permissionCategories ?? []) as $categoryName => $perms): ?>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px;">
+              <div style="font-size: 0.78rem; font-weight: 700; color: #650b2b; text-transform: uppercase; margin-bottom: 8px;"><?= htmlspecialchars($categoryName) ?></div>
+              <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
+                <?php foreach ($perms as $permKey => $permMeta): ?>
+                  <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 6px 10px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                    <div>
+                      <div style="font-weight: 600; font-size: 0.82rem; color: #1e293b;"><?= htmlspecialchars($permMeta['label']) ?></div>
+                    </div>
+                    <label class="matrix-switch" style="margin: 0; flex-shrink: 0;">
+                      <input type="checkbox" name="permissions[<?= htmlspecialchars($permKey) ?>]" data-perm-key="<?= htmlspecialchars($permKey) ?>" value="1" class="edit-role-perm" checked>
+                      <span class="matrix-slider"></span>
+                    </label>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <div class="desk-modal-footer">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('editRoleModal')">Cancel</button>
+        <button type="submit" class="desk-btn desk-btn-primary">Update Role</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 // Modal Form Submit Handlers
 function submitNewGrn() {

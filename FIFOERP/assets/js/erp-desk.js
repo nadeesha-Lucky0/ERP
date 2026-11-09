@@ -156,6 +156,9 @@ const Desk = {
       case 'tab-dest-codes':
         this.loadDestinationCodes();
         break;
+      case 'tab-admin':
+        this.switchAdminSubTab(this.currentAdminSubTab || 'admin-sub-locations');
+        break;
     }
   },
 
@@ -246,6 +249,9 @@ const Desk = {
         if (tip) tip.style.display = 'none';
       }
     });
+
+    // Initialize Permissions Matrix interactive controls
+    this.initPermissionsMatrix();
   },
 
   // -----------------------------------------------------------------
@@ -1988,8 +1994,358 @@ const Desk = {
   closeModal(modalId) {
     const m = document.getElementById(modalId);
     if (m) m.style.display = 'none';
+  },
+
+  // -----------------------------------------------------------------
+  // Administration & Governance
+  // -----------------------------------------------------------------
+  currentAdminSubTab: 'admin-sub-locations',
+
+  switchAdminSubTab(subTabId) {
+    this.currentAdminSubTab = subTabId;
+    document.querySelectorAll('.admin-sub-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-admin-sub') === subTabId);
+    });
+    document.querySelectorAll('.admin-sub-pane').forEach(p => {
+      p.classList.toggle('active', p.id === subTabId);
+    });
+  },
+
+  filterDepartmentsByLocation(locId) {
+    const rows = document.querySelectorAll('#departmentsTableBody tr[data-location-id]');
+    rows.forEach(r => {
+      if (!locId || r.getAttribute('data-location-id') === String(locId)) {
+        r.style.display = '';
+      } else {
+        r.style.display = 'none';
+      }
+    });
+  },
+
+  // Location Handlers
+  openEditLocationModal(id, name, code, status) {
+    document.getElementById('editLocId').value = id;
+    document.getElementById('editLocName').value = name;
+    document.getElementById('editLocCode').value = code;
+    document.getElementById('editLocStatus').value = status;
+    this.openModal('editLocationModal');
+  },
+
+  async submitCreateLocation() {
+    const form = document.getElementById('createLocationForm');
+    const fd = new FormData(form);
+    fd.append('action', 'create');
+
+    const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Power Station added successfully!');
+      this.closeModal('createLocationModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to add location.', true);
+    }
+  },
+
+  async submitEditLocation() {
+    const form = document.getElementById('editLocationForm');
+    const fd = new FormData(form);
+    fd.append('action', 'update');
+
+    const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Location updated successfully!');
+      this.closeModal('editLocationModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to update location.', true);
+    }
+  },
+
+  async deleteLocation(id, name) {
+    if (!confirm(`Are you sure you want to delete "${name}"? This location and its assigned departments will be affected.`)) {
+      return;
+    }
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const fd = new FormData();
+    fd.append('action', 'delete');
+    fd.append('id', id);
+    fd.append('_csrf_token', token);
+
+    const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Location deleted successfully.');
+      const row = document.getElementById(`loc-row-${id}`);
+      if (row) row.remove();
+    } else {
+      this.showToast(data.message || 'Could not delete location.', true);
+    }
+  },
+
+  // Department Handlers
+  openEditDepartmentModal(id, locationId, name, code, status) {
+    document.getElementById('editDeptId').value = id;
+    document.getElementById('editDeptLocationId').value = locationId;
+    document.getElementById('editDeptName').value = name;
+    document.getElementById('editDeptCode').value = code;
+    document.getElementById('editDeptStatus').value = status;
+    this.openModal('editDepartmentModal');
+  },
+
+  async submitCreateDepartment() {
+    const form = document.getElementById('createDepartmentForm');
+    const fd = new FormData(form);
+    fd.append('action', 'create');
+
+    const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Department added successfully!');
+      this.closeModal('createDepartmentModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to add department.', true);
+    }
+  },
+
+  async submitEditDepartment() {
+    const form = document.getElementById('editDepartmentForm');
+    const fd = new FormData(form);
+    fd.append('action', 'update');
+
+    const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Department updated successfully!');
+      this.closeModal('editDepartmentModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to update department.', true);
+    }
+  },
+
+  async deleteDepartment(id, name) {
+    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+      return;
+    }
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const fd = new FormData();
+    fd.append('action', 'delete');
+    fd.append('id', id);
+    fd.append('_csrf_token', token);
+
+    const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Department deleted successfully.');
+      const row = document.getElementById(`dept-row-${id}`);
+      if (row) row.remove();
+    } else {
+      this.showToast(data.message || 'Could not delete department.', true);
+    }
+  },
+
+  // User Handlers
+  openEditUserModal(user) {
+    document.getElementById('editUserId').value = user.id;
+    document.getElementById('editUserLocId').value = user.location_id || 1;
+    document.getElementById('editUserDept').value = user.department || '';
+    document.getElementById('editUserRoleId').value = user.role_id;
+    document.getElementById('editUserStatus').value = user.status;
+    document.getElementById('editUserFullName').value = user.full_name;
+    document.getElementById('editUserUsername').value = user.username;
+    document.getElementById('editUserEmail').value = user.email;
+    document.getElementById('editUserPassword').value = '';
+    this.openModal('editUserModal');
+  },
+
+  async submitCreateUser() {
+    const form = document.getElementById('createUserForm');
+    const fd = new FormData(form);
+    fd.append('action', 'create');
+
+    const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('User account created successfully!');
+      this.closeModal('createUserModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to create user.', true);
+    }
+  },
+
+  async submitEditUser() {
+    const form = document.getElementById('editUserForm');
+    const fd = new FormData(form);
+    fd.append('action', 'update');
+
+    const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('User account updated successfully!');
+      this.closeModal('editUserModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to update user.', true);
+    }
+  },
+
+  async deleteUser(id, name) {
+    if (!confirm(`Are you sure you want to delete user "${name}"?`)) {
+      return;
+    }
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const fd = new FormData();
+    fd.append('action', 'delete');
+    fd.append('id', id);
+    fd.append('_csrf_token', token);
+
+    const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('User deleted successfully.');
+      const row = document.getElementById(`user-row-${id}`);
+      if (row) row.remove();
+    } else {
+      this.showToast(data.message || 'Could not delete user.', true);
+    }
+  },
+
+  // Role Handlers
+  openEditRoleModal(role) {
+    document.getElementById('editRoleId').value = role.id;
+    document.getElementById('editRoleDisplayName').value = role.display_name;
+    document.getElementById('editRoleCode').value = role.code || '';
+    this.openModal('editRoleModal');
+  },
+
+  toggleAllRolePerms(formId, checked) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = checked;
+    });
+  },
+
+  async submitCreateRole() {
+    const form = document.getElementById('createRoleForm');
+    const fd = new FormData(form);
+    fd.append('action', 'create');
+
+    const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Role created successfully!');
+      this.closeModal('createRoleModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to create role.', true);
+    }
+  },
+
+  async submitEditRole() {
+    const form = document.getElementById('editRoleForm');
+    const fd = new FormData(form);
+    fd.append('action', 'update');
+
+    const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Role updated successfully!');
+      this.closeModal('editRoleModal');
+      setTimeout(() => location.reload(), 600);
+    } else {
+      this.showToast(data.message || 'Failed to update role.', true);
+    }
+  },
+
+  async deleteRole(id, name) {
+    if (!confirm(`Are you sure you want to delete role "${name}"?`)) {
+      return;
+    }
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    const fd = new FormData();
+    fd.append('action', 'delete');
+    fd.append('id', id);
+    fd.append('_csrf_token', token);
+
+    const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      this.showToast('Role deleted successfully.');
+      const row = document.getElementById(`role-row-${id}`);
+      if (row) row.remove();
+    } else {
+      this.showToast(data.message || 'Could not delete role.', true);
+    }
+  },
+
+  // Permissions Matrix Interactive Handlers
+  initPermissionsMatrix() {
+    const wrap = document.getElementById('usersMatrixWrap');
+    const btnLeft = document.getElementById('btnScrollMatrixLeft');
+    const btnRight = document.getElementById('btnScrollMatrixRight');
+
+    if (btnLeft && wrap) {
+      btnLeft.addEventListener('click', () => {
+        wrap.scrollBy({ left: -320, behavior: 'smooth' });
+      });
+    }
+    if (btnRight && wrap) {
+      btnRight.addEventListener('click', () => {
+        wrap.scrollBy({ left: 320, behavior: 'smooth' });
+      });
+    }
+
+    document.querySelectorAll('.matrix-perm-toggle').forEach(toggle => {
+      toggle.addEventListener('change', async function() {
+        const userId = this.getAttribute('data-user-id');
+        const roleId = this.getAttribute('data-role-id');
+        const permKey = this.getAttribute('data-permission-key');
+        const targetName = this.getAttribute('data-target-name') || 'User';
+        const permLabel = this.getAttribute('data-perm-label') || 'Permission';
+        const isGranted = this.checked ? '1' : '0';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        const fd = new FormData();
+        fd.append('action', 'toggle');
+        if (userId) fd.append('user_id', userId);
+        if (roleId) fd.append('role_id', roleId);
+        fd.append('permission_key', permKey);
+        fd.append('is_granted', isGranted);
+        fd.append('_csrf_token', csrfToken);
+
+        this.disabled = true;
+
+        try {
+          const res = await fetch(`${Desk.baseUrl}/api/permissions.php`, {
+            method: 'POST',
+            body: fd
+          });
+          const data = await res.json();
+          this.disabled = false;
+
+          if (data.success) {
+            const state = isGranted === '1' ? 'GRANTED' : 'REVOKED';
+            Desk.showToast(`${targetName}: ${permLabel} is now ${state}`);
+          } else {
+            this.checked = !this.checked;
+            Desk.showToast(data.message || 'Failed to update permission.', true);
+          }
+        } catch (err) {
+          this.disabled = false;
+          this.checked = !this.checked;
+          Desk.showToast('Network error while updating permission.', true);
+        }
+      });
+    });
   }
 };
 
+window.openModal = function(id) { Desk.openModal(id); };
+window.closeModal = function(id) { Desk.closeModal(id); };
 window.Desk = Desk;
 

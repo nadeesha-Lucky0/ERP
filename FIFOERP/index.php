@@ -77,6 +77,53 @@ for ($m = 1; $m <= 11; $m++) {
   ];
 }
 
+// =========================================================================
+// ADMIN DATA MODELS INITIALIZATION
+// =========================================================================
+$locModel = new \App\Models\Location();
+$deptModel = new \App\Models\Department();
+$roleModel = new \App\Models\Role();
+$userModel = new \App\Models\User();
+$permModel = new \App\Models\Permission();
+
+$locations = $locModel->getAll();
+$departments = $deptModel->getAll();
+$allRoles = $roleModel->all();
+$allUsers = $userModel->getAll();
+$permissionCategories = \App\Models\Permission::getAvailablePermissions();
+$permissionsMatrix = $permModel->getMatrix();
+$userPermissionsMatrix = $permModel->getUserMatrix();
+
+// Group active operational users by Station / Location for Permissions Matrix
+$rawMatrixUsers = array_values(array_filter($allUsers, fn($u) => $u['role_name'] !== 'super_admin' && (int)$u['role_id'] !== 1));
+$locMapById = [];
+$locMapByCode = [];
+foreach ($locations as $loc) {
+  $locMapById[(int)$loc['id']] = $loc;
+  if (!empty($loc['code'])) {
+    $locMapByCode[strtoupper(trim($loc['code']))] = $loc;
+  }
+}
+
+$groupedUsersByStation = [];
+foreach ($rawMatrixUsers as $u) {
+  $stName = '';
+  if (!empty($u['location_id']) && isset($locMapById[(int)$u['location_id']])) {
+    $l = $locMapById[(int)$u['location_id']];
+    $stName = $l['name'] . (!empty($l['code']) ? ' (' . $l['code'] . ')' : '');
+  }
+  if (empty($stName) && !empty($u['department'])) {
+    $stName = $u['department'];
+  }
+  if (empty($stName)) {
+    $stName = 'General / Headquarters';
+  }
+  if (!isset($groupedUsersByStation[$stName])) {
+    $groupedUsersByStation[$stName] = [];
+  }
+  $groupedUsersByStation[$stName][] = $u;
+}
+
 // Include Header
 require_once __DIR__ . '/views/layouts/header.php';
 ?>
@@ -2021,6 +2068,460 @@ require_once __DIR__ . '/views/layouts/header.php';
             </thead>
             <tbody id="destCodesTableBody"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         PANE 16: Administration & Governance
+         ============================================================ -->
+    <div id="tab-admin" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>Administration &amp; Governance Console</h1>
+          <div class="workspace-subtitle">Power Stations, Operational Departments, User Accounts, Roles &amp; Permissions Matrix</div>
+        </div>
+      </div>
+
+      <!-- Admin Sub-Navigation Strip -->
+      <div class="admin-sub-tabs-bar">
+        <button type="button" class="admin-sub-tab-btn active" data-admin-sub="admin-sub-locations" onclick="Desk.switchAdminSubTab('admin-sub-locations')">
+          <span><?= Icon::get('zap', 15) ?></span>
+          <span>Power Stations &amp; Locations</span>
+        </button>
+        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-departments" onclick="Desk.switchAdminSubTab('admin-sub-departments')">
+          <span><?= Icon::get('layers', 15) ?></span>
+          <span>Departments &amp; Stores</span>
+        </button>
+        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-users" onclick="Desk.switchAdminSubTab('admin-sub-users')">
+          <span><?= Icon::get('user', 15) ?></span>
+          <span>User Accounts</span>
+        </button>
+        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-roles" onclick="Desk.switchAdminSubTab('admin-sub-roles')">
+          <span><?= Icon::get('shield', 15) ?></span>
+          <span>User Roles &amp; Codes</span>
+        </button>
+        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-matrix" onclick="Desk.switchAdminSubTab('admin-sub-matrix')">
+          <span><?= Icon::get('check-square', 15) ?></span>
+          <span>Permissions &amp; Access Matrix</span>
+        </button>
+      </div>
+
+      <!-- SUB-PANE 1: POWER STATIONS & LOCATIONS -->
+      <div id="admin-sub-locations" class="admin-sub-pane active">
+        <div class="desk-card" style="margin-bottom: 24px;">
+          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Power Stations &amp; Operational Locations</h2>
+              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Hydroelectric &amp; Thermal Power Generation Complex Stations</div>
+            </div>
+            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createLocationModal')">
+              + Add Location
+            </button>
+          </div>
+
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th>Station / Location Name</th>
+                  <th>Code</th>
+                  <th>Assigned Depts</th>
+                  <th>Staff</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="locationsTableBody">
+                <?php if (empty($locations)): ?>
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No power stations found.</td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($locations as $loc): ?>
+                    <tr id="loc-row-<?= $loc['id'] ?>">
+                      <td><strong style="color: #0f172a;"><?= htmlspecialchars($loc['name']) ?></strong></td>
+                      <td><span class="desk-badge badge-draft" style="font-family: monospace; font-weight: 700;"><?= htmlspecialchars($loc['code']) ?></span></td>
+                      <td><strong style="color: #650b2b;"><?= (int)($loc['department_count'] ?? 0) ?></strong> Depts</td>
+                      <td><span><?= (int)($loc['staff_count'] ?? 0) ?></span> Users</td>
+                      <td>
+                        <span class="desk-badge <?= ($loc['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
+                          <?= ucfirst(htmlspecialchars($loc['status'])) ?>
+                        </span>
+                      </td>
+                      <td style="text-align: right; white-space: nowrap;">
+                        <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditLocationModal(<?= $loc['id'] ?>, '<?= addslashes(htmlspecialchars($loc['name'])) ?>', '<?= addslashes(htmlspecialchars($loc['code'])) ?>', '<?= htmlspecialchars($loc['status']) ?>')">
+                          Edit
+                        </button>
+                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteLocation(<?= $loc['id'] ?>, '<?= addslashes(htmlspecialchars($loc['name'])) ?>')">
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 2: DEPARTMENTS & STORES -->
+      <div id="admin-sub-departments" class="admin-sub-pane">
+        <div class="desk-card" style="margin-bottom: 24px;">
+          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Operational Departments &amp; Warehouses</h2>
+              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Station divisions, mechanical, electrical &amp; central stores</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <select id="filterDeptLocation" class="desk-form-control" style="width: auto; padding: 5px 10px; font-size: 0.82rem;" onchange="Desk.filterDepartmentsByLocation(this.value)">
+                <option value="">All Stations &amp; Locations</option>
+                <?php foreach ($locations as $loc): ?>
+                  <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+              <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createDepartmentModal')">
+                + Add Department
+              </button>
+            </div>
+          </div>
+
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th>Power Station / Location</th>
+                  <th>Department Name</th>
+                  <th>Code</th>
+                  <th>Assigned Staff</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="departmentsTableBody">
+                <?php if (empty($departments)): ?>
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No departments found.</td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($departments as $dept): ?>
+                    <tr id="dept-row-<?= $dept['id'] ?>" data-location-id="<?= $dept['location_id'] ?>">
+                      <td>
+                        <span class="desk-badge badge-draft" style="font-size: 0.75rem; font-weight: 700;">
+                          <?= htmlspecialchars($dept['location_name'] ?? 'General') ?>
+                        </span>
+                      </td>
+                      <td><strong style="color: #0f172a;"><?= htmlspecialchars($dept['name']) ?></strong></td>
+                      <td><code><?= htmlspecialchars($dept['code']) ?></code></td>
+                      <td style="font-weight: 600; color: #650b2b;"><?= (int)($dept['user_count'] ?? 0) ?> Members</td>
+                      <td>
+                        <span class="desk-badge <?= ($dept['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
+                          <?= ucfirst(htmlspecialchars($dept['status'])) ?>
+                        </span>
+                      </td>
+                      <td style="text-align: right; white-space: nowrap;">
+                        <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditDepartmentModal(<?= $dept['id'] ?>, <?= (int)$dept['location_id'] ?>, '<?= addslashes(htmlspecialchars($dept['name'])) ?>', '<?= addslashes(htmlspecialchars($dept['code'])) ?>', '<?= htmlspecialchars($dept['status']) ?>')">
+                          Edit
+                        </button>
+                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteDepartment(<?= $dept['id'] ?>, '<?= addslashes(htmlspecialchars($dept['name'])) ?>')">
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 3: USER ACCOUNTS -->
+      <div id="admin-sub-users" class="admin-sub-pane">
+        <div class="desk-card" style="margin-bottom: 24px;">
+          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">User Accounts &amp; Operational Access</h2>
+              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Station engineers, storekeepers, accountants &amp; operators</div>
+            </div>
+            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createUserModal')">
+              + Add User
+            </button>
+          </div>
+
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th>User Profile</th>
+                  <th>Assigned Station &amp; Dept</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Created Date</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <?php foreach ($allUsers as $u): ?>
+                  <tr id="user-row-<?= $u['id'] ?>">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: <?= htmlspecialchars($u['avatar_color'] ?? '#650b2b') ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem;">
+                          <?= strtoupper(substr($u['full_name'], 0, 1)) ?>
+                        </div>
+                        <div>
+                          <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;"><?= htmlspecialchars($u['full_name']) ?></div>
+                          <div style="font-size: 0.76rem; color: #64748b;">@<?= htmlspecialchars($u['username']) ?> &bull; <?= htmlspecialchars($u['email']) ?></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="font-size: 0.84rem; font-weight: 600; color: #1e293b;"><?= htmlspecialchars($u['location_name'] ?? 'Victoria Station') ?></div>
+                      <div style="font-size: 0.74rem; color: #64748b;"><?= htmlspecialchars($u['department'] ?? 'General') ?></div>
+                    </td>
+                    <td>
+                      <?php if ($u['role_name'] === 'super_admin'): ?>
+                        <span class="badge-super-admin" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700;"><?= htmlspecialchars($u['role_display_name']) ?></span>
+                      <?php else: ?>
+                        <span class="desk-badge badge-draft" style="font-size: 0.72rem; font-weight: 700;"><?= htmlspecialchars($u['role_display_name']) ?></span>
+                      <?php endif; ?>
+                    </td>
+                    <td>
+                      <span class="desk-badge <?= ($u['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
+                        <?= ucfirst(htmlspecialchars($u['status'])) ?>
+                      </span>
+                    </td>
+                    <td style="color: #64748b; font-size: 0.82rem;"><?= substr($u['created_at'], 0, 10) ?></td>
+                    <td style="text-align: right; white-space: nowrap;">
+                      <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditUserModal(<?= htmlspecialchars(json_encode([
+                        'id' => $u['id'],
+                        'full_name' => $u['full_name'],
+                        'username' => $u['username'],
+                        'email' => $u['email'],
+                        'role_id' => $u['role_id'],
+                        'location_id' => $u['location_id'] ?? 1,
+                        'department' => $u['department'] ?? '',
+                        'status' => $u['status']
+                      ])) ?>)">
+                        Edit
+                      </button>
+                      <?php if ((int)$u['id'] !== (int)Auth::id()): ?>
+                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteUser(<?= $u['id'] ?>, '<?= addslashes(htmlspecialchars($u['full_name'])) ?>')">
+                          Delete
+                        </button>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 4: USER ROLES & CODES -->
+      <div id="admin-sub-roles" class="admin-sub-pane">
+        <div class="desk-card" style="margin-bottom: 24px;">
+          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Defined User Roles &amp; Operational Designations</h2>
+              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Manage designations, role codes, tab access scopes and assigned staff</div>
+            </div>
+            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createRoleModal')">
+              + Add Role
+            </button>
+          </div>
+
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th>Role Title / Name</th>
+                  <th>Role Code</th>
+                  <th>Role Identifier</th>
+                  <th>Assigned Station / Dept</th>
+                  <th>Tab Access</th>
+                  <th>Assigned Staff</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rolesTableBody">
+                <?php
+                $allPermKeys = \App\Models\Permission::getAllPermissionKeys();
+                $totalPerms = count($allPermKeys);
+                foreach ($allRoles as $r):
+                  $roleId = (int)$r['id'];
+                  $enabledCount = 0;
+                  foreach ($allPermKeys as $k) {
+                    if (isset($permissionsMatrix[$k][$roleId])) {
+                      if ((int)$permissionsMatrix[$k][$roleId] === 1) $enabledCount++;
+                    } else {
+                      $enabledCount++;
+                    }
+                  }
+                  $roleCodeVal = !empty($r['code']) ? $r['code'] : strtoupper($r['name']);
+                ?>
+                  <tr id="role-row-<?= $r['id'] ?>">
+                    <td>
+                      <strong style="color: #0f172a; font-size: 0.92rem;"><?= htmlspecialchars($r['display_name']) ?></strong>
+                      <?php if (!empty($r['description'])): ?>
+                        <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;"><?= htmlspecialchars($r['description']) ?></div>
+                      <?php endif; ?>
+                    </td>
+                    <td>
+                      <span class="desk-badge" style="font-family: monospace; font-size: 0.82rem; font-weight: 700; background: #650b2b; color: #ffffff; padding: 3px 8px; border-radius: 4px;">
+                        <?= htmlspecialchars($roleCodeVal) ?>
+                      </span>
+                    </td>
+                    <td><code><?= htmlspecialchars($r['name']) ?></code></td>
+                    <td><span style="font-size: 0.82rem; color: #475569;"><?= htmlspecialchars($r['location_name'] ?? 'All Stations (Global)') ?></span></td>
+                    <td>
+                      <button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="font-size: 0.76rem; font-weight: 600;" onclick="Desk.openEditRoleModal(<?= htmlspecialchars(json_encode([
+                        'id' => $r['id'],
+                        'name' => $r['name'],
+                        'code' => $roleCodeVal,
+                        'display_name' => $r['display_name'],
+                        'description' => $r['description'] ?? '',
+                        'location_id' => $r['location_id'] ?? '',
+                        'department_id' => $r['department_id'] ?? ''
+                      ])) ?>)">
+                        <span style="color: #650b2b; font-weight: 700;"><?= $enabledCount ?>/<?= $totalPerms ?></span> Tabs &bull; Configure
+                      </button>
+                    </td>
+                    <td><strong style="color: #650b2b;"><?= (int)($r['user_count'] ?? 0) ?></strong> Members</td>
+                    <td style="text-align: right; white-space: nowrap;">
+                      <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditRoleModal(<?= htmlspecialchars(json_encode([
+                        'id' => $r['id'],
+                        'name' => $r['name'],
+                        'code' => $roleCodeVal,
+                        'display_name' => $r['display_name'],
+                        'description' => $r['description'] ?? '',
+                        'location_id' => $r['location_id'] ?? '',
+                        'department_id' => $r['department_id'] ?? ''
+                      ])) ?>)">
+                        Edit
+                      </button>
+                      <?php if ($r['id'] != 1 && (int)($r['user_count'] ?? 0) === 0): ?>
+                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteRole(<?= $r['id'] ?>, '<?= addslashes(htmlspecialchars($r['display_name'])) ?>')">
+                          Delete
+                        </button>
+                      <?php endif; ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 5: PERMISSIONS MATRIX -->
+      <div id="admin-sub-matrix" class="admin-sub-pane">
+        <div class="desk-card" style="margin-bottom: 24px;">
+          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">User Permissions &amp; Access Matrix</h2>
+              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Interactive ON/OFF access control across all ERP workspaces, workflow tabs and reports</div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Horizontal Scroll:</span>
+              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" id="btnScrollMatrixLeft" title="Scroll Matrix Left">
+                &larr; Left
+              </button>
+              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" id="btnScrollMatrixRight" title="Scroll Matrix Right">
+                Right &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- Permissions Matrix Table -->
+          <div id="usersMatrixWrap" class="matrix-table-wrap">
+            <table class="matrix-table">
+              <thead>
+                <!-- Tier 1: Station / Location Colspan Headers -->
+                <tr>
+                  <th rowspan="2" class="matrix-nav-col" style="vertical-align: middle; background: #f8fafc; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; font-weight: 700; color: #1e293b;">
+                    System Navigation Tab / Sub-Tab
+                  </th>
+                  <?php if (empty($groupedUsersByStation)): ?>
+                    <th style="text-align: center; color: #94a3b8; padding: 12px;">No active users</th>
+                  <?php else: ?>
+                    <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                      <th colspan="<?= count($stUsers) ?>" style="text-align: center; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.74rem; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; border-left: 2px solid #cbd5e1; padding: 6px 8px; white-space: nowrap;">
+                        <?= htmlspecialchars($stationName ?: 'All Stations (Global)') ?>
+                      </th>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tr>
+                <!-- Tier 2: User Account Headers -->
+                <tr>
+                  <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                    <?php foreach ($stUsers as $idx => $u): ?>
+                      <th class="matrix-user-col" style="text-align: center; background: #ffffff; padding: 6px 4px; white-space: nowrap; border-bottom: 1px solid #cbd5e1; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : '' ?>">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; text-transform: uppercase;">
+                          <?= htmlspecialchars($u['username']) ?>
+                        </div>
+                        <div>
+                          <span class="desk-badge badge-draft" style="font-size: 0.62rem; padding: 1px 4px;">
+                            <?= htmlspecialchars($u['role_display_name'] ?? 'User') ?>
+                          </span>
+                        </div>
+                      </th>
+                    <?php endforeach; ?>
+                  <?php endforeach; ?>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($permissionCategories as $categoryName => $perms): ?>
+                  <tr class="matrix-category-row">
+                    <td class="matrix-nav-col" style="background: #fdf2f5 !important; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+                      <strong style="color: #650b2b;"><?= htmlspecialchars($categoryName) ?></strong>
+                    </td>
+                    <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                      <?php foreach ($stUsers as $idx => $u): ?>
+                        <td class="matrix-user-col" style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : 'border-left: 1px solid #f1f5f9;' ?>"></td>
+                      <?php endforeach; ?>
+                    <?php endforeach; ?>
+                  </tr>
+
+                  <?php foreach ($perms as $permKey => $permMeta):
+                    $level = $permMeta['level'] ?? 1;
+                    $levelClass = 'matrix-level-' . $level;
+                  ?>
+                    <tr>
+                      <td class="<?= $levelClass ?> matrix-nav-col" style="border-right: 1px solid #e2e8f0;">
+                        <span class="matrix-perm-title"><?= htmlspecialchars($permMeta['label']) ?></span>
+                      </td>
+                      <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                        <?php foreach ($stUsers as $idx => $u):
+                          if (isset($userPermissionsMatrix[$permKey][$u['id']])) {
+                            $isGranted = ((int)$userPermissionsMatrix[$permKey][$u['id']] === 1);
+                          } elseif (isset($permissionsMatrix[$permKey][$u['role_id']])) {
+                            $isGranted = ((int)$permissionsMatrix[$permKey][$u['role_id']] === 1);
+                          } else {
+                            $isGranted = true;
+                          }
+                        ?>
+                          <td class="matrix-user-col" style="text-align: center; padding: 4px 3px; <?= ($idx === 0) ? 'border-left: 2px solid #f1f5f9;' : '' ?>">
+                            <label class="matrix-switch" title="Toggle <?= htmlspecialchars($permMeta['label']) ?> for <?= htmlspecialchars($u['username']) ?>">
+                              <input type="checkbox" class="matrix-perm-toggle"
+                                data-user-id="<?= $u['id'] ?>"
+                                data-permission-key="<?= htmlspecialchars($permKey) ?>"
+                                data-target-name="<?= htmlspecialchars($u['username']) ?>"
+                                data-perm-label="<?= htmlspecialchars($permMeta['label']) ?>"
+                                <?= $isGranted ? 'checked' : '' ?>>
+                              <span class="matrix-slider"></span>
+                            </label>
+                          </td>
+                        <?php endforeach; ?>
+                      <?php endforeach; ?>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
