@@ -51,7 +51,7 @@ A direct cross-reference mapping the legacy FIFO system menus and tabs to their 
 
 | Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
-| **Payslip Cancelation** | Payslip Cancellations | Sidebar &rarr; `Cash Book & Payroll` &rarr; `Payslip Cancellations` |
+| **Payslip Cancelation** | Payslip Cancelation | Sidebar &rarr; `Cash Book` &rarr; `Payslip Cancelation` |
 
 ---
 
@@ -59,14 +59,14 @@ A direct cross-reference mapping the legacy FIFO system menus and tabs to their 
 
 | Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
-| **Quantity On Hand &rarr; Batch wise report** | Active Batches (QOH) | Sidebar &rarr; `Inventory & FIFO` &rarr; `Active Batches (QOH)` |
-| **Quantity On Hand &rarr; Material wise report** | Material-wise Balance | Sidebar &rarr; `Reports` &rarr; `Material-wise Balance` |
+| **Quantity On Hand &rarr; Batch wise report** | Quantity On Hand | Sidebar &rarr; `Reports` &rarr; `Quantity On Hand` &rarr; Sub-tab: `Batch wise report` |
+| **Quantity On Hand &rarr; Material wise report** | Quantity On Hand | Sidebar &rarr; `Reports` &rarr; `Quantity On Hand` &rarr; Sub-tab: `Material wise report` |
 | **Monthly Transfers** | Monthly Transfers | Sidebar &rarr; `Reports` &rarr; `Monthly Transfers` |
 | **Average Diesel Price** | Average Diesel Price | Sidebar &rarr; `Reports` &rarr; `Average Diesel Price` |
-| **CPC Procurements report** | CPC Procurements | Sidebar &rarr; `Reports` &rarr; `CPC Procurements` |
+| **CPC Procurements report** | CPC Procurements report | Sidebar &rarr; `Reports` &rarr; `CPC Procurements report` |
 | **Inventory Inquiry Report** | Inventory Inquiry Report | Sidebar &rarr; `Reports` &rarr; `Inventory Inquiry Report` |
-| **Job wise material Issue Report** | Job-wise Issues | Sidebar &rarr; `Reports` &rarr; `Job-wise Issues` |
-| **Monthly Transaction** | Monthly Transactions | Sidebar &rarr; `Reports` &rarr; `Monthly Transactions` |
+| **Job wise material Issue Report** | Job wise material Issue Report | Sidebar &rarr; `Reports` &rarr; `Job wise material Issue Report` |
+| **Monthly Transaction** | Monthly Transaction | Sidebar &rarr; `Reports` &rarr; `Monthly Transaction` |
 | **GRN - Issue Summary** | GRN - Issue Summary | Sidebar &rarr; `Reports` &rarr; `GRN - Issue Summary` |
 | **Material Flow Report** | Material Flow Report | Sidebar &rarr; `Reports` &rarr; `Material Flow Report` |
 

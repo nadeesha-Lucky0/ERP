@@ -391,44 +391,85 @@ require_once __DIR__ . '/views/layouts/header.php';
     </div>
 
     <!-- ============================================================
-         PANE 2: Active Batches (FIFO Stock Ledger)
+         PANE: Quantity On Hand (QOH) - Batch Wise & Material Wise
          ============================================================ -->
-    <div id="tab-batches" class="tab-pane" style="display: none;">
+    <div id="tab-qoh" class="tab-pane" style="display: none;">
       <div class="workspace-header">
         <div class="workspace-title-box">
-          <h1>Active Batches (FIFO Queue)</h1>
-          <div class="workspace-subtitle">First-In, First-Out Stock Lots and Locations</div>
+          <h1>Quantity On Hand (QOH)</h1>
+          <div class="workspace-subtitle">Store Batch-wise &amp; Material-wise Physical Stock Balance Reports</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewGrn')">
-            <?= Icon::get('plus', 13) ?> Receive New Batch (GRN)
+          <button class="desk-btn desk-btn-default" onclick="Desk.refreshCurrentQoh()">
+            <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
       </div>
 
-      <div class="desk-card">
-        <div class="desk-card-header">
-          <div class="desk-card-title">Inventory Batches List</div>
-          <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.loadBatches()">
-            <?= Icon::get('refresh', 13) ?> Refresh
+      <!-- Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
+      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
+        <div id="qohPills" class="pv-pills-wrap">
+          <button type="button" class="pv-pill-btn active" data-qoh-btn="qoh-sub-batch" onclick="Desk.switchQohSubTab('qoh-sub-batch')">
+            <?= Icon::get('package', 12) ?> Batch wise report
+          </button>
+          <button type="button" class="pv-pill-btn" data-qoh-btn="qoh-sub-material" onclick="Desk.switchQohSubTab('qoh-sub-material')">
+            <?= Icon::get('layers', 12) ?> Material wise report
           </button>
         </div>
-        <div class="desk-table-wrapper">
-          <table class="desk-table">
-            <thead>
-              <tr>
-                <th>Batch Number</th>
-                <th>SKU</th>
-                <th>Material Description</th>
-                <th>Remaining / Initial Qty</th>
-                <th>Unit Cost</th>
-                <th>Total Valuation</th>
-                <th>Storage Bin</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="batchesTableBody"></tbody>
-          </table>
+      </div>
+
+      <!-- SUB-PANE 1: BATCH WISE REPORT -->
+      <div id="qoh-sub-batch" class="qoh-sub-pane active">
+        <div class="desk-card">
+          <div class="desk-card-header">
+            <div class="desk-card-title">Batch-wise Quantity On Hand &amp; Valuations</div>
+            <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewGrn')">
+              <?= Icon::get('plus', 13) ?> Receive New Batch (GRN)
+            </button>
+          </div>
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th>Batch Number</th>
+                  <th>SKU</th>
+                  <th>Material Description</th>
+                  <th>Remaining / Initial Qty</th>
+                  <th>Unit Cost</th>
+                  <th>Total Valuation</th>
+                  <th>Storage Bin</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="batchesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-PANE 2: MATERIAL WISE REPORT -->
+      <div id="qoh-sub-material" class="qoh-sub-pane" style="display: none;">
+        <div class="desk-card">
+          <div class="desk-card-header">
+            <div class="desk-card-title">Material-wise Consolidated Balance Grouped by SKU</div>
+          </div>
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Material Description</th>
+                  <th>Category</th>
+                  <th>Total QOH</th>
+                  <th>Avg Unit Cost</th>
+                  <th>Total Valuation</th>
+                  <th>Batches Count</th>
+                  <th>Availability</th>
+                </tr>
+              </thead>
+              <tbody id="qohMaterialTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1477,42 +1518,6 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
     </div>
 
-    <!-- ============================================================
-         PANE 8: Material-Wise Balance (QOH)
-         ============================================================ -->
-    <div id="tab-report-qoh-material" class="tab-pane" style="display: none;">
-      <div class="workspace-header">
-        <div class="workspace-title-box">
-          <h1>Material-Wise Balance (QOH)</h1>
-          <div class="workspace-subtitle">Consolidated Stock Summary Grouped by SKU</div>
-        </div>
-        <div class="header-action-btns">
-          <button class="desk-btn desk-btn-default" onclick="Desk.loadQohMaterial()">
-            <?= Icon::get('refresh', 13) ?> Refresh
-          </button>
-        </div>
-      </div>
-
-      <div class="desk-card">
-        <div class="desk-table-wrapper">
-          <table class="desk-table">
-            <thead>
-              <tr>
-                <th>SKU</th>
-                <th>Material Description</th>
-                <th>Category</th>
-                <th>Total QOH</th>
-                <th>Avg Unit Cost</th>
-                <th>Total Valuation</th>
-                <th>Batches Count</th>
-                <th>Availability</th>
-              </tr>
-            </thead>
-            <tbody id="qohMaterialTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
 
     <!-- ============================================================
          PANE 9: CPC Fuel Procurements

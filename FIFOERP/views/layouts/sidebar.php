@@ -35,13 +35,9 @@ use App\Helpers\Icon;
   </button>
 
   <div class="sidebar-section-title">Reports</div>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-batches">
-    <span class="sidebar-icon"><?= Icon::get('package') ?></span>
-    <span>Batch-wise Report (QOH)</span>
-  </button>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-report-qoh-material">
+  <button type="button" class="sidebar-nav-item" data-tab="tab-qoh">
     <span class="sidebar-icon"><?= Icon::get('layers') ?></span>
-    <span>Material-wise Report</span>
+    <span>Quantity On Hand</span>
   </button>
   <button type="button" class="sidebar-nav-item" data-tab="tab-report-transfers">
     <span class="sidebar-icon"><?= Icon::get('repeat') ?></span>

@@ -35,11 +35,18 @@ const Desk = {
 
   switchTab(tabId) {
     let reportSubTabToActivate = null;
+    let qohSubTabToActivate = null;
     if (tabId === 'tab-phv' || tabId === 'tab-phv-workspace') {
       tabId = 'tab-pv-workflow';
     } else if (tabId === 'tab-av7') {
       tabId = 'tab-pv-reports';
       reportSubTabToActivate = 'pv-sub-av7';
+    } else if (tabId === 'tab-batches') {
+      tabId = 'tab-qoh';
+      qohSubTabToActivate = 'qoh-sub-batch';
+    } else if (tabId === 'tab-report-qoh-material') {
+      tabId = 'tab-qoh';
+      qohSubTabToActivate = 'qoh-sub-material';
     }
 
     // Hide all tab panes
@@ -63,6 +70,9 @@ const Desk = {
     switch (tabId) {
       case 'tab-dashboard':
         this.loadDashboardData();
+        break;
+      case 'tab-qoh':
+        this.switchQohSubTab(qohSubTabToActivate || this.currentQohSubTab || 'qoh-sub-batch');
         break;
       case 'tab-batches':
         this.loadBatches();
@@ -568,6 +578,37 @@ const Desk = {
           Desk.showToast(res.message, true);
         }
       });
+  },
+
+  // -----------------------------------------------------------------
+  // Quantity On Hand (QOH) Sub-tabs (Batch Wise & Material Wise)
+  // -----------------------------------------------------------------
+  switchQohSubTab(subTabId) {
+    document.querySelectorAll('#qohPills .pv-pill-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-qoh-btn') === subTabId);
+    });
+
+    document.querySelectorAll('#tab-qoh .qoh-sub-pane').forEach(pane => {
+      const isActive = (pane.id === subTabId);
+      pane.classList.toggle('active', isActive);
+      pane.style.display = isActive ? 'block' : 'none';
+    });
+
+    this.currentQohSubTab = subTabId;
+
+    if (subTabId === 'qoh-sub-batch') {
+      this.loadBatches();
+    } else if (subTabId === 'qoh-sub-material') {
+      this.loadQohMaterial();
+    }
+  },
+
+  refreshCurrentQoh() {
+    if (this.currentQohSubTab === 'qoh-sub-material') {
+      this.loadQohMaterial();
+    } else {
+      this.loadBatches();
+    }
   },
 
   // -----------------------------------------------------------------
