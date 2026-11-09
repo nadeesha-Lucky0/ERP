@@ -337,8 +337,8 @@ const Desk = {
 
   filterReceipts(status, btn) {
     this.currentReceiptFilter = status;
-    document.querySelectorAll('.active-receipt-filter').forEach(el => el.classList.remove('active-receipt-filter'));
-    if (btn) btn.classList.add('active-receipt-filter');
+    document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(el => el.classList.remove('active'));
+    if (btn) btn.classList.add('active');
     this.renderReceiptsTable();
   },
 
@@ -346,9 +346,47 @@ const Desk = {
     const tbody = document.getElementById('receiptsTableBody');
     if (!tbody) return;
 
+    const titleEl = document.getElementById('receiptsCardTitle');
+    const subEl = document.getElementById('receiptsCardSubtitle');
+    const headerAction = document.getElementById('receiptsHeaderAction');
+
     let docs = this.cachedReceipts;
-    if (this.currentReceiptFilter !== 'all') {
-      docs = docs.filter(d => d.status.toLowerCase() === this.currentReceiptFilter.toLowerCase());
+    const filter = this.currentReceiptFilter;
+
+    if (filter === 'Entry') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+      if (titleEl) titleEl.textContent = 'Receipts Entry (Draft Goods Received Notes)';
+      if (subEl) subEl.textContent = 'Newly recorded consignments awaiting technical verification and store audit';
+      if (headerAction) headerAction.innerHTML = `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewGrn')">+ New GRN Receipt</button>`;
+    } else if (filter === 'Validation') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+      if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
+      if (subEl) subEl.textContent = 'Technical store audit validation — certify received delivery against PO specs and warehouse bin storage';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
+    } else if (filter === 'Approval') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'validated');
+      if (titleEl) titleEl.textContent = 'Following Documents are pending for your approval';
+      if (subEl) subEl.textContent = 'Station Chief Engineer / Authorized Officer electronic sign-off prior to FIFO ledger posting';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Pending Approval: ${docs.length}</span>`;
+    } else if (filter === 'Posting') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'approved');
+      if (titleEl) titleEl.textContent = 'Following Documents are approved and ready for posting to FIFO Ledger';
+      if (subEl) subEl.textContent = 'Commit stock into active FIFO inventory queue and record journal vouchers';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-success" style="font-size: 11px;">Ready to Post: ${docs.length}</span>`;
+    } else if (filter === 'Posted Cancellation') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'posted');
+      if (titleEl) titleEl.textContent = 'Posted Documents - Cancellation & Stock Reversal';
+      if (subEl) subEl.textContent = 'Reverse posted consignments and restore ledger balances with audit verification log';
+      if (headerAction) headerAction.innerHTML = '';
+    } else if (filter === 'Unposted Cancellation') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'draft' || d.status.toLowerCase() === 'validated' || d.status.toLowerCase() === 'cancelled');
+      if (titleEl) titleEl.textContent = 'Unposted Documents Cancellation';
+      if (subEl) subEl.textContent = 'Cancel or discard draft and validated documents prior to posting';
+      if (headerAction) headerAction.innerHTML = '';
+    } else {
+      if (titleEl) titleEl.textContent = 'Goods Received Documents (GRN) - Master Ledger';
+      if (subEl) subEl.textContent = 'All Goods Received Notes across all lifecycle stages';
+      if (headerAction) headerAction.innerHTML = `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewGrn')">+ New GRN</button>`;
     }
 
     let html = '';
@@ -363,17 +401,17 @@ const Desk = {
           <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
           <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
           <td>
-            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})">Inspect</button>
-            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">Validate</button>` : ''}
-            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">Approve</button>` : ''}
-            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">Post to FIFO</button>` : ''}
+            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
+            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">✓ Validate</button>` : ''}
+            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">⭐ Approve</button>` : ''}
+            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
             ${d.status === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
             ${d.status === 'Draft' || d.status === 'Validated' ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
           </td>
         </tr>
       `;
     });
-    tbody.innerHTML = html || `<tr><td colspan="7" style="text-align: center; padding: 20px; color: #64748b;">No receipts found for filter '${this.currentReceiptFilter}'</td></tr>`;
+    tbody.innerHTML = html || `<tr><td colspan="7" style="text-align: center; padding: 24px; color: #64748b; font-size: 13px;">No documents found for stage '<strong>${filter}</strong>'</td></tr>`;
   },
 
   // -----------------------------------------------------------------
@@ -396,8 +434,8 @@ const Desk = {
 
   filterIssues(status, btn) {
     this.currentIssueFilter = status;
-    document.querySelectorAll('.active-issue-filter').forEach(el => el.classList.remove('active-issue-filter'));
-    if (btn) btn.classList.add('active-issue-filter');
+    document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(el => el.classList.remove('active'));
+    if (btn) btn.classList.add('active');
     this.renderIssuesTable();
   },
 
@@ -405,9 +443,47 @@ const Desk = {
     const tbody = document.getElementById('issuesTableBody');
     if (!tbody) return;
 
+    const titleEl = document.getElementById('issuesCardTitle');
+    const subEl = document.getElementById('issuesCardSubtitle');
+    const headerAction = document.getElementById('issuesHeaderAction');
+
     let docs = this.cachedIssues;
-    if (this.currentIssueFilter !== 'all') {
-      docs = docs.filter(d => d.status.toLowerCase() === this.currentIssueFilter.toLowerCase());
+    const filter = this.currentIssueFilter;
+
+    if (filter === 'Entry') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+      if (titleEl) titleEl.textContent = 'Material Issues Entry (Draft Requisitions)';
+      if (subEl) subEl.textContent = 'Draft material requisition notes waiting for technical audit validation';
+      if (headerAction) headerAction.innerHTML = `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewIssue')">+ New Material Issue</button>`;
+    } else if (filter === 'Validation') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+      if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
+      if (subEl) subEl.textContent = 'Storekeeper stock validation — verify quantity requirements against active FIFO batch balances';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
+    } else if (filter === 'Approval') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'validated');
+      if (titleEl) titleEl.textContent = 'Following Documents are pending for your approval';
+      if (subEl) subEl.textContent = 'Chief Engineer / Plant Manager authorization required before issuing spares';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Pending Approval: ${docs.length}</span>`;
+    } else if (filter === 'Posting') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'approved');
+      if (titleEl) titleEl.textContent = 'Following Documents are approved and ready for posting to FIFO Ledger';
+      if (subEl) subEl.textContent = 'Dispatches physical materials and deducts stock from oldest active FIFO batches';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-success" style="font-size: 11px;">Ready to Post: ${docs.length}</span>`;
+    } else if (filter === 'Posted Cancellation') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'posted');
+      if (titleEl) titleEl.textContent = 'Posted Material Issues - Cancellation & Stock Reversal';
+      if (subEl) subEl.textContent = 'Reverse posted issues back into FIFO stock queue with reversal journal entry';
+      if (headerAction) headerAction.innerHTML = '';
+    } else if (filter === 'Unposted Cancellation') {
+      docs = docs.filter(d => d.status.toLowerCase() === 'draft' || d.status.toLowerCase() === 'validated' || d.status.toLowerCase() === 'cancelled');
+      if (titleEl) titleEl.textContent = 'Unposted Material Requisitions Cancellation';
+      if (subEl) subEl.textContent = 'Cancel draft or validated requisitions before stock is allocated';
+      if (headerAction) headerAction.innerHTML = '';
+    } else {
+      if (titleEl) titleEl.textContent = 'Material Issue Requisitions (FIFO Queue)';
+      if (subEl) subEl.textContent = 'Material requisitions queue from staff draft to storekeeper validation, authorization and FIFO batch consumption';
+      if (headerAction) headerAction.innerHTML = `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewIssue')">+ New Issue</button>`;
     }
 
     let html = '';
@@ -427,16 +503,16 @@ const Desk = {
           <td>
             <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
             ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">✏️ Edit</button>` : ''}
-            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">Validate</button>` : ''}
-            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">Approve</button>` : ''}
-            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">Post to FIFO</button>` : ''}
+            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">✓ Validate</button>` : ''}
+            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">⭐ Approve</button>` : ''}
+            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
             ${d.status === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
             ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
           </td>
         </tr>
       `;
     });
-    tbody.innerHTML = html || `<tr><td colspan="8" style="text-align: center; padding: 20px; color: #64748b;">No material issues found for filter '${this.currentIssueFilter}'</td></tr>`;
+    tbody.innerHTML = html || `<tr><td colspan="8" style="text-align: center; padding: 24px; color: #64748b; font-size: 13px;">No material issues found for stage '<strong>${filter}</strong>'</td></tr>`;
   },
 
   openEditIssue(docId) {

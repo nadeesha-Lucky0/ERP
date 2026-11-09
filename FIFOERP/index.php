@@ -397,7 +397,7 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Receipts (GRN) Management</h1>
-          <div class="workspace-subtitle">Goods Received Notes &amp; Consignments (Entry &rarr; Validation &rarr; Approval &rarr; Post)</div>
+          <div class="workspace-subtitle">Goods Received Notes Workflow (Entry &rarr; Validation &rarr; Approval &rarr; Posting)</div>
         </div>
         <div class="header-action-btns">
           <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewGrn')">
@@ -409,19 +409,42 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Quick Filter Pills -->
-      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm active-receipt-filter" onclick="Desk.filterReceipts('all', this)">All Receipts</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterReceipts('Draft', this)">Draft / Entry</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterReceipts('Validated', this)">Validated</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterReceipts('Approved', this)">Approved</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterReceipts('Posted', this)">Posted</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterReceipts('Cancelled', this)">Cancelled</button>
+      <!-- Real FIFO Workflow Sub-tabs (Fixed, Clean Wrap, Zero Side Scroll) -->
+      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
+        <div id="receiptWorkflowPills" class="pv-pills-wrap">
+          <button type="button" class="pv-pill-btn active" data-receipt-filter="all" onclick="Desk.filterReceipts('all', this)">
+            <?= Icon::get('layers', 12) ?> All Receipts
+          </button>
+          <button type="button" class="pv-pill-btn" data-receipt-filter="Entry" onclick="Desk.filterReceipts('Entry', this)">
+            <?= Icon::get('edit', 12) ?> Entry
+          </button>
+          <button type="button" class="pv-pill-btn" data-receipt-filter="Validation" onclick="Desk.filterReceipts('Validation', this)">
+            <?= Icon::get('check-circle', 12) ?> Validation
+          </button>
+          <button type="button" class="pv-pill-btn" data-receipt-filter="Approval" onclick="Desk.filterReceipts('Approval', this)">
+            <?= Icon::get('award', 12) ?> Approval
+          </button>
+          <button type="button" class="pv-pill-btn" data-receipt-filter="Posting" onclick="Desk.filterReceipts('Posting', this)">
+            <?= Icon::get('send', 12) ?> Posting
+          </button>
+          <button type="button" class="pv-pill-btn" data-receipt-filter="Posted Cancellation" onclick="Desk.filterReceipts('Posted Cancellation', this)">
+            <?= Icon::get('rotate-ccw', 12) ?> Posted Cancellation
+          </button>
+          <button type="button" class="pv-pill-btn" data-receipt-filter="Unposted Cancellation" onclick="Desk.filterReceipts('Unposted Cancellation', this)">
+            <?= Icon::get('x-circle', 12) ?> Unposted Cancellation
+          </button>
+        </div>
       </div>
 
       <div class="desk-card">
-        <div class="desk-card-header">
-          <div class="desk-card-title">Goods Received Documents (GRN)</div>
+        <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div class="desk-card-title" id="receiptsCardTitle">Goods Received Documents (GRN)</div>
+            <div id="receiptsCardSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Manage goods receipt notes through technical inspection, audit validation and FIFO ledger entry
+            </div>
+          </div>
+          <div id="receiptsHeaderAction"></div>
         </div>
         <div class="desk-table-wrapper">
           <table class="desk-table">
@@ -449,7 +472,7 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Material Issues (FIFO Queue)</h1>
-          <div class="workspace-subtitle">Spares &amp; Consumables Issue Workflow (Entry &rarr; Edit &rarr; Validation &rarr; Approval &rarr; FIFO Post)</div>
+          <div class="workspace-subtitle">Spares &amp; Consumables Issue Workflow (Entry &rarr; Edit &rarr; Validation &rarr; Approval &rarr; Posting)</div>
         </div>
         <div class="header-action-btns">
           <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewIssue')">
@@ -461,19 +484,42 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Quick Filter Pills -->
-      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm active-issue-filter" onclick="Desk.filterIssues('all', this)">All Issues</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterIssues('Draft', this)">Draft / In Entry</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterIssues('Validated', this)">Validated</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterIssues('Approved', this)">Approved &amp; Ready to Post</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterIssues('Posted', this)">Posted to FIFO</button>
-        <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.filterIssues('Cancelled', this)">Cancelled</button>
+      <!-- Real FIFO Workflow Sub-tabs (Fixed, Clean Wrap, Zero Side Scroll) -->
+      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
+        <div id="issueWorkflowPills" class="pv-pills-wrap">
+          <button type="button" class="pv-pill-btn active" data-issue-filter="all" onclick="Desk.filterIssues('all', this)">
+            <?= Icon::get('layers', 12) ?> All Issues
+          </button>
+          <button type="button" class="pv-pill-btn" data-issue-filter="Entry" onclick="Desk.filterIssues('Entry', this)">
+            <?= Icon::get('edit', 12) ?> Entry
+          </button>
+          <button type="button" class="pv-pill-btn" data-issue-filter="Validation" onclick="Desk.filterIssues('Validation', this)">
+            <?= Icon::get('check-circle', 12) ?> Validation
+          </button>
+          <button type="button" class="pv-pill-btn" data-issue-filter="Approval" onclick="Desk.filterIssues('Approval', this)">
+            <?= Icon::get('award', 12) ?> Approval
+          </button>
+          <button type="button" class="pv-pill-btn" data-issue-filter="Posting" onclick="Desk.filterIssues('Posting', this)">
+            <?= Icon::get('send', 12) ?> Posting
+          </button>
+          <button type="button" class="pv-pill-btn" data-issue-filter="Posted Cancellation" onclick="Desk.filterIssues('Posted Cancellation', this)">
+            <?= Icon::get('rotate-ccw', 12) ?> Posted Cancellation
+          </button>
+          <button type="button" class="pv-pill-btn" data-issue-filter="Unposted Cancellation" onclick="Desk.filterIssues('Unposted Cancellation', this)">
+            <?= Icon::get('x-circle', 12) ?> Unposted Cancellation
+          </button>
+        </div>
       </div>
 
       <div class="desk-card">
-        <div class="desk-card-header">
-          <div class="desk-card-title">Material Issue Requisitions (FIFO Queue)</div>
+        <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div class="desk-card-title" id="issuesCardTitle">Material Issue Requisitions (FIFO Queue)</div>
+            <div id="issuesCardSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Material requisitions queue from staff draft to storekeeper validation, authorization and FIFO batch consumption
+            </div>
+          </div>
+          <div id="issuesHeaderAction"></div>
         </div>
         <div class="desk-table-wrapper">
           <table class="desk-table">
