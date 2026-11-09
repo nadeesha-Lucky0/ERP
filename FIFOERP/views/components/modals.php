@@ -61,10 +61,10 @@
     </div>
     <div class="desk-modal-body">
       <form id="formNewIssue" onsubmit="event.preventDefault(); submitNewIssue();">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
           <div class="desk-form-group">
-            <label class="desk-form-label">Select Material (SKU)</label>
-            <select id="issueSku" class="desk-form-control" required>
+            <label class="desk-form-label">Select Material (SKU) *</label>
+            <select id="issueSku" class="desk-form-control" onchange="Desk.checkIssueStockAvailability(this.value)" required>
               <option value="LUB-VG46-200L">LUB-VG46-200L - Turbine Lubricating Oil Shell Turbo T 46</option>
               <option value="HYD-HOSE-2IN">HYD-HOSE-2IN - High Pressure Hydraulic Hose 2" 350 Bar</option>
               <option value="GRS-SHL-18KG">GRS-SHL-18KG - Generator Bearing Grease Shell Gadus S2</option>
@@ -74,10 +74,28 @@
             </select>
           </div>
           <div class="desk-form-group">
-            <label class="desk-form-label">Quantity to Issue</label>
-            <input type="number" id="issueQty" class="desk-form-control" min="1" value="2" required>
+            <label class="desk-form-label">Quantity to Issue *</label>
+            <input type="number" id="issueQty" class="desk-form-control" min="1" value="1" oninput="Desk.validateIssueQty()" required>
           </div>
         </div>
+
+        <!-- Live Three-Tier Stock Availability & Reservation Card -->
+        <div id="issueStockStatusCard" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; text-align: center;">
+          <div>
+            <div style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">1. Physical On-Hand</div>
+            <div id="issueStockPhysical" style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-top: 2px;">--</div>
+          </div>
+          <div style="border-left: 1px solid #e2e8f0;">
+            <div style="font-size: 0.72rem; color: #dc2626; font-weight: 700; text-transform: uppercase;">2. Pending Reserved</div>
+            <div id="issueStockAllocated" style="font-size: 1.15rem; font-weight: 800; color: #dc2626; margin-top: 2px;">--</div>
+          </div>
+          <div style="border-left: 1px solid #e2e8f0;">
+            <div style="font-size: 0.72rem; color: #059669; font-weight: 700; text-transform: uppercase;">3. Available to Issue</div>
+            <div id="issueStockAvailable" style="font-size: 1.15rem; font-weight: 800; color: #059669; margin-top: 2px;">--</div>
+          </div>
+        </div>
+
+        <div id="issueStockAlert" style="display: none; padding: 8px 12px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; color: #be123c; font-size: 0.8rem; margin-bottom: 12px; font-weight: 600;"></div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="desk-form-group">
             <label class="desk-form-label">Destination Code / Job Area</label>

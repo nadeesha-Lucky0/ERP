@@ -424,11 +424,12 @@ require_once __DIR__ . '/views/layouts/header.php';
                   <th>SKU</th>
                   <th>Material Description</th>
                   <th>Category</th>
-                  <th>Total QOH</th>
+                  <th>Physical On-Hand</th>
+                  <th>Pending Reserved</th>
+                  <th>Available to Issue</th>
                   <th>Avg Unit Cost</th>
                   <th>Total Valuation</th>
-                  <th>Batches Count</th>
-                  <th>Availability</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody id="qohMaterialTableBody"></tbody>

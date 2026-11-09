@@ -1546,16 +1546,27 @@ const Desk = {
         if (res.success) {
           let html = '';
           res.data.data.forEach(m => {
+            const availQty = m.available_quantity !== undefined ? m.available_quantity : Math.max(0, m.total_quantity_on_hand - (m.allocated_quantity || 0));
+            const allocQty = parseInt(m.allocated_quantity) || 0;
+            const allocBadge = allocQty > 0 
+              ? `<span class="desk-badge" style="background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; font-weight: 700;">${allocQty} Reserved</span>` 
+              : `<span style="color: #94a3b8; font-size: 0.8rem;">0</span>`;
+            
+            const availBadge = availQty > 0
+              ? `<strong style="color: #059669; font-size: 14px;">${availQty}</strong>`
+              : `<strong style="color: #dc2626; font-size: 14px;">0 Out of Stock</strong>`;
+
             html += `
               <tr>
                 <td><code>${m.sku}</code></td>
                 <td><strong>${m.item_name}</strong></td>
                 <td>${m.category}</td>
-                <td><span style="font-weight: 700; font-size: 14px;">${m.total_quantity_on_hand}</span></td>
+                <td><span style="font-weight: 700; font-size: 14px; color: #0f172a;">${m.total_quantity_on_hand}</span></td>
+                <td>${allocBadge}</td>
+                <td>${availBadge}</td>
                 <td>Rs. ${parseFloat(m.avg_unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                 <td><strong>Rs. ${parseFloat(m.total_stock_valuation).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></td>
-                <td>${m.total_batches}</td>
-                <td>${m.frozen_quantity > 0 ? `<span class="desk-badge badge-frozen">Frozen: ${m.frozen_quantity}</span>` : '<span class="desk-badge badge-active">Available</span>'}</td>
+                <td>${m.frozen_quantity > 0 ? `<span class="desk-badge badge-frozen">Frozen: ${m.frozen_quantity}</span>` : '<span class="desk-badge badge-active">Active</span>'}</td>
               </tr>
             `;
           });
@@ -2008,11 +2019,72 @@ const Desk = {
   openModal(modalId) {
     const m = document.getElementById(modalId);
     if (m) m.style.display = 'flex';
+    if (modalId === 'modalNewIssue') {
+      this.checkIssueStockAvailability();
+    }
   },
 
   closeModal(modalId) {
     const m = document.getElementById(modalId);
     if (m) m.style.display = 'none';
+  },
+
+  // -----------------------------------------------------------------
+  // Three-Tier Stock Availability & Reservation Handlers
+  // -----------------------------------------------------------------
+  currentStockAvailability: null,
+
+  async checkIssueStockAvailability(sku) {
+    if (!sku) {
+      const skuSelect = document.getElementById('issueSku');
+      if (skuSelect) sku = skuSelect.value;
+    }
+    if (!sku) return;
+
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}`);
+      const data = await res.json();
+      if (data.success) {
+        this.currentStockAvailability = data.data;
+        const physEl = document.getElementById('issueStockPhysical');
+        const allocEl = document.getElementById('issueStockAllocated');
+        const availEl = document.getElementById('issueStockAvailable');
+        if (physEl) physEl.textContent = data.data.physical_on_hand;
+        if (allocEl) allocEl.textContent = data.data.allocated_reserved;
+        if (availEl) {
+          availEl.textContent = data.data.available_to_issue;
+          availEl.style.color = data.data.available_to_issue > 0 ? '#059669' : '#dc2626';
+        }
+        this.validateIssueQty();
+      }
+    } catch (e) {
+      console.warn('Could not check stock availability', e);
+    }
+  },
+
+  validateIssueQty() {
+    const qtyInput = document.getElementById('issueQty');
+    const alertBox = document.getElementById('issueStockAlert');
+    const submitBtn = document.querySelector('#formNewIssue button[type="submit"]');
+    if (!qtyInput || !this.currentStockAvailability) return;
+
+    const requested = parseInt(qtyInput.value) || 0;
+    const avail = this.currentStockAvailability.available_to_issue;
+    const phys = this.currentStockAvailability.physical_on_hand;
+    const alloc = this.currentStockAvailability.allocated_reserved;
+
+    if (requested > avail) {
+      qtyInput.style.borderColor = '#ef4444';
+      if (alertBox) {
+        alertBox.style.display = 'block';
+        alertBox.innerHTML = `⚠️ <strong>Stock Reservation Conflict:</strong> Requested ${requested} units exceeds available stock of ${avail} (${phys} on-hand, ${alloc} reserved under pending approvals).`;
+      }
+      if (submitBtn) submitBtn.disabled = true;
+    } else {
+      qtyInput.style.borderColor = '';
+      if (alertBox) alertBox.style.display = 'none';
+      if (submitBtn) submitBtn.disabled = false;
+    }
   },
 
   // -----------------------------------------------------------------

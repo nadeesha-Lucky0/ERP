@@ -16,17 +16,86 @@ try {
 
     switch ($action) {
         // -------------------------------------------------------------
-        // Batches List (Quantity On Hand)
+        // Batches List (Quantity On Hand) with Live Reservation Data
         // -------------------------------------------------------------
         case 'get_batches':
             $stmt = $db->prepare("
-                SELECT * FROM fifo_batches 
-                WHERE location_id = :loc 
-                ORDER BY received_date DESC, id DESC
+                SELECT b.*,
+                    COALESCE((
+                        SELECT SUM(udi.quantity)
+                        FROM unposted_document_items udi
+                        JOIN unposted_documents ud ON udi.document_id = ud.id
+                        WHERE udi.sku = b.sku 
+                          AND ud.location_id = b.location_id
+                          AND ud.doc_type = 'ISSUE'
+                          AND ud.status IN ('Draft', 'Validated', 'Approved')
+                    ), 0) as sku_allocated_quantity
+                FROM fifo_batches b 
+                WHERE b.location_id = :loc 
+                ORDER BY b.received_date DESC, b.id DESC
             ");
             $stmt->execute([':loc' => $locationId]);
             $batches = $stmt->fetchAll();
             Response::success('Batches loaded', ['batches' => $batches]);
+            break;
+
+        // -------------------------------------------------------------
+        // Three-Tier Real-Time Stock Availability & Reservation Check
+        // -------------------------------------------------------------
+        case 'get_stock_availability':
+            $sku = trim($_GET['sku'] ?? '');
+            if (empty($sku)) {
+                Response::error('SKU is required.');
+            }
+
+            // 1. Physical on-hand from active batches
+            $stTotPhys = $db->prepare("
+                SELECT COALESCE(SUM(remaining_quantity), 0) FROM fifo_batches
+                WHERE sku = :sku AND location_id = :loc AND status = 'active'
+            ");
+            $stTotPhys->execute([':sku' => $sku, ':loc' => $locationId]);
+            $physicalQty = (int)$stTotPhys->fetchColumn();
+
+            $stmtPhysical = $db->prepare("
+                SELECT item_name, unit_cost
+                FROM fifo_batches 
+                WHERE sku = :sku AND location_id = :loc AND status = 'active'
+                ORDER BY received_date ASC
+                LIMIT 1
+            ");
+            $stmtPhysical->execute([':sku' => $sku, ':loc' => $locationId]);
+            $physRow = $stmtPhysical->fetch();
+            $itemName = $physRow['item_name'] ?? $sku;
+            $unitCost = (float)($physRow['unit_cost'] ?? 0);
+
+            // 2. Allocated / Reserved quantity in pending unposted issues (Draft, Validated, Approved)
+            $stmtAlloc = $db->prepare("
+                SELECT COALESCE(SUM(udi.quantity), 0) as allocated_qty,
+                       COUNT(DISTINCT ud.id) as pending_doc_count
+                FROM unposted_document_items udi
+                JOIN unposted_documents ud ON udi.document_id = ud.id
+                WHERE udi.sku = :sku 
+                  AND ud.location_id = :loc
+                  AND ud.doc_type = 'ISSUE'
+                  AND ud.status IN ('Draft', 'Validated', 'Approved')
+            ");
+            $stmtAlloc->execute([':sku' => $sku, ':loc' => $locationId]);
+            $allocRow = $stmtAlloc->fetch();
+            $allocatedQty = (int)($allocRow['allocated_qty'] ?? 0);
+            $pendingDocsCount = (int)($allocRow['pending_doc_count'] ?? 0);
+
+            // 3. True available stock to issue (Free Stock)
+            $availableQty = max(0, $physicalQty - $allocatedQty);
+
+            Response::success('Stock availability retrieved', [
+                'sku' => $sku,
+                'item_name' => $itemName,
+                'unit_cost' => $unitCost,
+                'physical_on_hand' => $physicalQty,
+                'allocated_reserved' => $allocatedQty,
+                'available_to_issue' => $availableQty,
+                'pending_doc_count' => $pendingDocsCount
+            ]);
             break;
 
         // -------------------------------------------------------------
@@ -86,6 +155,42 @@ try {
 
             if (empty($items)) {
                 Response::error('Please add at least one item to the document.');
+            }
+
+            // Strict Three-Tier Stock Allocation & Reservation Verification for Material Issues
+            if ($docType === 'ISSUE') {
+                foreach ($items as $chkItem) {
+                    $itemSku = trim($chkItem['sku'] ?? '');
+                    $reqQty = (int)($chkItem['quantity'] ?? 1);
+
+                    // 1. Total physical on-hand
+                    $sPhys = $db->prepare("
+                        SELECT COALESCE(SUM(remaining_quantity), 0) FROM fifo_batches 
+                        WHERE sku = :sku AND location_id = :loc AND status = 'active'
+                    ");
+                    $sPhys->execute([':sku' => $itemSku, ':loc' => $locationId]);
+                    $phys = (int)$sPhys->fetchColumn();
+
+                    // 2. Currently committed / reserved in pending unposted issues
+                    $sAlloc = $db->prepare("
+                        SELECT COALESCE(SUM(udi.quantity), 0) FROM unposted_document_items udi
+                        JOIN unposted_documents ud ON udi.document_id = ud.id
+                        WHERE udi.sku = :sku 
+                          AND ud.location_id = :loc 
+                          AND ud.doc_type = 'ISSUE' 
+                          AND ud.status IN ('Draft', 'Validated', 'Approved')
+                    ");
+                    $sAlloc->execute([':sku' => $itemSku, ':loc' => $locationId]);
+                    $alloc = (int)$sAlloc->fetchColumn();
+
+                    $available = max(0, $phys - $alloc);
+
+                    if ($reqQty > $available) {
+                        Response::error(
+                            "Stock Reservation Conflict: Cannot request {$reqQty} units for SKU '{$itemSku}'. Only {$available} units are free for issue ({$phys} physical on-hand, {$alloc} units reserved under pending approvals)."
+                        );
+                    }
+                }
             }
 
             $prefix = ($docType === 'GRN') ? 'GRN' : 'ISS';

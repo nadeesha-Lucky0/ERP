@@ -20,34 +20,56 @@ try {
         case 'qoh_batch':
             $stmt = $db->prepare("
                 SELECT b.*, (b.remaining_quantity * b.unit_cost) as total_valuation,
-                DATEDIFF(CURDATE(), b.received_date) as days_in_stock
+                DATEDIFF(CURDATE(), b.received_date) as days_in_stock,
+                COALESCE((
+                    SELECT SUM(udi.quantity) 
+                    FROM unposted_document_items udi
+                    JOIN unposted_documents ud ON udi.document_id = ud.id
+                    WHERE udi.sku = b.sku 
+                      AND ud.location_id = :loc1
+                      AND ud.doc_type = 'ISSUE'
+                      AND ud.status IN ('Draft', 'Validated', 'Approved')
+                ), 0) as sku_allocated_quantity
                 FROM fifo_batches b
-                WHERE b.location_id = :loc
+                WHERE b.location_id = :loc2
                 ORDER BY b.item_name ASC, b.received_date ASC
             ");
-            $stmt->execute([':loc' => $locationId]);
+            $stmt->execute([':loc1' => $locationId, ':loc2' => $locationId]);
             $rows = $stmt->fetchAll();
             Response::success('QOH Batch wise report', ['data' => $rows]);
             break;
 
         // -------------------------------------------------------------
-        // QOH: Material-Wise (Aggregated by SKU)
+        // QOH: Material-Wise (Aggregated by SKU with Three-Tier Live Balances)
         // -------------------------------------------------------------
         case 'qoh_material':
             $stmt = $db->prepare("
                 SELECT sku, item_name, category,
                 SUM(remaining_quantity) as total_quantity_on_hand,
+                COALESCE((
+                    SELECT SUM(udi.quantity) 
+                    FROM unposted_document_items udi
+                    JOIN unposted_documents ud ON udi.document_id = ud.id
+                    WHERE udi.sku = fifo_batches.sku 
+                      AND ud.location_id = :loc1
+                      AND ud.doc_type = 'ISSUE'
+                      AND ud.status IN ('Draft', 'Validated', 'Approved')
+                ), 0) as allocated_quantity,
                 AVG(unit_cost) as avg_unit_cost,
                 SUM(remaining_quantity * unit_cost) as total_stock_valuation,
                 COUNT(id) as total_batches,
                 SUM(IF(freeze_status = 'frozen', remaining_quantity, 0)) as frozen_quantity
                 FROM fifo_batches
-                WHERE location_id = :loc
+                WHERE location_id = :loc2
                 GROUP BY sku, item_name, category
                 ORDER BY item_name ASC
             ");
-            $stmt->execute([':loc' => $locationId]);
+            $stmt->execute([':loc1' => $locationId, ':loc2' => $locationId]);
             $rows = $stmt->fetchAll();
+            foreach ($rows as &$r) {
+                $r['available_quantity'] = max(0, (int)$r['total_quantity_on_hand'] - (int)$r['allocated_quantity']);
+            }
+            unset($r);
             Response::success('QOH Material wise report', ['data' => $rows]);
             break;
 
