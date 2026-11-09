@@ -63,6 +63,22 @@ use App\Helpers\Icon;
     <span class="sidebar-icon"><?= Icon::get('briefcase') ?></span>
     <span>Job-wise Issues</span>
   </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-inventory-inquiry">
+    <span class="sidebar-icon"><?= Icon::get('search') ?></span>
+    <span>Inventory Inquiry Report</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-monthly-tx">
+    <span class="sidebar-icon"><?= Icon::get('file-text') ?></span>
+    <span>Monthly Transactions</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-grn-issue-summary">
+    <span class="sidebar-icon"><?= Icon::get('clipboard') ?></span>
+    <span>GRN - Issue Summary</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-material-flow">
+    <span class="sidebar-icon"><?= Icon::get('repeat') ?></span>
+    <span>Material Flow Report</span>
+  </button>
 
   <div class="sidebar-section-title">Authorized Tasks</div>
   <button type="button" class="sidebar-nav-item" data-tab="tab-cost-adjust">

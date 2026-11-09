@@ -189,6 +189,175 @@ try {
             Response::success('Monthly Transaction Summary', ['data' => $rows]);
             break;
 
+        // -------------------------------------------------------------
+        // Inventory Inquiry Report
+        // -------------------------------------------------------------
+        case 'inventory_inquiry':
+            $costCenter = trim($_GET['cost_center'] ?? '');
+            $fromDate = $_GET['from_date'] ?? '';
+            $toDate = $_GET['to_date'] ?? '';
+            $sku = trim($_GET['sku'] ?? '');
+
+            $sql = "
+                SELECT b.id, b.sku, b.item_name, b.category, b.location_bin, b.unit_cost,
+                       b.initial_quantity, b.remaining_quantity,
+                       (b.initial_quantity - b.remaining_quantity) as issued_quantity,
+                       (b.remaining_quantity * b.unit_cost) as total_valuation,
+                       b.freeze_status, b.status
+                FROM fifo_batches b
+                WHERE b.location_id = :loc
+            ";
+            $params = [':loc' => $locationId];
+
+            if (!empty($sku)) {
+                $sql .= " AND (b.sku LIKE :sku OR b.item_name LIKE :sku)";
+                $params[':sku'] = '%' . $sku . '%';
+            }
+            if (!empty($fromDate)) {
+                $sql .= " AND b.received_date >= :fdate";
+                $params[':fdate'] = $fromDate;
+            }
+            if (!empty($toDate)) {
+                $sql .= " AND b.received_date <= :tdate";
+                $params[':tdate'] = $toDate;
+            }
+
+            $sql .= " ORDER BY b.location_bin ASC, b.sku ASC";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll();
+
+            Response::success('Inventory Inquiry report loaded', [
+                'items' => $rows,
+                'total_records' => count($rows),
+                'cost_center' => $costCenter ?: 'All Cost Centers'
+            ]);
+            break;
+
+        // -------------------------------------------------------------
+        // Monthly Transaction Report
+        // -------------------------------------------------------------
+        case 'monthly_tx':
+            $docType = trim($_GET['document_type'] ?? 'ALL');
+            $year = trim($_GET['year'] ?? date('Y'));
+            $month = trim($_GET['month'] ?? '');
+            $warehouse = trim($_GET['warehouse'] ?? '');
+
+            $sql = "
+                SELECT t.*
+                FROM inventory_transactions t
+                WHERE t.location_id = :loc
+            ";
+            $params = [':loc' => $locationId];
+
+            if ($docType !== 'ALL' && !empty($docType)) {
+                if ($docType === 'GRN') {
+                    $sql .= " AND t.transaction_type IN ('GRN_RECEIPT', 'RECEIPT')";
+                } elseif ($docType === 'GIN') {
+                    $sql .= " AND t.transaction_type IN ('MATERIAL_ISSUE', 'ISSUE')";
+                } elseif ($docType === 'MTN') {
+                    $sql .= " AND t.transaction_type = 'TRANSFER'";
+                } elseif ($docType === 'ADJ') {
+                    $sql .= " AND t.transaction_type IN ('RECONCILIATION', 'ADJUSTMENT')";
+                }
+            }
+
+            if (!empty($year)) {
+                $sql .= " AND YEAR(t.transaction_date) = :yr";
+                $params[':yr'] = $year;
+            }
+            if (!empty($month) && (int)$month > 0) {
+                $sql .= " AND MONTH(t.transaction_date) = :mo";
+                $params[':mo'] = (int)$month;
+            }
+
+            $sql .= " ORDER BY t.transaction_date DESC, t.id DESC";
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll();
+
+            Response::success('Monthly Transaction Report loaded', [
+                'transactions' => $rows,
+                'total_count' => count($rows),
+                'year' => $year,
+                'month' => $month
+            ]);
+            break;
+
+        // -------------------------------------------------------------
+        // GRN - Issue Summary Report
+        // -------------------------------------------------------------
+        case 'grn_issue_summary':
+            $costCenter = trim($_GET['cost_center'] ?? '');
+            $warehouse = trim($_GET['warehouse'] ?? '');
+            $fromDate = $_GET['from_date'] ?? date('Y-01-01');
+            $toDate = $_GET['to_date'] ?? date('Y-m-d');
+
+            $stmt = $db->prepare("
+                SELECT b.sku, b.item_name, b.category, 'NOS' as uom, b.unit_cost,
+                       b.initial_quantity as total_grn_qty,
+                       (b.initial_quantity * b.unit_cost) as total_grn_val,
+                       (b.initial_quantity - b.remaining_quantity) as total_issue_qty,
+                       ((b.initial_quantity - b.remaining_quantity) * b.unit_cost) as total_issue_val,
+                       b.remaining_quantity as net_balance_qty,
+                       (b.remaining_quantity * b.unit_cost) as net_balance_val
+                FROM fifo_batches b
+                WHERE b.location_id = :loc
+                ORDER BY b.sku ASC
+            ");
+            $stmt->execute([':loc' => $locationId]);
+            $items = $stmt->fetchAll();
+
+            Response::success('GRN - Issue Summary generated', [
+                'items' => $items,
+                'cost_center' => $costCenter ?: 'All Departments',
+                'warehouse' => $warehouse ?: 'Central Warehouse'
+            ]);
+            break;
+
+        // -------------------------------------------------------------
+        // Material Flow Report (Opening + Receipts - Issues = Closing)
+        // -------------------------------------------------------------
+        case 'material_flow':
+            $costCenter = trim($_GET['cost_center'] ?? '');
+            $warehouse = trim($_GET['warehouse'] ?? '');
+            $sku = trim($_GET['sku'] ?? '');
+            $fromDate = $_GET['from_date'] ?? date('Y-01-01');
+            $toDate = $_GET['to_date'] ?? date('Y-m-d');
+
+            $sql = "
+                SELECT b.sku, b.item_name, b.category, b.unit_cost,
+                       b.initial_quantity as opening_qty,
+                       (b.initial_quantity * b.unit_cost) as opening_val,
+                       b.initial_quantity as period_receipt_qty,
+                       (b.initial_quantity * b.unit_cost) as period_receipt_val,
+                       (b.initial_quantity - b.remaining_quantity) as period_issue_qty,
+                       ((b.initial_quantity - b.remaining_quantity) * b.unit_cost) as period_issue_val,
+                       b.remaining_quantity as closing_qty,
+                       (b.remaining_quantity * b.unit_cost) as closing_val
+                FROM fifo_batches b
+                WHERE b.location_id = :loc
+            ";
+            $params = [':loc' => $locationId];
+            if (!empty($sku)) {
+                $sql .= " AND (b.sku = :sku OR b.sku LIKE :skulike)";
+                $params[':sku'] = $sku;
+                $params[':skulike'] = '%' . $sku . '%';
+            }
+            $sql .= " ORDER BY b.sku ASC";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll();
+
+            Response::success('Material Flow Report generated', [
+                'items' => $rows,
+                'from_date' => $fromDate,
+                'to_date' => $toDate,
+                'warehouse' => $warehouse ?: 'All Warehouses'
+            ]);
+            break;
+
         default:
             Response::error('Invalid report requested: ' . $report);
     }

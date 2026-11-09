@@ -1379,6 +1379,317 @@ require_once __DIR__ . '/views/layouts/header.php';
     </div>
 
     <!-- ============================================================
+         PANE: Inventory Inquiry Report
+         ============================================================ -->
+    <div id="tab-report-inventory-inquiry" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>Inventory Inquiry Report</h1>
+          <div class="workspace-subtitle">Comprehensive Stock Ledger Balance with Cumulative Receipts &amp; Issues</div>
+        </div>
+        <div class="header-action-btns">
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadInventoryInquiry()">
+            <?= Icon::get('refresh', 13) ?> Refresh
+          </button>
+          <button class="desk-btn desk-btn-default" onclick="window.print()">
+            <?= Icon::get('printer', 13) ?> Print Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Form -->
+      <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
+        <form id="formInventoryInquiry" onsubmit="event.preventDefault(); Desk.loadInventoryInquiry();">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Search SKU / Item Name</label>
+              <input type="text" id="inquirySku" class="desk-form-control" placeholder="e.g. 01-01-01 or Turbine">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Cost Center / Department</label>
+              <select id="inquiryCostCenter" class="desk-form-control">
+                <option value="">All Cost Centers</option>
+                <option value="Mechanical">Mechanical Maintenance</option>
+                <option value="Electrical">Electrical Maintenance</option>
+                <option value="Civil">Civil Works</option>
+                <option value="Operations">Hydraulic Operations</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">From Date</label>
+              <input type="date" id="inquiryFromDate" class="desk-form-control">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">To Date</label>
+              <input type="date" id="inquiryToDate" class="desk-form-control">
+            </div>
+            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+              <?= Icon::get('search', 13) ?> Filter Inquiry
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="desk-card">
+        <div class="desk-card-header">
+          <div class="desk-card-title">Live Stock Ledger Balance &amp; Valuation</div>
+          <span id="inquiryCountBadge" style="font-size: 12px; color: var(--text-muted); font-weight: 600;"></span>
+        </div>
+        <div class="desk-table-wrapper">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Bin</th>
+                <th>SKU</th>
+                <th>Material Description</th>
+                <th>Category</th>
+                <th style="text-align: right;">Initial Receipts</th>
+                <th style="text-align: right;">Total Dispatched (Issues)</th>
+                <th style="text-align: right;">Current QOH</th>
+                <th style="text-align: right;">Unit Cost (LKR)</th>
+                <th style="text-align: right;">Total Valuation (LKR)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryInquiryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         PANE: Monthly Transaction Report
+         ============================================================ -->
+    <div id="tab-report-monthly-tx" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>Monthly Transactions Report</h1>
+          <div class="workspace-subtitle">Detailed Audit Log of Receipts (GRN), Issues (GIN), Transfers &amp; Adjustments</div>
+        </div>
+        <div class="header-action-btns">
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadMonthlyTx()">
+            <?= Icon::get('refresh', 13) ?> Refresh
+          </button>
+          <button class="desk-btn desk-btn-default" onclick="window.print()">
+            <?= Icon::get('printer', 13) ?> Print Report
+          </button>
+        </div>
+      </div>
+
+      <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
+        <form id="formMonthlyTx" onsubmit="event.preventDefault(); Desk.loadMonthlyTx();">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Document Type</label>
+              <select id="monthlyTxDocType" class="desk-form-control">
+                <option value="ALL">All Document Types</option>
+                <option value="GRN">Goods Received Note (GRN)</option>
+                <option value="GIN">Goods Issue Note (GIN)</option>
+                <option value="MTN">Material Transfer Note (MTN)</option>
+                <option value="ADJ">Audit Reconciliations</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Year</label>
+              <input type="number" id="monthlyTxYear" class="desk-form-control" value="<?= date('Y') ?>">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Month</label>
+              <select id="monthlyTxMonth" class="desk-form-control">
+                <option value="">All Months</option>
+                <?php for ($m = 1; $m <= 12; $m++): ?>
+                  <option value="<?= $m ?>" <?= ($m == date('n')) ? 'selected' : '' ?>><?= date('F', mktime(0, 0, 0, $m, 10)) ?></option>
+                <?php endfor; ?>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Warehouse</label>
+              <select id="monthlyTxWarehouse" class="desk-form-control">
+                <option value="">All Store Locations</option>
+                <option value="Central Main Store" selected>Central Main Store</option>
+                <option value="Mechanical Spares Bay">Mechanical Spares Bay</option>
+                <option value="Electrical Spares Bay">Electrical Spares Bay</option>
+              </select>
+            </div>
+            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+              <?= Icon::get('file-text', 13) ?> Filter Logs
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="desk-card">
+        <div class="desk-card-header">
+          <div class="desk-card-title">Transaction Audit Register</div>
+          <span id="monthlyTxCountBadge" style="font-size: 12px; color: var(--text-muted); font-weight: 600;"></span>
+        </div>
+        <div class="desk-table-wrapper">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Tx Date</th>
+                <th>Document No</th>
+                <th>Type</th>
+                <th>SKU</th>
+                <th>Material Description</th>
+                <th style="text-align: right;">Quantity</th>
+                <th style="text-align: right;">Unit Rate (LKR)</th>
+                <th style="text-align: right;">Total Value (LKR)</th>
+                <th>Reference / Job</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTxTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         PANE: GRN - Issue Summary Report
+         ============================================================ -->
+    <div id="tab-report-grn-issue-summary" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>GRN - Issue Summary Report</h1>
+          <div class="workspace-subtitle">Comparison Analysis between Total Receipts (GRN) and Issues</div>
+        </div>
+        <div class="header-action-btns">
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadGrnIssueSummary()">
+            <?= Icon::get('refresh', 13) ?> Refresh
+          </button>
+          <button class="desk-btn desk-btn-default" onclick="window.print()">
+            <?= Icon::get('printer', 13) ?> Print Summary
+          </button>
+        </div>
+      </div>
+
+      <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
+        <form id="formGrnIssueSummary" onsubmit="event.preventDefault(); Desk.loadGrnIssueSummary();">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Cost Center / Department</label>
+              <select id="grnSumCostCenter" class="desk-form-control">
+                <option value="">All Departments</option>
+                <option value="Mechanical">Mechanical Maintenance</option>
+                <option value="Electrical">Electrical Maintenance</option>
+                <option value="Civil">Civil Works</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Store / Warehouse</label>
+              <select id="grnSumWarehouse" class="desk-form-control">
+                <option value="Central Main Store" selected>Central Main Store</option>
+                <option value="Mechanical Spares Warehouse">Mechanical Spares Warehouse</option>
+                <option value="Electrical Spares Warehouse">Electrical Spares Warehouse</option>
+              </select>
+            </div>
+            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+              <?= Icon::get('clipboard', 13) ?> Generate Summary
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="desk-card">
+        <div class="desk-card-header">
+          <div class="desk-card-title">Cumulative Receipts vs Dispatches Summary</div>
+        </div>
+        <div class="desk-table-wrapper">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Item Code</th>
+                <th>Material Description</th>
+                <th>UOM</th>
+                <th style="text-align: right;">GRN Qty</th>
+                <th style="text-align: right;">GRN Value (LKR)</th>
+                <th style="text-align: right;">Issue Qty</th>
+                <th style="text-align: right;">Issue Value (LKR)</th>
+                <th style="text-align: right;">Net Balance Qty</th>
+                <th style="text-align: right;">Net Balance Value (LKR)</th>
+              </tr>
+            </thead>
+            <tbody id="grnIssueSummaryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         PANE: Material Flow Report
+         ============================================================ -->
+    <div id="tab-report-material-flow" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>Material Flow Report</h1>
+          <div class="workspace-subtitle">Stock Movement Cycle: Opening Balance + Receipts - Issues = Closing Balance</div>
+        </div>
+        <div class="header-action-btns">
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadMaterialFlow()">
+            <?= Icon::get('refresh', 13) ?> Refresh
+          </button>
+          <button class="desk-btn desk-btn-default" onclick="window.print()">
+            <?= Icon::get('printer', 13) ?> Print Report
+          </button>
+        </div>
+      </div>
+
+      <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
+        <form id="formMaterialFlow" onsubmit="event.preventDefault(); Desk.loadMaterialFlow();">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Material SKU Filter</label>
+              <input type="text" id="matFlowSku" class="desk-form-control" placeholder="All materials or enter code">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">Warehouse</label>
+              <select id="matFlowWarehouse" class="desk-form-control">
+                <option value="Central Main Store" selected>Central Main Store</option>
+                <option value="Mechanical Spares Bay">Mechanical Spares Bay</option>
+                <option value="Electrical Spares Bay">Electrical Spares Bay</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">From Date</label>
+              <input type="date" id="matFlowFromDate" class="desk-form-control" value="<?= date('Y-01-01') ?>">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label">To Date</label>
+              <input type="date" id="matFlowToDate" class="desk-form-control" value="<?= date('Y-m-d') ?>">
+            </div>
+            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+              <?= Icon::get('repeat', 13) ?> View Flow
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="desk-card">
+        <div class="desk-card-header">
+          <div class="desk-card-title">Material Movement &amp; Velocity Ledger</div>
+        </div>
+        <div class="desk-table-wrapper">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Item Code</th>
+                <th>Material Description</th>
+                <th style="text-align: right;">Opening Balance</th>
+                <th style="text-align: right;">Receipts (+)</th>
+                <th style="text-align: right;">Issues (-)</th>
+                <th style="text-align: right;">Closing Balance</th>
+                <th style="text-align: right;">Unit Cost (LKR)</th>
+                <th style="text-align: right;">Closing Valuation (LKR)</th>
+              </tr>
+            </thead>
+            <tbody id="materialFlowTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
          PANE 13: Cost Adjustments
          ============================================================ -->
     <div id="tab-cost-adjust" class="tab-pane" style="display: none;">

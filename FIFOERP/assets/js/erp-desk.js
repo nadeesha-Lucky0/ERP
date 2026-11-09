@@ -103,6 +103,18 @@ const Desk = {
       case 'tab-report-jobs':
         this.loadJobIssues();
         break;
+      case 'tab-report-inventory-inquiry':
+        this.loadInventoryInquiry();
+        break;
+      case 'tab-report-monthly-tx':
+        this.loadMonthlyTx();
+        break;
+      case 'tab-report-grn-issue-summary':
+        this.loadGrnIssueSummary();
+        break;
+      case 'tab-report-material-flow':
+        this.loadMaterialFlow();
+        break;
       case 'tab-cost-adjust':
         this.loadCostAdjustments();
         break;
@@ -1456,6 +1468,167 @@ const Desk = {
                 <td>${j.item_name}</td>
                 <td><strong>${j.quantity}</strong></td>
                 <td>Rs. ${parseFloat(j.total_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadInventoryInquiry() {
+    const tbody = document.getElementById('inventoryInquiryTableBody');
+    if (!tbody) return;
+
+    const sku = encodeURIComponent(document.getElementById('inquirySku')?.value || '');
+    const costCenter = encodeURIComponent(document.getElementById('inquiryCostCenter')?.value || '');
+    const fromDate = encodeURIComponent(document.getElementById('inquiryFromDate')?.value || '');
+    const toDate = encodeURIComponent(document.getElementById('inquiryToDate')?.value || '');
+
+    fetch(`${this.baseUrl}/api/reports.php?report=inventory_inquiry&sku=${sku}&cost_center=${costCenter}&from_date=${fromDate}&to_date=${toDate}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const badge = document.getElementById('inquiryCountBadge');
+          if (badge) badge.textContent = `${res.data.total_records} Active Items Found`;
+
+          let html = '';
+          const items = res.data.items || [];
+          if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px; color: #94a3b8;">No inventory items match the inquiry filters.</td></tr>';
+            return;
+          }
+          items.forEach(b => {
+            html += `
+              <tr>
+                <td><strong>${b.location_bin || '-'}</strong></td>
+                <td><code>${b.sku}</code></td>
+                <td><strong>${b.item_name}</strong></td>
+                <td><span class="desk-badge badge-draft">${b.category || 'Standard'}</span></td>
+                <td style="text-align: right;">${b.initial_quantity}</td>
+                <td style="text-align: right; color: #dc2626; font-weight: 600;">${b.issued_quantity}</td>
+                <td style="text-align: right; font-weight: 700; color: #0284c7;">${b.remaining_quantity}</td>
+                <td style="text-align: right;">Rs. ${parseFloat(b.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right; font-weight: 700;">Rs. ${parseFloat(b.total_valuation).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td><span class="desk-badge ${b.freeze_status === 'frozen' ? 'badge-cancelled' : 'badge-posted'}">${b.freeze_status === 'frozen' ? 'FROZEN' : 'ACTIVE'}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadMonthlyTx() {
+    const tbody = document.getElementById('monthlyTxTableBody');
+    if (!tbody) return;
+
+    const docType = encodeURIComponent(document.getElementById('monthlyTxDocType')?.value || 'ALL');
+    const year = encodeURIComponent(document.getElementById('monthlyTxYear')?.value || '');
+    const month = encodeURIComponent(document.getElementById('monthlyTxMonth')?.value || '');
+    const warehouse = encodeURIComponent(document.getElementById('monthlyTxWarehouse')?.value || '');
+
+    fetch(`${this.baseUrl}/api/reports.php?report=monthly_tx&document_type=${docType}&year=${year}&month=${month}&warehouse=${warehouse}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const badge = document.getElementById('monthlyTxCountBadge');
+          if (badge) badge.textContent = `${res.data.total_count} Transactions Logged`;
+
+          let html = '';
+          const txs = res.data.transactions || [];
+          if (txs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px; color: #94a3b8;">No transactions found for the selected criteria.</td></tr>';
+            return;
+          }
+          txs.forEach(t => {
+            html += `
+              <tr>
+                <td>${t.transaction_date}</td>
+                <td><code>${t.document_no}</code></td>
+                <td><span class="desk-badge ${t.transaction_type && t.transaction_type.includes('RECEIPT') ? 'badge-approved' : ((t.transaction_type && t.transaction_type.includes('ISSUE')) ? 'badge-draft' : 'badge-posted')}">${t.transaction_type}</span></td>
+                <td><code>${t.sku}</code></td>
+                <td><strong>${t.item_name}</strong></td>
+                <td style="text-align: right; font-weight: 700;">${t.quantity}</td>
+                <td style="text-align: right;">Rs. ${parseFloat(t.unit_price).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right; font-weight: 700;">Rs. ${parseFloat(t.total_value).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td>${t.reference_no || '-'}</td>
+                <td><span class="desk-badge badge-posted">${t.status}</span></td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadGrnIssueSummary() {
+    const tbody = document.getElementById('grnIssueSummaryTableBody');
+    if (!tbody) return;
+
+    const costCenter = encodeURIComponent(document.getElementById('grnSumCostCenter')?.value || '');
+    const warehouse = encodeURIComponent(document.getElementById('grnSumWarehouse')?.value || '');
+
+    fetch(`${this.baseUrl}/api/reports.php?report=grn_issue_summary&cost_center=${costCenter}&warehouse=${warehouse}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          const items = res.data.items || [];
+          if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 24px; color: #94a3b8;">No records found.</td></tr>';
+            return;
+          }
+          items.forEach(it => {
+            html += `
+              <tr>
+                <td><code>${it.sku}</code></td>
+                <td><strong>${it.item_name}</strong></td>
+                <td>${it.uom}</td>
+                <td style="text-align: right; color: #059669; font-weight: 600;">${it.total_grn_qty}</td>
+                <td style="text-align: right;">Rs. ${parseFloat(it.total_grn_val).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right; color: #dc2626; font-weight: 600;">${it.total_issue_qty}</td>
+                <td style="text-align: right;">Rs. ${parseFloat(it.total_issue_val).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right; font-weight: 700; color: #0284c7;">${it.net_balance_qty}</td>
+                <td style="text-align: right; font-weight: 700;">Rs. ${parseFloat(it.net_balance_val).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        }
+      });
+  },
+
+  loadMaterialFlow() {
+    const tbody = document.getElementById('materialFlowTableBody');
+    if (!tbody) return;
+
+    const sku = encodeURIComponent(document.getElementById('matFlowSku')?.value || '');
+    const warehouse = encodeURIComponent(document.getElementById('matFlowWarehouse')?.value || '');
+    const fromDate = encodeURIComponent(document.getElementById('matFlowFromDate')?.value || '');
+    const toDate = encodeURIComponent(document.getElementById('matFlowToDate')?.value || '');
+
+    fetch(`${this.baseUrl}/api/reports.php?report=material_flow&sku=${sku}&warehouse=${warehouse}&from_date=${fromDate}&to_date=${toDate}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          let html = '';
+          const items = res.data.items || [];
+          if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 24px; color: #94a3b8;">No movement records found for selected criteria.</td></tr>';
+            return;
+          }
+          items.forEach(m => {
+            html += `
+              <tr>
+                <td><code>${m.sku}</code></td>
+                <td><strong>${m.item_name}</strong></td>
+                <td style="text-align: right;">${m.opening_qty}</td>
+                <td style="text-align: right; color: #059669; font-weight: 600;">+${m.period_receipt_qty}</td>
+                <td style="text-align: right; color: #dc2626; font-weight: 600;">-${m.period_issue_qty}</td>
+                <td style="text-align: right; font-weight: 700; color: #0284c7;">${m.closing_qty}</td>
+                <td style="text-align: right;">Rs. ${parseFloat(m.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: right; font-weight: 700;">Rs. ${parseFloat(m.closing_val).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
               </tr>
             `;
           });
