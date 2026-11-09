@@ -4,8 +4,8 @@
 
 const Desk = {
   currentTab: 'tab-dashboard',
-  currentIssueFilter: 'all',
-  currentReceiptFilter: 'all',
+  currentIssueFilter: 'Entry',
+  currentReceiptFilter: 'Entry',
   cachedIssues: [],
   cachedReceipts: [],
   baseUrl: '',

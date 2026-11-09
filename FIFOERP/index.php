@@ -412,10 +412,7 @@ require_once __DIR__ . '/views/layouts/header.php';
       <!-- Real FIFO Workflow Sub-tabs (Fixed, Clean Wrap, Zero Side Scroll) -->
       <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
         <div id="receiptWorkflowPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-receipt-filter="all" onclick="Desk.filterReceipts('all', this)">
-            <?= Icon::get('layers', 12) ?> All Receipts
-          </button>
-          <button type="button" class="pv-pill-btn" data-receipt-filter="Entry" onclick="Desk.filterReceipts('Entry', this)">
+          <button type="button" class="pv-pill-btn active" data-receipt-filter="Entry" onclick="Desk.filterReceipts('Entry', this)">
             <?= Icon::get('edit', 12) ?> Entry
           </button>
           <button type="button" class="pv-pill-btn" data-receipt-filter="Validation" onclick="Desk.filterReceipts('Validation', this)">
@@ -487,10 +484,7 @@ require_once __DIR__ . '/views/layouts/header.php';
       <!-- Real FIFO Workflow Sub-tabs (Fixed, Clean Wrap, Zero Side Scroll) -->
       <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
         <div id="issueWorkflowPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-issue-filter="all" onclick="Desk.filterIssues('all', this)">
-            <?= Icon::get('layers', 12) ?> All Issues
-          </button>
-          <button type="button" class="pv-pill-btn" data-issue-filter="Entry" onclick="Desk.filterIssues('Entry', this)">
+          <button type="button" class="pv-pill-btn active" data-issue-filter="Entry" onclick="Desk.filterIssues('Entry', this)">
             <?= Icon::get('edit', 12) ?> Entry
           </button>
           <button type="button" class="pv-pill-btn" data-issue-filter="Validation" onclick="Desk.filterIssues('Validation', this)">
