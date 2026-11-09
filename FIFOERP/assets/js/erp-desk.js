@@ -181,6 +181,39 @@ const Desk = {
         }
       });
     }
+
+    // Chart hover tooltips
+    document.addEventListener('mouseover', (e) => {
+      const rect = e.target.closest ? e.target.closest('.chart-bar-rect') : null;
+      if (rect) {
+        const tip = document.getElementById('chartTooltip');
+        if (!tip) return;
+        const cat = rect.getAttribute('data-category');
+        const month = rect.getAttribute('data-month-name');
+        const val = rect.getAttribute('data-val');
+        tip.innerHTML = `<div class="chart-tooltip-title">${cat} (${month})</div><div class="chart-tooltip-val">Rs. ${val}</div>`;
+        tip.style.display = 'block';
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      const tip = document.getElementById('chartTooltip');
+      if (tip && tip.style.display === 'block') {
+        const wrapper = document.getElementById('svgChartWrapper');
+        if (wrapper) {
+          const b = wrapper.getBoundingClientRect();
+          tip.style.left = (e.clientX - b.left) + 'px';
+          tip.style.top = (e.clientY - b.top - 15) + 'px';
+        }
+      }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+      if (e.target && e.target.classList && e.target.classList.contains('chart-bar-rect')) {
+        const tip = document.getElementById('chartTooltip');
+        if (tip) tip.style.display = 'none';
+      }
+    });
   },
 
   // -----------------------------------------------------------------

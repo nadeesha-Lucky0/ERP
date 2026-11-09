@@ -755,3 +755,93 @@ textarea.desk-form-control {
   }
 }
 
+/* ==========================================================================
+   Cumulative Monthly Transaction Values Chart & Home Desk Report
+   ========================================================================== */
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  padding: 24px 28px 26px;
+  margin-bottom: 24px;
+}
+.chart-card-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.chart-italic-title {
+  font-family: "Times New Roman", Times, Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.35rem;
+  color: #0f172a;
+  letter-spacing: 0.01em;
+  margin: 0 0 6px 0;
+}
+.chart-sub-meta {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+}
+.chart-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 20px;
+  align-items: center;
+}
+.chart-svg-container {
+  width: 100%;
+  position: relative;
+  min-height: 380px;
+}
+.chart-legend-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.legend-color-box {
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.chart-tooltip {
+  position: absolute;
+  display: none;
+  background: rgba(15, 23, 42, 0.95);
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  transform: translate(-50%, -120%);
+}
+@media (max-width: 900px) {
+  .chart-layout-grid {
+    grid-template-columns: 1fr;
+  }
+  .chart-legend-box {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+
