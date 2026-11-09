@@ -5,7 +5,11 @@ use App\Core\Auth;
 use App\Config\Database;
 
 if (Auth::check()) {
-    header("Location: " . BASE_PATH . "/index.php");
+    if (Auth::isAdmin()) {
+        header("Location: " . BASE_PATH . "/index.php#tab-admin");
+    } else {
+        header("Location: " . BASE_PATH . "/index.php");
+    }
     exit;
 }
 
@@ -14,14 +18,19 @@ $error = '';
 // Handle Direct 1-Click Login or Form Submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['quick_login'])) {
     $username = trim($_POST['username'] ?? 'admin');
-    $password = trim($_POST['password'] ?? 'admin123');
+    $password = trim($_POST['password'] ?? 'admin');
 
     try {
         if (Auth::attempt($username, $password)) {
-            header("Location: " . BASE_PATH . "/index.php");
+            // If administrator, route directly to Admin Dashboard
+            if (Auth::isAdmin() || $username === 'admin') {
+                header("Location: " . BASE_PATH . "/index.php#tab-admin");
+            } else {
+                header("Location: " . BASE_PATH . "/index.php");
+            }
             exit;
         } else {
-            $error = 'Invalid credentials. Common login: admin / admin123';
+            $error = 'Invalid credentials. Common login: admin / admin';
         }
     } catch (\Throwable $e) {
         $error = 'Database Notice: Please make sure MySQL is started in XAMPP. (' . $e->getMessage() . ')';
@@ -130,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || isset($_GET['quick_login'])) {
 
       <div class="desk-form-group">
         <label class="desk-form-label">Password</label>
-        <input type="password" name="password" class="desk-form-control" value="admin123" required>
+        <input type="password" name="password" class="desk-form-control" value="admin" required>
       </div>
 
       <button type="submit" class="desk-btn desk-btn-primary" style="width: 100%; justify-content: center; height: 40px; font-weight: 600; font-size: 14px; margin-top: 6px;">
