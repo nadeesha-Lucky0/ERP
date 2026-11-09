@@ -8,11 +8,7 @@ use App\Helpers\Icon;
     <span>Home Desk</span>
   </button>
 
-  <div class="sidebar-section-title">Inventory & FIFO</div>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-batches">
-    <span class="sidebar-icon"><?= Icon::get('package') ?></span>
-    <span>Active Batches (QOH)</span>
-  </button>
+  <div class="sidebar-section-title">Inventory - FIFO</div>
   <button type="button" class="sidebar-nav-item" data-tab="tab-receipts">
     <span class="sidebar-icon"><?= Icon::get('file-text') ?></span>
     <span>Receipts (GRN)</span>
@@ -32,44 +28,44 @@ use App\Helpers\Icon;
     <span>PHV Reports (AV 7)</span>
   </button>
 
-  <div class="sidebar-section-title">Cash Book & Payroll</div>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-cashbook">
-    <span class="sidebar-icon"><?= Icon::get('wallet') ?></span>
-    <span>Cash Book Vouchers</span>
-  </button>
+  <div class="sidebar-section-title">Cash Book</div>
   <button type="button" class="sidebar-nav-item" data-tab="tab-payslips">
     <span class="sidebar-icon"><?= Icon::get('file-x') ?></span>
-    <span>Payslip Cancellations</span>
+    <span>Payslip Cancelation</span>
   </button>
 
   <div class="sidebar-section-title">Reports</div>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-batches">
+    <span class="sidebar-icon"><?= Icon::get('package') ?></span>
+    <span>Batch-wise Report (QOH)</span>
+  </button>
   <button type="button" class="sidebar-nav-item" data-tab="tab-report-qoh-material">
     <span class="sidebar-icon"><?= Icon::get('layers') ?></span>
-    <span>Material-wise Balance</span>
-  </button>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-report-cpc">
-    <span class="sidebar-icon"><?= Icon::get('droplet') ?></span>
-    <span>CPC Procurements</span>
-  </button>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-report-diesel">
-    <span class="sidebar-icon"><?= Icon::get('trending-up') ?></span>
-    <span>Average Diesel Price</span>
+    <span>Material-wise Report</span>
   </button>
   <button type="button" class="sidebar-nav-item" data-tab="tab-report-transfers">
     <span class="sidebar-icon"><?= Icon::get('repeat') ?></span>
     <span>Monthly Transfers</span>
   </button>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-report-jobs">
-    <span class="sidebar-icon"><?= Icon::get('briefcase') ?></span>
-    <span>Job-wise Issues</span>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-diesel">
+    <span class="sidebar-icon"><?= Icon::get('trending-up') ?></span>
+    <span>Average Diesel Price</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-cpc">
+    <span class="sidebar-icon"><?= Icon::get('droplet') ?></span>
+    <span>CPC Procurements report</span>
   </button>
   <button type="button" class="sidebar-nav-item" data-tab="tab-report-inventory-inquiry">
     <span class="sidebar-icon"><?= Icon::get('search') ?></span>
     <span>Inventory Inquiry Report</span>
   </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-report-jobs">
+    <span class="sidebar-icon"><?= Icon::get('briefcase') ?></span>
+    <span>Job wise material Issue Report</span>
+  </button>
   <button type="button" class="sidebar-nav-item" data-tab="tab-report-monthly-tx">
     <span class="sidebar-icon"><?= Icon::get('file-text') ?></span>
-    <span>Monthly Transactions</span>
+    <span>Monthly Transaction</span>
   </button>
   <button type="button" class="sidebar-nav-item" data-tab="tab-report-grn-issue-summary">
     <span class="sidebar-icon"><?= Icon::get('clipboard') ?></span>
@@ -89,8 +85,5 @@ use App\Helpers\Icon;
     <span class="sidebar-icon"><?= Icon::get('hash') ?></span>
     <span>Allocated Qty Correction</span>
   </button>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-dest-codes">
-    <span class="sidebar-icon"><?= Icon::get('tag') ?></span>
-    <span>Destination Codes</span>
-  </button>
 </aside>
+
