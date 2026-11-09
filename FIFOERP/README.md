@@ -1,14 +1,14 @@
-# EGL FIFO &rarr; ERP Tab Mapping
+# EGL FIFO to ERP Tab Mapping Guide
 
-කලින් Real FIFO පද්ධතියේ තිබූ Tabs සහ නව ERP පද්ධතියේ ඒවා පිහිටා ඇති ස්ථාන පහත වගු මඟින් සරලව දක්වා ඇත.
+A direct cross-reference mapping the legacy FIFO system menus and tabs to their exact locations in the new ERP.
 
 ---
 
 ### 1. Inventory - FIFO &rarr; Transaction
 
-| කලින් FIFO Tab නම | දැන් නව ERP එකේ ඇති තැන | ලබාගන්නා ආකාරය (How to Open) |
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
-| **Reciepts** | Receipts (GRN) | Sidebar &rarr; `Receipts (GRN)` (`+ New GRN Receipt` Button) |
+| **Reciepts** | Receipts (GRN) | Sidebar &rarr; `Receipts (GRN)` &rarr; `+ New GRN Receipt` Button |
 | **Issue &rarr; Entry** | Material Issues (FIFO) | Sidebar &rarr; `Material Issues (FIFO)` &rarr; `+ New Material Issue` Button |
 | **Issue &rarr; Edit** | Material Issues (FIFO) | `Draft / In Entry` Filter &rarr; Action `Edit` Button |
 | **Issue &rarr; Validation** | Material Issues (FIFO) | `Validated` Filter &rarr; Action `Validate` Button |
@@ -21,7 +21,7 @@
 
 ### 2. Inventory - FIFO &rarr; Physical Verification
 
-| කලින් FIFO Tab නම | දැන් නව ERP එකේ ඇති තැන | ලබාගන්නා ආකාරය (How to Open) |
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
 | **Freeze Batches** | Verification Workflow | Sidebar &rarr; `Verification Workflow` &rarr; Sub-tab: `Freeze Batches` |
 | **Generate Sheet** | Verification Workflow | Sidebar &rarr; `Verification Workflow` &rarr; Sub-tab: `Generate Sheet` |
@@ -37,7 +37,7 @@
 
 ### 3. Physical Verification &rarr; PHV Reports
 
-| කලින් FIFO Tab නම | දැන් නව ERP එකේ ඇති තැන | ලබාගන්නා ආකාරය (How to Open) |
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
 | **Avg Consumption** | PHV Reports (AV 7) | Sidebar &rarr; `PHV Reports (AV 7)` &rarr; Sub-tab: `Avg Consumption` |
 | **Final Report** | PHV Reports (AV 7) | Sidebar &rarr; `PHV Reports (AV 7)` &rarr; Sub-tab: `Final Report` |
@@ -49,7 +49,7 @@
 
 ### 4. Cash Book
 
-| කලින් FIFO Tab නම | දැන් නව ERP එකේ ඇති තැන | ලබාගන්නා ආකාරය (How to Open) |
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
 | **Payslip Cancelation** | Payslip Cancellations | Sidebar &rarr; `Cash Book & Payroll` &rarr; `Payslip Cancellations` |
 
@@ -57,7 +57,7 @@
 
 ### 5. Reports
 
-| කලින් FIFO Tab නම | දැන් නව ERP එකේ ඇති තැන | ලබාගන්නා ආකාරය (How to Open) |
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
 | **Quantity On Hand &rarr; Batch wise report** | Active Batches (QOH) | Sidebar &rarr; `Inventory & FIFO` &rarr; `Active Batches (QOH)` |
 | **Quantity On Hand &rarr; Material wise report** | Material-wise Balance | Sidebar &rarr; `Reports` &rarr; `Material-wise Balance` |
@@ -74,7 +74,7 @@
 
 ### 6. Authorized Tasks
 
-| කලින් FIFO Tab නම | දැන් නව ERP එකේ ඇති තැන | ලබාගන්නා ආකාරය (How to Open) |
+| Legacy FIFO Tab Name | New ERP Location | How to Open / Access Path |
 | :--- | :--- | :--- |
 | **Cost Adjustments** | Cost Adjustments | Sidebar &rarr; `Authorized Tasks` &rarr; `Cost Adjustments` |
 | **Allocated Qty Correction** | Allocated Qty Correction | Sidebar &rarr; `Authorized Tasks` &rarr; `Allocated Qty Correction` |
