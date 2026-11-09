@@ -2084,30 +2084,6 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Admin Sub-Navigation Strip -->
-      <div class="admin-sub-tabs-bar">
-        <button type="button" class="admin-sub-tab-btn active" data-admin-sub="admin-sub-locations" onclick="Desk.switchAdminSubTab('admin-sub-locations')">
-          <span><?= Icon::get('zap', 15) ?></span>
-          <span>Power Stations &amp; Locations</span>
-        </button>
-        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-departments" onclick="Desk.switchAdminSubTab('admin-sub-departments')">
-          <span><?= Icon::get('layers', 15) ?></span>
-          <span>Departments &amp; Stores</span>
-        </button>
-        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-users" onclick="Desk.switchAdminSubTab('admin-sub-users')">
-          <span><?= Icon::get('user', 15) ?></span>
-          <span>User Accounts</span>
-        </button>
-        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-roles" onclick="Desk.switchAdminSubTab('admin-sub-roles')">
-          <span><?= Icon::get('shield', 15) ?></span>
-          <span>User Roles &amp; Codes</span>
-        </button>
-        <button type="button" class="admin-sub-tab-btn" data-admin-sub="admin-sub-matrix" onclick="Desk.switchAdminSubTab('admin-sub-matrix')">
-          <span><?= Icon::get('check-square', 15) ?></span>
-          <span>Permissions &amp; Access Matrix</span>
-        </button>
-      </div>
-
       <!-- SUB-PANE 1: POWER STATIONS & LOCATIONS -->
       <div id="admin-sub-locations" class="admin-sub-pane active">
         <div class="desk-card" style="margin-bottom: 24px;">
