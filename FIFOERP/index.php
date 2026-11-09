@@ -80,6 +80,7 @@ for ($m = 1; $m <= 11; $m++) {
 // =========================================================================
 // ADMIN DATA MODELS INITIALIZATION
 // =========================================================================
+$isAdmin = \App\Core\Auth::isAdmin();
 $locModel = new \App\Models\Location();
 $deptModel = new \App\Models\Department();
 $roleModel = new \App\Models\Role();
@@ -138,7 +139,7 @@ require_once __DIR__ . '/views/layouts/header.php';
     <!-- ============================================================
          PANE 1: Home Dashboard Workspace
          ============================================================ -->
-    <div id="tab-dashboard" class="tab-pane">
+    <div id="tab-dashboard" class="tab-pane" <?= $isAdmin ? 'style="display: none;"' : '' ?>>
       <div class="workspace-header" style="margin-bottom: 16px;">
         <div class="workspace-title-box">
           <h1>Home Desk</h1>
@@ -2075,7 +2076,7 @@ require_once __DIR__ . '/views/layouts/header.php';
     <!-- ============================================================
          PANE 16: Administration & Governance
          ============================================================ -->
-    <div id="tab-admin" class="tab-pane" style="display: none;">
+    <div id="tab-admin" class="tab-pane" <?= $isAdmin ? 'style="display: block;"' : 'style="display: none;"' ?>>
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Administration &amp; Governance Console</h1>

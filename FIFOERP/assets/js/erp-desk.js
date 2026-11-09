@@ -14,13 +14,19 @@ const Desk = {
     this.baseUrl = baseUrl || '';
     this.bindEvents();
 
-    // Auto-restore active tab from URL hash or sessionStorage on refresh
+    // Auto-restore active tab from URL hash, first active sidebar button, or sessionStorage on refresh
     const hashTab = window.location.hash ? window.location.hash.replace('#', '') : '';
     const storedTab = sessionStorage.getItem('fifoerp_active_tab');
-    const targetTab = hashTab || storedTab || 'tab-dashboard';
+    const firstActiveBtn = document.querySelector('.sidebar-nav-item.active') || document.querySelector('.sidebar-nav-item');
+    const defaultTab = firstActiveBtn ? firstActiveBtn.getAttribute('data-tab') : 'tab-dashboard';
+    const targetTab = hashTab || storedTab || defaultTab;
+    const defaultSub = firstActiveBtn ? firstActiveBtn.getAttribute('data-admin-sub') : null;
 
-    if (targetTab && targetTab !== 'tab-dashboard' && document.getElementById(targetTab)) {
+    if (targetTab && document.getElementById(targetTab)) {
       this.switchTab(targetTab);
+      if (defaultSub && targetTab === 'tab-admin') {
+        this.switchAdminSubTab(defaultSub);
+      }
     } else {
       this.loadDashboardData();
     }
@@ -46,7 +52,12 @@ const Desk = {
   switchTab(tabId) {
     let reportSubTabToActivate = null;
     let qohSubTabToActivate = null;
-    if (tabId === 'tab-phv' || tabId === 'tab-phv-workspace') {
+    let adminSubToActivate = null;
+
+    if (tabId && tabId.startsWith('admin-sub-')) {
+      adminSubToActivate = tabId;
+      tabId = 'tab-admin';
+    } else if (tabId === 'tab-phv' || tabId === 'tab-phv-workspace') {
       tabId = 'tab-pv-workflow';
     } else if (tabId === 'tab-av7') {
       tabId = 'tab-pv-reports';
@@ -68,8 +79,8 @@ const Desk = {
 
     let targetPane = document.getElementById(tabId);
     if (!targetPane) {
-      console.warn(`Tab '${tabId}' not found. Falling back to 'tab-dashboard'.`);
-      tabId = 'tab-dashboard';
+      const fallbackBtn = document.querySelector('.sidebar-nav-item.active') || document.querySelector('.sidebar-nav-item');
+      tabId = fallbackBtn ? fallbackBtn.getAttribute('data-tab') : 'tab-dashboard';
       targetPane = document.getElementById(tabId);
     }
 
@@ -157,7 +168,7 @@ const Desk = {
         this.loadDestinationCodes();
         break;
       case 'tab-admin':
-        this.switchAdminSubTab(this.currentAdminSubTab || 'admin-sub-locations');
+        this.switchAdminSubTab(adminSubToActivate || this.currentAdminSubTab || 'admin-sub-locations');
         break;
     }
   },
@@ -168,7 +179,15 @@ const Desk = {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const tab = btn.getAttribute('data-tab');
-        if (tab) Desk.switchTab(tab);
+        const adminSub = btn.getAttribute('data-admin-sub');
+        if (tab) {
+          Desk.switchTab(tab);
+          if (adminSub && tab === 'tab-admin') {
+            Desk.switchAdminSubTab(adminSub);
+            document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
+            btn.classList.add('active');
+          }
+        }
       });
     });
 
@@ -2008,6 +2027,9 @@ const Desk = {
     });
     document.querySelectorAll('.admin-sub-pane').forEach(p => {
       p.classList.toggle('active', p.id === subTabId);
+    });
+    document.querySelectorAll('.sidebar-nav-item[data-admin-sub]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-admin-sub') === subTabId);
     });
   },
 

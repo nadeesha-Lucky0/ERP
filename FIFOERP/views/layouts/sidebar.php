@@ -1,7 +1,41 @@
 <?php
+use App\Core\Auth;
 use App\Helpers\Icon;
+
+$currentUser = Auth::user();
+$isAdmin = Auth::isAdmin();
 ?>
 <aside class="desk-sidebar">
+<?php if ($isAdmin): ?>
+  <!-- ============================================================
+       ADMINISTRATION ROLE SIDEBAR NAVIGATION
+       ============================================================ -->
+  <div class="sidebar-section-title">Administration Hub</div>
+  <button type="button" class="sidebar-nav-item active" data-tab="tab-admin" data-admin-sub="admin-sub-locations">
+    <span class="sidebar-icon"><?= Icon::get('zap') ?></span>
+    <span>Power Stations &amp; Locations</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-admin" data-admin-sub="admin-sub-departments">
+    <span class="sidebar-icon"><?= Icon::get('layers') ?></span>
+    <span>Departments &amp; Stores</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-admin" data-admin-sub="admin-sub-users">
+    <span class="sidebar-icon"><?= Icon::get('user') ?></span>
+    <span>User Accounts</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-admin" data-admin-sub="admin-sub-roles">
+    <span class="sidebar-icon"><?= Icon::get('shield') ?></span>
+    <span>User Roles &amp; Codes</span>
+  </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-admin" data-admin-sub="admin-sub-matrix">
+    <span class="sidebar-icon"><?= Icon::get('check-square') ?></span>
+    <span>Permissions Matrix</span>
+  </button>
+
+<?php else: ?>
+  <!-- ============================================================
+       OPERATIONAL POWER STATIONS SIDEBAR NAVIGATION (STAFF / OPERATORS)
+       ============================================================ -->
   <div class="sidebar-section-title">Workspaces</div>
   <button type="button" class="sidebar-nav-item active" data-tab="tab-dashboard">
     <span class="sidebar-icon"><?= Icon::get('home') ?></span>
@@ -81,11 +115,5 @@ use App\Helpers\Icon;
     <span class="sidebar-icon"><?= Icon::get('hash') ?></span>
     <span>Allocated Qty Correction</span>
   </button>
-
-  <div class="sidebar-section-title">Administration</div>
-  <button type="button" class="sidebar-nav-item" data-tab="tab-admin">
-    <span class="sidebar-icon"><?= Icon::get('settings') ?></span>
-    <span>Admin Management</span>
-  </button>
+<?php endif; ?>
 </aside>
-
