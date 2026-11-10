@@ -99,15 +99,19 @@ class Location {
     }
 
     public function create(array $data): int {
+        $code = strtoupper(trim($data['code']));
+        $name = trim($data['name']);
+        $dbName = !empty($data['database_name']) ? trim($data['database_name']) : \App\Core\StationDatabase::getDbName($code, $name);
+
         $stmt = $this->db->prepare("
             INSERT INTO locations (name, code, database_name, type, capacity_mw, province, district, description, status)
             VALUES (:name, :code, :database_name, :type, :capacity_mw, :province, :district, :description, :status)
         ");
 
         $stmt->execute([
-            ':name' => trim($data['name']),
-            ':code' => strtoupper(trim($data['code'])),
-            ':database_name' => trim($data['database_name'] ?? ''),
+            ':name' => $name,
+            ':code' => $code,
+            ':database_name' => $dbName,
             ':type' => trim($data['type'] ?? 'Hydroelectric'),
             ':capacity_mw' => trim($data['capacity_mw'] ?? ''),
             ':province' => trim($data['province'] ?? ''),
@@ -116,7 +120,16 @@ class Location {
             ':status' => $data['status'] ?? 'active'
         ]);
 
-        return (int)$this->db->lastInsertId();
+        $newId = (int)$this->db->lastInsertId();
+
+        // Auto-provision station database and tables
+        try {
+            \App\Core\StationDatabase::createStationDb($code, $name, $dbName);
+        } catch (\Throwable $e) {
+            error_log("Failed to auto-create station DB: " . $e->getMessage());
+        }
+
+        return $newId;
     }
 
     public function update(int $id, array $data): bool {

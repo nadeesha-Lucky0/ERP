@@ -17,7 +17,7 @@ if (in_array($action, ['download_sheets_zip', 'download_sheet_pdf'])) {
 }
 
 try {
-    $db = Database::getConnection();
+    $db = Database::getStationConnection($locationId);
 
     switch ($action) {
         // -------------------------------------------------------------

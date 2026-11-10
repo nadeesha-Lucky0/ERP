@@ -11,7 +11,7 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $locationId = (int)($_SESSION['location_id'] ?? 1);
 
 try {
-    $db = Database::getConnection();
+    $db = Database::getStationConnection($locationId);
 
     switch ($action) {
         // -------------------------------------------------------------

@@ -18,7 +18,7 @@ class FifoEngine {
         ?string $departmentName = null,
         ?int $userId = 1
     ): array {
-        $db = Database::getConnection();
+        $db = Database::getStationConnection($locationId);
         $db->beginTransaction();
 
         try {
@@ -136,7 +136,7 @@ class FifoEngine {
         ?string $expiryDate = null,
         ?int $userId = 1
     ): int {
-        $db = Database::getConnection();
+        $db = Database::getStationConnection($locationId);
         $db->beginTransaction();
 
         try {
