@@ -50,9 +50,11 @@ class Auth {
         $db = Database::getConnection();
         
         $stmt = $db->prepare("
-            SELECT u.*, r.name as role_name, r.display_name as role_display
+            SELECT u.*, r.name as role_name, r.display_name as role_display,
+                   l.name as location_name, l.code as location_code
             FROM users u
             JOIN roles r ON u.role_id = r.id
+            LEFT JOIN locations l ON u.location_id = l.id
             WHERE (u.username = :u1 OR u.email = :u2) AND u.status = 'active'
             LIMIT 1
         ");

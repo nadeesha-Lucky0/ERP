@@ -1,7 +1,22 @@
 <?php
 use App\Core\Auth;
 use App\Helpers\Icon;
+
 $currentUser = Auth::user();
+$isSuperAdmin = ($currentUser['role_name'] ?? '') === 'super_admin';
+
+// Power station code and role display
+$locationCode = $currentUser['location_code'] ?? null;
+if (!$locationCode && !empty($currentUser['location_id']) && !$isSuperAdmin) {
+    try {
+        $db = \App\Config\Database::getConnection();
+        $stmt = $db->prepare("SELECT code FROM locations WHERE id = :lid LIMIT 1");
+        $stmt->execute([':lid' => $currentUser['location_id']]);
+        $locationCode = $stmt->fetchColumn() ?: '';
+    } catch (\Throwable $e) {}
+}
+
+$roleDisplay = $currentUser['role_display'] ?? $currentUser['role_display_name'] ?? $currentUser['role_name'] ?? 'User';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,19 +49,27 @@ $currentUser = Auth::user();
 
   <!-- Navbar Actions -->
   <div class="desk-navbar-actions">
-    <div class="location-selector" title="Active Power Station">
-      <span style="display: flex; align-items: center; color: var(--primary);"><?= Icon::get('zap', 14) ?></span>
-      <span>Victoria Hydro (VIC-01)</span>
-    </div>
-
-    <div class="user-profile-badge" title="Logged in user">
-      <div class="user-avatar" style="background: <?= htmlspecialchars($currentUser['avatar_color'] ?? '#0d9488') ?>;">
-        <?= strtoupper(substr($currentUser['full_name'] ?? 'A', 0, 1)) ?>
+    <?php if ($isSuperAdmin): ?>
+      <div class="user-profile-badge" title="Administrator">
+        <div class="user-avatar" style="background: #650b2b;">
+          A
+        </div>
+        <div style="font-size: 13px; font-weight: 700; color: #0f172a; padding-right: 4px;">
+          Admin
+        </div>
       </div>
-      <div style="font-size: 13px; font-weight: 600;">
-        <?= htmlspecialchars($currentUser['full_name'] ?? 'Administrator') ?>
+    <?php else: ?>
+      <div class="user-profile-badge" title="Station &amp; Role">
+        <?php if (!empty($locationCode)): ?>
+          <span style="font-family: monospace; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; letter-spacing: 0.5px;">
+            <?= htmlspecialchars($locationCode) ?>
+          </span>
+        <?php endif; ?>
+        <div style="font-size: 13px; font-weight: 600; color: #0f172a; padding-right: 4px;">
+          <?= htmlspecialchars($roleDisplay) ?>
+        </div>
       </div>
-    </div>
+    <?php endif; ?>
 
     <a href="<?= BASE_PATH ?>/logout.php" class="desk-btn desk-btn-default desk-btn-sm" title="Sign Out">
       Logout
