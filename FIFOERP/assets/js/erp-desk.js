@@ -455,6 +455,7 @@ const Desk = {
   // Receipts (GRN) Management
   // -----------------------------------------------------------------
   loadReceipts() {
+    this.initGrnFormLookups();
     const tbody = document.getElementById('receiptsTableBody');
     if (!tbody) return;
     tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Loading receipts...</td></tr>`;
@@ -2388,17 +2389,339 @@ const Desk = {
     .catch(err => alert('Network error: ' + err));
   },
 
-  submitBodyGrn(form) {
-    const formData = new FormData(form);
-    const item = {
-      sku: form.sku.value.trim(),
-      item_name: form.item_name.value.trim(),
-      quantity: parseInt(form.quantity.value) || 1,
-      unit_cost: parseFloat(form.unit_cost.value) || 0,
-      location_bin: form.location_bin.value.trim() || 'Bay-01'
-    };
+  // -----------------------------------------------------------------
+  // Legacy FIFO Style Receipts (GRN) In-Body Detailed Form Methods
+  // -----------------------------------------------------------------
+  grnAddedItems: [],
+  allCatalogMaterials: [],
+  grnLookupsLoaded: false,
+
+  onDocProfileChange(val) {
+    const notice = document.getElementById('grnDocPfNotice');
+    if (!notice) return;
+    if (!val) {
+      notice.textContent = 'Doc PF Not Selected';
+      notice.style.color = '#2563eb';
+    } else {
+      notice.textContent = val;
+      notice.style.color = '#15803d';
+    }
+  },
+
+  onReceiptFromChange(val) {
+    const row = document.getElementById('grnDynamicReceiptRow');
+    const label = document.getElementById('grnDynamicReceiptLabel');
+    const selSupplier = document.getElementById('grnSelectSupplier');
+    const selDept = document.getElementById('grnSelectDept');
+    const selSection = document.getElementById('grnSelectSection');
+
+    if (!row || !label || !selSupplier || !selDept || !selSection) return;
+
+    // Reset visibility
+    selSupplier.style.display = 'none';
+    selDept.style.display = 'none';
+    selSection.style.display = 'none';
+
+    if (val === 'Purchase Order') {
+      row.style.display = 'flex';
+      label.textContent = 'Receipt Supplier';
+      selSupplier.style.display = 'block';
+    } else if (val === 'Cost Center') {
+      row.style.display = 'flex';
+      label.textContent = 'Receipt Dept';
+      selDept.style.display = 'block';
+    } else if (val === 'Section') {
+      row.style.display = 'flex';
+      label.textContent = 'Section';
+      selSection.style.display = 'block';
+    } else {
+      row.style.display = 'none';
+    }
+  },
+
+  toggleGrnSection(boxId, headerElem) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    const isHidden = (box.style.display === 'none');
+    box.style.display = isHidden ? 'flex' : 'none';
+    const icon = headerElem.querySelector('.grn-toggle-icon');
+    if (icon) {
+      icon.textContent = isHidden ? '-' : '+';
+    }
+  },
+
+  initGrnFormLookups() {
+    if (this.grnLookupsLoaded) return;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_receipt_lookups`)
+      .then(res => res.json())
+      .then(res => {
+        if (!res.success || !res.data) return;
+        this.grnLookupsLoaded = true;
+        const d = res.data;
+
+        // Populate Sections
+        const selSec = document.getElementById('grnSelectSection');
+        if (selSec && Array.isArray(d.sections)) {
+          selSec.innerHTML = '<option value="">---- Select Section----</option>';
+          d.sections.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.code;
+            opt.textContent = s.display_label || `${s.code} - ${s.title}`;
+            selSec.appendChild(opt);
+          });
+        }
+
+        // Store catalog materials
+        if (Array.isArray(d.materials)) {
+          this.allCatalogMaterials = d.materials;
+          this.renderGrnMaterialDropdown(d.materials);
+        }
+      })
+      .catch(err => console.error('Failed to load GRN lookups:', err));
+  },
+
+  renderGrnMaterialDropdown(materials) {
+    const selMat = document.getElementById('grnSelectMaterial');
+    if (!selMat) return;
+    selMat.innerHTML = '<option value="">-- Select Material For Receipt--</option>';
+    materials.slice(0, 100).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.sku;
+      opt.textContent = `${m.sku} - ${m.item_name}`;
+      opt.dataset.sku = m.sku;
+      opt.dataset.name = m.item_name;
+      selMat.appendChild(opt);
+    });
+  },
+
+  filterGrnMaterialDropdown(query) {
+    const q = (query || '').toLowerCase().trim();
+    if (!q) {
+      this.renderGrnMaterialDropdown(this.allCatalogMaterials);
+      return;
+    }
+    const filtered = this.allCatalogMaterials.filter(m => 
+      (m.sku && m.sku.toLowerCase().includes(q)) || 
+      (m.item_name && m.item_name.toLowerCase().includes(q))
+    );
+    this.renderGrnMaterialDropdown(filtered);
+  },
+
+  addGrnMaterialItem() {
+    const selMat = document.getElementById('grnSelectMaterial');
+    if (!selMat || !selMat.value) {
+      alert('Please select a material from the dropdown first.');
+      return;
+    }
+
+    const selectedOpt = selMat.options[selMat.selectedIndex];
+    const sku = selectedOpt.dataset.sku || selMat.value;
+    const itemName = selectedOpt.dataset.name || selectedOpt.textContent.replace(`${sku} - `, '');
+
+    const qtyStr = prompt(`Enter received quantity for:\n[${sku}] ${itemName}`, '10');
+    if (qtyStr === null) return;
+    const quantity = parseInt(qtyStr) || 1;
+    if (quantity <= 0) {
+      alert('Quantity must be greater than zero.');
+      return;
+    }
+
+    const costStr = prompt(`Enter unit purchase cost (Rs.) for:\n[${sku}] ${itemName}`, '500.00');
+    if (costStr === null) return;
+    const unitCost = parseFloat(costStr) || 0;
+
+    const bin = prompt(`Enter storage bin for this material:`, 'Bay-01') || 'Bay-01';
+
+    const lineTotal = quantity * unitCost;
+
+    this.grnAddedItems.push({
+      sku: sku,
+      item_name: itemName,
+      quantity: quantity,
+      unit_cost: unitCost,
+      total_cost: lineTotal,
+      location_bin: bin
+    });
+
+    this.renderGrnItemsTable();
+    this.recalcGrnInvoiceTotal();
+  },
+
+  removeGrnMaterialItem(idx) {
+    if (idx >= 0 && idx < this.grnAddedItems.length) {
+      this.grnAddedItems.splice(idx, 1);
+      this.renderGrnItemsTable();
+      this.recalcGrnInvoiceTotal();
+    }
+  },
+
+  renderGrnItemsTable() {
+    const tbody = document.getElementById('grnItemsTableBody');
+    if (!tbody) return;
+
+    if (this.grnAddedItems.length === 0) {
+      tbody.innerHTML = `
+        <tr id="grnEmptyRow">
+          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material&quot;.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    let html = '';
+    this.grnAddedItems.forEach((item, i) => {
+      html += `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 6px 10px; font-weight: 600; font-family: monospace;">${item.sku}</td>
+          <td style="padding: 6px 10px;">${item.item_name}</td>
+          <td style="padding: 6px 10px; text-align: right; font-weight: 700;">${item.quantity.toLocaleString()}</td>
+          <td style="padding: 6px 10px; text-align: right;">Rs. ${item.unit_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td style="padding: 6px 10px; text-align: right; font-weight: 700; color: #0d9488;">Rs. ${item.total_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td style="padding: 6px 10px;"><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 11px;">${item.location_bin}</span></td>
+          <td style="padding: 6px 10px; text-align: center;">
+            <button type="button" onclick="Desk.removeGrnMaterialItem(${i})" style="background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 2px; padding: 2px 6px; font-size: 11px; cursor: pointer;">Remove</button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  },
+
+  recalcGrnInvoiceTotal() {
+    const total = this.grnAddedItems.reduce((sum, it) => sum + (it.total_cost || 0), 0);
+    const totInput = document.getElementById('grnInvoiceTotal');
+    if (totInput) {
+      totInput.value = total.toFixed(2);
+    }
+  },
+
+  retrieveGrnMaterials() {
+    const orderNo = (document.getElementById('grnOrderNo')?.value || '').trim();
+    if (!orderNo) {
+      alert('Please enter an Order No* in the Reference Data box above to retrieve materials.');
+      document.getElementById('grnOrderNo')?.focus();
+      return;
+    }
+
+    if (this.allCatalogMaterials.length > 0) {
+      // Pick 2 random sample materials from catalog
+      const sample = this.allCatalogMaterials.slice(0, 2);
+      sample.forEach((m, idx) => {
+        const qty = 5 * (idx + 1);
+        const cost = 1250.00 * (idx + 1);
+        this.grnAddedItems.push({
+          sku: m.sku,
+          item_name: m.item_name,
+          quantity: qty,
+          unit_cost: cost,
+          total_cost: qty * cost,
+          location_bin: 'Main Store Bay-01'
+        });
+      });
+      this.renderGrnItemsTable();
+      this.recalcGrnInvoiceTotal();
+      alert(`Retrieved ${sample.length} line items from Order Reference [${orderNo}].`);
+    } else {
+      alert(`No pre-linked items found for Order No [${orderNo}]. Please select materials from the dropdown.`);
+    }
+  },
+
+  submitDetailedGrn() {
+    const receiptFrom = document.getElementById('grnReceiptFrom')?.value || '';
+    if (!receiptFrom) {
+      alert('Please select "Receipt From" (Purchase Order, Cost Center, or Section).');
+      document.getElementById('grnReceiptFrom')?.focus();
+      return;
+    }
+
+    let receiptDetails = '';
+    if (receiptFrom === 'Purchase Order') {
+      receiptDetails = document.getElementById('grnSelectSupplier')?.value || '';
+      if (!receiptDetails) {
+        alert('Please select a Receipt Supplier.');
+        document.getElementById('grnSelectSupplier')?.focus();
+        return;
+      }
+    } else if (receiptFrom === 'Cost Center') {
+      receiptDetails = document.getElementById('grnSelectDept')?.value || '';
+      if (!receiptDetails) {
+        alert('Please select a Receipt Dept / Cost Center.');
+        document.getElementById('grnSelectDept')?.focus();
+        return;
+      }
+    } else if (receiptFrom === 'Section') {
+      receiptDetails = document.getElementById('grnSelectSection')?.value || '';
+      if (!receiptDetails) {
+        alert('Please select a Section.');
+        document.getElementById('grnSelectSection')?.focus();
+        return;
+      }
+    }
+
+    const invoiceNo = (document.getElementById('grnInvoiceNo')?.value || '').trim();
+    if (!invoiceNo) {
+      alert('Invoice No* is required in the Reference Data box.');
+      const box = document.getElementById('grnRefBox');
+      if (box) box.style.display = 'flex';
+      document.getElementById('grnInvoiceNo')?.focus();
+      return;
+    }
+
+    const orderNo = (document.getElementById('grnOrderNo')?.value || '').trim();
+    if (!orderNo) {
+      alert('Order No* is required in the Reference Data box.');
+      const box = document.getElementById('grnRefBox');
+      if (box) box.style.display = 'flex';
+      document.getElementById('grnOrderNo')?.focus();
+      return;
+    }
+
+    if (this.grnAddedItems.length === 0) {
+      alert('Please add at least one material item to this Goods Received Note.');
+      document.getElementById('grnSelectMaterial')?.focus();
+      return;
+    }
+
+    const formData = new FormData();
     formData.append('doc_type', 'GRN');
-    formData.append('items', JSON.stringify([item]));
+    formData.append('doc_profile', document.getElementById('grnDocProfile')?.value || 'Goods Received Note');
+    formData.append('receipt_from', receiptFrom);
+    formData.append('receipt_details', receiptDetails);
+    formData.append('source_dept', document.getElementById('grnSourceDept')?.value || '832.00');
+    formData.append('warehouse', document.getElementById('grnWarehouse')?.value || 'Main Store Bay-01');
+    formData.append('base_on', document.getElementById('grnBaseOn')?.value || 'PO');
+    formData.append('delivery_date', document.getElementById('grnDeliveryDate')?.value || '');
+    formData.append('acc_date', document.getElementById('grnAccDate')?.value || '');
+    formData.append('due_date', document.getElementById('grnDueDate')?.value || '');
+
+    // Values to consider
+    formData.append('nbt', document.getElementById('grnNbt')?.value || '0');
+    formData.append('nbt_excluded', document.getElementById('grnNbtExcluded')?.checked ? '1' : '0');
+    formData.append('vat', document.getElementById('grnVat')?.value || '0');
+    formData.append('vat_excluded', document.getElementById('grnVatExcluded')?.checked ? '1' : '0');
+    formData.append('transport', document.getElementById('grnTransport')?.value || '0');
+    formData.append('transport_excluded', document.getElementById('grnTransportExcluded')?.checked ? '1' : '0');
+    formData.append('other_cost', document.getElementById('grnOther')?.value || '0');
+    formData.append('other_excluded', document.getElementById('grnOtherExcluded')?.checked ? '1' : '0');
+
+    // Reference data
+    formData.append('invoice_number', invoiceNo);
+    formData.append('order_reference', orderNo);
+    formData.append('other_ref_1', document.getElementById('grnOtherRef1')?.value || '');
+    formData.append('other_ref_2', document.getElementById('grnOtherRef2')?.value || '');
+
+    // Remarks
+    formData.append('remarks', document.getElementById('grnRemarks')?.value || '');
+
+    // Totals & Discounts
+    formData.append('invoice_total', document.getElementById('grnInvoiceTotal')?.value || '0');
+    formData.append('is_single_material', document.getElementById('grnSingleMaterial')?.checked ? '1' : '0');
+    formData.append('discount_for_all', document.getElementById('grnDiscountForAll')?.value || '0');
+    formData.append('is_percentage', document.getElementById('grnIsPercentage')?.checked ? '1' : '0');
+
+    // Items
+    formData.append('items', JSON.stringify(this.grnAddedItems));
 
     fetch(`${this.baseUrl}/api/inventory.php?action=create_document`, {
       method: 'POST',
@@ -2407,14 +2730,23 @@ const Desk = {
     .then(res => res.json())
     .then(res => {
       if (res.success) {
-        alert(res.message || 'Draft GRN Receipt created successfully!');
-        form.reset();
-        this.loadReceipts();
+        alert(res.message || 'Draft GRN Receipt successfully created!');
+        Desk.clearDetailedGrn();
+        Desk.loadReceipts();
       } else {
         alert(res.message || 'Error creating GRN.');
       }
     })
     .catch(err => alert('Network error: ' + err));
+  },
+
+  clearDetailedGrn() {
+    const form = document.getElementById('formBodyNewGrn');
+    if (form) form.reset();
+    this.grnAddedItems = [];
+    this.renderGrnItemsTable();
+    this.onReceiptFromChange('');
+    this.onDocProfileChange('Goods Received Note');
   },
 
   submitBodyIssue(form) {

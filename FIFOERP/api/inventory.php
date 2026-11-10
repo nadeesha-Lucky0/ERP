@@ -16,6 +16,89 @@ try {
 
     switch ($action) {
         // -------------------------------------------------------------
+        // Lookups for Receipts Entry Form (Sections, Cost Centers, Suppliers, Warehouses)
+        // -------------------------------------------------------------
+        case 'get_receipt_lookups':
+            $central = Database::getConnection();
+            
+            // Sections from issue_destination_codes
+            $sections = [];
+            try {
+                $stSec = $central->query("SELECT code, title, display_label FROM issue_destination_codes WHERE status = 'active' ORDER BY sort_order ASC, code ASC");
+                $sections = $stSec->fetchAll();
+            } catch (\Throwable $e) {}
+
+            // Cost Centers
+            $costCenters = [
+                ['code' => '832.00', 'name' => '832.00 - Capital Expenditure'],
+                ['code' => '831.00', 'name' => '831.00 - Operations & Generation'],
+                ['code' => '832.10', 'name' => '832.10 - Mechanical Maintenance'],
+                ['code' => '832.20', 'name' => '832.20 - Electrical Maintenance'],
+                ['code' => '832.30', 'name' => '832.30 - Civil Engineering & Dam Safety'],
+                ['code' => '832.40', 'name' => '832.40 - Instrumentation & Control System'],
+                ['code' => '832.50', 'name' => '832.50 - Power House Auxiliary Stores'],
+                ['code' => '832.60', 'name' => '832.60 - Chemical & Lubricants Division']
+            ];
+
+            // Approved Suppliers
+            $suppliers = [
+                'Lanka Lubricants Ltd',
+                'Colombo Electrical Supplies Ltd',
+                'Industrial Spares (Pvt) Ltd',
+                'Diesel & Motor Engineering (DIMO)',
+                'United Motors Lanka PLC',
+                'Hayleys Power & Energy',
+                'Ceylon Petroleum Corporation (CPC)',
+                'State Engineering Corporation',
+                'Walker Sons & Co Ltd',
+                'Kelani Cables PLC',
+                'Brown & Company PLC',
+                'Tokyo Cement Company',
+                'Avent Technologies (Pvt) Ltd'
+            ];
+
+            // Warehouses
+            $warehouses = [
+                'Main Store Bay-01',
+                'Mechanical Stores',
+                'Electrical Supplies Sub-Store',
+                'Central Warehouse - Main Store',
+                'Chemical & Oil Depot Bay-03',
+                'Heavy Yard Bay-04'
+            ];
+
+            // Common materials
+            $materials = [];
+            try {
+                $stMat = $central->query("SELECT formatted_code as sku, item_name, uom FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 200");
+                $materials = $stMat->fetchAll();
+            } catch (\Throwable $e) {}
+
+            Response::success('Lookups loaded', [
+                'sections' => $sections,
+                'cost_centers' => $costCenters,
+                'suppliers' => $suppliers,
+                'warehouses' => $warehouses,
+                'materials' => $materials
+            ]);
+            break;
+
+        case 'search_materials':
+            $q = trim($_GET['q'] ?? '');
+            $central = Database::getConnection();
+            $materials = [];
+            if (!empty($q)) {
+                $stmt = $central->prepare("SELECT formatted_code as sku, item_name, uom FROM fifo_master_items WHERE (formatted_code LIKE :q1 OR item_name LIKE :q2) AND status = 'ACTIVE' LIMIT 50");
+                $param = '%' . $q . '%';
+                $stmt->execute([':q1' => $param, ':q2' => $param]);
+                $materials = $stmt->fetchAll();
+            } else {
+                $materials = $central->query("SELECT formatted_code as sku, item_name, uom FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 50")->fetchAll();
+            }
+            Response::success('Materials found', ['materials' => $materials]);
+            break;
+
+        // -------------------------------------------------------------
         // Batches List (Quantity On Hand) with Live Reservation Data
         // -------------------------------------------------------------
         case 'get_batches':
@@ -196,21 +279,71 @@ try {
             $prefix = ($docType === 'GRN') ? 'GRN' : 'ISS';
             $docNo = $prefix . '-' . date('Y') . '-' . str_pad((string)rand(100, 9999), 4, '0', STR_PAD_LEFT);
 
+            $docProfile = trim($_POST['doc_profile'] ?? 'Goods Received Note');
+            $docProfileCode = trim($_POST['doc_profile_code'] ?? 'PF-GRN');
+            $sourceDept = trim($_POST['source_dept'] ?? '832.00');
+            $receiptDetails = trim($_POST['receipt_details'] ?? '');
+            $deliveryDate = !empty($_POST['delivery_date']) ? date('Y-m-d', strtotime($_POST['delivery_date'])) : date('Y-m-d');
+            $accDate = !empty($_POST['acc_date']) ? date('Y-m-d', strtotime($_POST['acc_date'])) : date('Y-m-d');
+            $dueDate = !empty($_POST['due_date']) ? date('Y-m-d', strtotime($_POST['due_date'])) : null;
+            $baseOn = trim($_POST['base_on'] ?? 'PO');
+            $nbt = (float)($_POST['nbt'] ?? 0);
+            $nbtExcluded = !empty($_POST['nbt_excluded']) ? 1 : 0;
+            $vat = (float)($_POST['vat'] ?? 0);
+            $vatExcluded = !empty($_POST['vat_excluded']) ? 1 : 0;
+            $transport = (float)($_POST['transport'] ?? 0);
+            $transportExcluded = !empty($_POST['transport_excluded']) ? 1 : 0;
+            $otherCost = (float)($_POST['other_cost'] ?? 0);
+            $otherExcluded = !empty($_POST['other_excluded']) ? 1 : 0;
+            $invoiceNumber = trim($_POST['invoice_number'] ?? '');
+            $orderReference = trim($_POST['order_reference'] ?? '');
+            $otherRef1 = trim($_POST['other_ref_1'] ?? '');
+            $otherRef2 = trim($_POST['other_ref_2'] ?? '');
+            $invTotalManual = (float)($_POST['invoice_total'] ?? 0);
+            $isSingleMaterial = !empty($_POST['is_single_material']) ? 1 : 0;
+            $discountForAll = (float)($_POST['discount_for_all'] ?? 0);
+            $isPercentage = !empty($_POST['is_percentage']) ? 1 : 0;
+
             $db->beginTransaction();
             $insDoc = $db->prepare("
                 INSERT INTO unposted_documents
-                (location_id, doc_type, doc_no, doc_date, receipt_from, department_code, destination_code, warehouse, status, invoice_total, remarks, created_by)
+                (location_id, doc_type, doc_no, doc_date, doc_profile, doc_profile_code, source_dept, receipt_from, receipt_details, delivery_date, acc_date, due_date, department_code, destination_code, warehouse, base_on, status, invoice_total, vat, vat_excluded, transport, transport_excluded, nbt, nbt_excluded, other_cost, other_excluded, invoice_number, order_reference, other_ref_1, other_ref_2, is_single_material, discount_for_all, is_percentage, remarks, created_by)
                 VALUES
-                (:loc, :dtype, :dno, CURDATE(), :from, :dept, :dest, :wh, 'Draft', 0, :rem, :uid)
+                (:loc, :dtype, :dno, :acc_date, :doc_prof, :doc_prof_code, :s_dept, :from, :rec_det, :deliv_date, :acc_date2, :due_date, :dept, :dest, :wh, :base_on, 'Draft', :inv_tot, :vat, :vat_ex, :trans, :trans_ex, :nbt, :nbt_ex, :other, :other_ex, :inv_no, :order_ref, :ref1, :ref2, :single_mat, :discount, :is_pct, :rem, :uid)
             ");
             $insDoc->execute([
                 ':loc' => $locationId,
                 ':dtype' => $docType,
                 ':dno' => $docNo,
+                ':acc_date' => $accDate,
+                ':doc_prof' => $docProfile,
+                ':doc_prof_code' => $docProfileCode,
+                ':s_dept' => $sourceDept,
                 ':from' => $receiptFrom,
+                ':rec_det' => $receiptDetails,
+                ':deliv_date' => $deliveryDate,
+                ':acc_date2' => $accDate,
+                ':due_date' => $dueDate,
                 ':dept' => $deptCode,
                 ':dest' => $destCode,
                 ':wh' => $warehouse,
+                ':base_on' => $baseOn,
+                ':inv_tot' => $invTotalManual,
+                ':vat' => $vat,
+                ':vat_ex' => $vatExcluded,
+                ':trans' => $transport,
+                ':trans_ex' => $transportExcluded,
+                ':nbt' => $nbt,
+                ':nbt_ex' => $nbtExcluded,
+                ':other' => $otherCost,
+                ':other_ex' => $otherExcluded,
+                ':inv_no' => $invoiceNumber,
+                ':order_ref' => $orderReference,
+                ':ref1' => $otherRef1,
+                ':ref2' => $otherRef2,
+                ':single_mat' => $isSingleMaterial,
+                ':discount' => $discountForAll,
+                ':is_pct' => $isPercentage,
                 ':rem' => $remarks,
                 ':uid' => Auth::id() ?? 1
             ]);

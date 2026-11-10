@@ -485,58 +485,362 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- In-Body Receipts Entry Form (Visible on Entry Sub-Tab) -->
-      <div id="bodyGrnEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
-          <?= Icon::get('plus-circle', 16) ?> Enter New Goods Received Note (GRN Draft)
-        </h3>
-        <form id="formBodyNewGrn" onsubmit="event.preventDefault(); Desk.submitBodyGrn(this);">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Supplier / Source *</label>
-              <input type="text" name="receipt_from" class="desk-form-control" required placeholder="e.g. Lanka Lubricants Ltd / Supplier" style="border: 1px solid #71717a; border-radius: 2px;">
+      <!-- In-Body Receipts Entry Form (Matching Legacy FIFO ERP System) -->
+      <style>
+        .grn-input {
+          height: 28px;
+          padding: 2px 8px;
+          font-size: 13px;
+          color: #000000;
+          border: 1px solid #71717a;
+          border-radius: 2px;
+          background: #ffffff;
+          outline: none;
+          box-sizing: border-box;
+        }
+        .grn-input:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 1px #2563eb;
+        }
+        .grn-classic-btn {
+          height: 28px;
+          padding: 0 16px;
+          background: linear-gradient(180deg, #9bb8db 0%, #7598c0 100%);
+          color: #ffffff;
+          border: 1px solid #5a7d9f;
+          border-radius: 3px;
+          font-size: 12.5px;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .grn-classic-btn:hover {
+          background: linear-gradient(180deg, #8ba8cf 0%, #668ab5 100%);
+        }
+        .grn-action-btn {
+          min-width: 90px;
+          height: 32px;
+          padding: 0 22px;
+          border: 1px solid #4a6682;
+          border-radius: 3px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .grn-action-btn:hover {
+          opacity: 0.92;
+        }
+      </style>
+
+      <div id="bodyGrnEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 20px 24px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
+        <form id="formBodyNewGrn" onsubmit="event.preventDefault(); Desk.submitDetailedGrn();">
+          
+          <!-- TOP FORM GRID -->
+          <div style="display: grid; grid-template-columns: 1fr 280px; gap: 24px; margin-bottom: 20px; align-items: start;">
+            
+            <!-- Left Column: Profiles, Types, Dynamic Selection -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              
+              <!-- Row 1: Document Profile & Status -->
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Document Profile</label>
+                <select id="grnDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onDocProfileChange(this.value)" style="min-width: 190px;">
+                  <option value="">-Select DOC PF-</option>
+                  <option value="Goods Received Note" selected>Goods Received Note</option>
+                  <option value="Direct Material Purchase">Direct Material Purchase</option>
+                  <option value="Store Transfer Receipt">Store Transfer Receipt</option>
+                </select>
+                <span id="grnDocPfNotice" style="color: #2563eb; font-weight: 500; font-size: 13px;">Goods Received Note</span>
+                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
+                  <span style="font-weight: 700; font-size: 13px; color: #000000;">Status</span>
+                  <input type="text" value="New" readonly style="width: 65px; height: 26px; background: #f8fafc; border: 1px solid #cbd5e1; font-size: 12px; text-align: center; color: #64748b; border-radius: 2px;">
+                </div>
+              </div>
+
+              <!-- Row 2: Receipt From -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Receipt From</label>
+                <select id="grnReceiptFrom" name="receipt_from" class="grn-input" onchange="Desk.onReceiptFromChange(this.value)" style="min-width: 200px;">
+                  <option value="">-Select Receipt From-</option>
+                  <option value="Purchase Order">Purchase Order</option>
+                  <option value="Cost Center">Cost Center</option>
+                  <option value="Section">Section</option>
+                </select>
+              </div>
+
+              <!-- Row 3: Source Dept -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Source Dept</label>
+                <input type="text" name="source_dept" id="grnSourceDept" value="832.00" readonly style="width: 160px; height: 28px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 2px 8px; font-size: 13px; color: #475569; border-radius: 2px;">
+              </div>
+
+              <!-- Row 4: Dynamic Row (Shows Receipt Supplier, Receipt Dept, or Section based on Receipt From) -->
+              <div id="grnDynamicReceiptRow" style="display: none; align-items: center; gap: 12px;">
+                <label id="grnDynamicReceiptLabel" style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Receipt Supplier</label>
+                
+                <!-- Supplier Dropdown (for Purchase Order) -->
+                <select id="grnSelectSupplier" name="receipt_supplier" class="grn-input" style="display: none; min-width: 320px; max-width: 440px;">
+                  <option value="">---- Select Supplier----</option>
+                  <option value="Lanka Lubricants Ltd">Lanka Lubricants Ltd</option>
+                  <option value="Colombo Electrical Supplies Ltd">Colombo Electrical Supplies Ltd</option>
+                  <option value="Industrial Spares (Pvt) Ltd">Industrial Spares (Pvt) Ltd</option>
+                  <option value="Diesel & Motor Engineering (DIMO)">Diesel & Motor Engineering (DIMO)</option>
+                  <option value="United Motors Lanka PLC">United Motors Lanka PLC</option>
+                  <option value="Hayleys Power & Energy">Hayleys Power & Energy</option>
+                  <option value="Ceylon Petroleum Corporation (CPC)">Ceylon Petroleum Corporation (CPC)</option>
+                  <option value="State Engineering Corporation">State Engineering Corporation</option>
+                  <option value="Walker Sons & Co Ltd">Walker Sons & Co Ltd</option>
+                  <option value="Kelani Cables PLC">Kelani Cables PLC</option>
+                  <option value="Brown & Company PLC">Brown & Company PLC</option>
+                  <option value="Tokyo Cement Company">Tokyo Cement Company</option>
+                  <option value="Avent Technologies (Pvt) Ltd">Avent Technologies (Pvt) Ltd</option>
+                </select>
+
+                <!-- Cost Center Dropdown (for Cost Center) -->
+                <select id="grnSelectDept" name="receipt_dept" class="grn-input" style="display: none; min-width: 320px; max-width: 440px;">
+                  <option value="">---- Select Cost Center----</option>
+                  <option value="832.00 - Capital Expenditure">832.00 - Capital Expenditure</option>
+                  <option value="831.00 - Operations & Generation">831.00 - Operations & Generation</option>
+                  <option value="832.10 - Mechanical Maintenance">832.10 - Mechanical Maintenance</option>
+                  <option value="832.20 - Electrical Maintenance">832.20 - Electrical Maintenance</option>
+                  <option value="832.30 - Civil Engineering & Dam Safety">832.30 - Civil Engineering & Dam Safety</option>
+                  <option value="832.40 - Instrumentation & Control System">832.40 - Instrumentation & Control System</option>
+                  <option value="832.50 - Power House Auxiliary Stores">832.50 - Power House Auxiliary Stores</option>
+                  <option value="832.60 - Chemical & Lubricants Division">832.60 - Chemical & Lubricants Division</option>
+                </select>
+
+                <!-- Section Dropdown (for Section) -->
+                <select id="grnSelectSection" name="receipt_section" class="grn-input" style="display: none; min-width: 320px; max-width: 440px;">
+                  <option value="">---- Select Section----</option>
+                </select>
+              </div>
+
+              <!-- Row 5: Warehouse & Base on -->
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Warehouse</label>
+                <select name="warehouse" id="grnWarehouse" class="grn-input" style="min-width: 240px;">
+                  <option value="">---- Select Warehouse----</option>
+                  <option value="Main Store Bay-01" selected>Main Store Bay-01</option>
+                  <option value="Mechanical Stores">Mechanical Stores</option>
+                  <option value="Electrical Supplies Sub-Store">Electrical Supplies Sub-Store</option>
+                  <option value="Central Warehouse - Main Store">Central Warehouse - Main Store</option>
+                  <option value="Chemical & Oil Depot Bay-03">Chemical & Oil Depot Bay-03</option>
+                  <option value="Heavy Yard Bay-04">Heavy Yard Bay-04</option>
+                </select>
+
+                <div style="display: inline-flex; align-items: center; gap: 8px; margin-left: 14px;">
+                  <span style="font-weight: 700; font-size: 13px; color: #000000;">Base on</span>
+                  <select name="base_on" id="grnBaseOn" class="grn-input" style="min-width: 130px;">
+                    <option value="">-Select Type-</option>
+                    <option value="PO" selected>PO</option>
+                    <option value="Direct Purchase">Direct Purchase</option>
+                    <option value="Transfer Order">Transfer Order</option>
+                    <option value="Contract">Contract</option>
+                  </select>
+                </div>
+              </div>
+
             </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Warehouse Bay *</label>
-              <select name="warehouse" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
-                <option value="Main Store Bay-01">Main Store Bay-01</option>
-                <option value="Spares Warehouse Bay-02">Spares Warehouse Bay-02</option>
-                <option value="Chemical & Oil Depot Bay-03">Chemical & Oil Depot Bay-03</option>
-                <option value="Heavy Yard Bay-04">Heavy Yard Bay-04</option>
+
+            <!-- Right Column: Delivery Date, Acc Date, Due Date -->
+            <div style="display: flex; flex-direction: column; gap: 10px; background: #f8fafc; padding: 14px; border: 1px solid #e2e8f0; border-radius: 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Delivery Date</label>
+                <input type="date" name="delivery_date" id="grnDeliveryDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Acc Date</label>
+                <input type="date" name="acc_date" id="grnAccDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Due Date</label>
+                <input type="date" name="due_date" id="grnDueDate" class="grn-input" style="width: 140px;">
+              </div>
+            </div>
+
+          </div>
+
+          <!-- COLLAPSIBLE SECTION 1: Values To Consider for Material Unit Price -->
+          <div style="margin-bottom: 12px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
+            <div class="grn-blue-header" onclick="Desk.toggleGrnSection('grnValuesBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+              <span>Values  To Consider for Material Unit Price</span>
+              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">-</span>
+            </div>
+            <div id="grnValuesBox" style="background: #bfdbfe; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
+              
+              <!-- NBT Row -->
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">NBT</label>
+                <input type="number" step="0.01" name="nbt" id="grnNbt" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
+                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
+                  Exclude from Unit Price
+                  <input type="checkbox" name="nbt_excluded" id="grnNbtExcluded" value="1" style="width: 16px; height: 16px;">
+                </label>
+              </div>
+
+              <!-- VAT Row -->
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">VAT</label>
+                <input type="number" step="0.01" name="vat" id="grnVat" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
+                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
+                  Exclude from Unit Price
+                  <input type="checkbox" name="vat_excluded" id="grnVatExcluded" value="1" style="width: 16px; height: 16px;">
+                </label>
+              </div>
+
+              <!-- Transport Row -->
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">Transport</label>
+                <input type="number" step="0.01" name="transport" id="grnTransport" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
+                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
+                  Exclude from Unit Price
+                  <input type="checkbox" name="transport_excluded" id="grnTransportExcluded" value="1" style="width: 16px; height: 16px;">
+                </label>
+              </div>
+
+              <!-- Other Row -->
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">Other</label>
+                <input type="number" step="0.01" name="other_cost" id="grnOther" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
+                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
+                  Exclude from Unit Price
+                  <input type="checkbox" name="other_excluded" id="grnOtherExcluded" value="1" style="width: 16px; height: 16px;">
+                </label>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- COLLAPSIBLE SECTION 2: Exapand to Add,Edit Or view Reference Data -->
+          <div style="margin-bottom: 12px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
+            <div class="grn-blue-header" onclick="Desk.toggleGrnSection('grnRefBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+              <span>Exapand to Add,Edit Or view Reference Data</span>
+              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">-</span>
+            </div>
+            <div id="grnRefBox" style="background: #bfdbfe; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Invoice No*</label>
+                <input type="text" name="invoice_number" id="grnInvoiceNo" class="grn-input" style="width: 260px; background: #ffffff;" placeholder="e.g. INV-2026-001">
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Order No*</label>
+                <input type="text" name="order_reference" id="grnOrderNo" class="grn-input" style="width: 260px; background: #ffffff;" placeholder="e.g. PO-832-2026-01">
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Other Reference 1</label>
+                <input type="text" name="other_ref_1" id="grnOtherRef1" class="grn-input" style="width: 260px; background: #ffffff;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Other Reference 2</label>
+                <input type="text" name="other_ref_2" id="grnOtherRef2" class="grn-input" style="width: 260px; background: #ffffff;">
+              </div>
+            </div>
+          </div>
+
+          <!-- COLLAPSIBLE SECTION 3: Exapand to Add,Edit Or view Remarks (Collapsed by default) -->
+          <div style="margin-bottom: 16px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
+            <div class="grn-blue-header" onclick="Desk.toggleGrnSection('grnRemarksBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+              <span>Exapand to Add,Edit Or view Remarks</span>
+              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">+</span>
+            </div>
+            <div id="grnRemarksBox" style="display: none; background: #bfdbfe; padding: 12px 16px;">
+              <textarea name="remarks" id="grnRemarks" rows="2" style="width: 100%; border: 1px solid #71717a; border-radius: 2px; padding: 6px; font-size: 13px; background: #ffffff;" placeholder="Inspection remarks, delivery comments, or quality clearance notes..."></textarea>
+            </div>
+          </div>
+
+          <!-- INVOICE TOTAL & MATERIAL SELECTION AREA -->
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+            
+            <!-- Row 1: Invoice Total, Single Material, Retrieve Materials -->
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <label style="width: 200px; font-weight: 700; font-size: 13px; color: #000000;">Invoice Total (Without Tax) *</label>
+              <input type="number" step="0.01" name="invoice_total" id="grnInvoiceTotal" class="grn-input" style="width: 180px;" placeholder="0.00">
+              
+              <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
+                <input type="checkbox" name="is_single_material" id="grnSingleMaterial" value="1" style="width: 16px; height: 16px;">
+                Single Material
+              </label>
+
+              <button type="button" class="grn-classic-btn" onclick="Desk.retrieveGrnMaterials()">
+                Retrieve Materials
+              </button>
+            </div>
+
+            <!-- Row 2: Discount For All, Precentage, Discount Type -->
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <label style="width: 200px; font-weight: 700; font-size: 13px; color: #000000;">Discount For All</label>
+              <input type="number" step="0.01" name="discount_for_all" id="grnDiscountForAll" value="0.00" class="grn-input" style="width: 180px;">
+              
+              <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
+                <input type="checkbox" name="is_percentage" id="grnIsPercentage" value="1" style="width: 16px; height: 16px;">
+                Precentage
+              </label>
+
+              <select name="discount_type" id="grnDiscountType" class="grn-input" style="min-width: 190px;">
+                <option value="">-Select Discount Type-</option>
+                <option value="Item-wise">Item-wise Discount</option>
+                <option value="Invoice-level">Invoice-level Discount</option>
+                <option value="Cash Discount">Cash Discount</option>
               </select>
             </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Storage Bin *</label>
-              <input type="text" name="location_bin" class="desk-form-control" value="Bin A-01" required style="border: 1px solid #71717a; border-radius: 2px;">
+
+            <!-- Row 3: Material Dropdown & Add Material Button -->
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+              <select id="grnSelectMaterial" class="grn-input" style="flex: 1; min-width: 320px; font-size: 13px;">
+                <option value="">-- Select Material For Receipt--</option>
+              </select>
+              <button type="button" class="grn-classic-btn" onclick="Desk.addGrnMaterialItem()">
+                Add Material
+              </button>
             </div>
+
+            <!-- Row 4: Search input -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label style="width: 60px; font-weight: 700; font-size: 13px; color: #000000;">Search</label>
+              <input type="text" id="grnSearchMaterial" class="grn-input" style="flex: 1; max-width: 580px;" placeholder="Type SKU or description to search materials..." oninput="Desk.filterGrnMaterialDropdown(this.value)">
+            </div>
+
           </div>
-          <div style="display: grid; grid-template-columns: 200px 1fr 140px 160px; gap: 14px; margin-bottom: 14px;">
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Material SKU *</label>
-              <input type="text" name="sku" class="desk-form-control" required placeholder="e.g. 01-01-01-001" style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Material Description *</label>
-              <input type="text" name="item_name" class="desk-form-control" required placeholder="e.g. Turbine Guide Vane Bushing" style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Quantity *</label>
-              <input type="number" name="quantity" class="desk-form-control" min="1" value="10" required style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Unit Cost (Rs.) *</label>
-              <input type="number" name="unit_cost" class="desk-form-control" step="0.01" min="0" placeholder="0.00" required style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
+
+          <!-- ADDED MATERIALS LIST TABLE -->
+          <div id="grnItemsTableWrap" style="margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 3px; overflow: hidden; background: #ffffff;">
+            <table class="desk-table" style="margin: 0; font-size: 12.5px;">
+              <thead style="background: #f1f5f9;">
+                <tr>
+                  <th style="padding: 6px 10px; width: 140px;">SKU</th>
+                  <th style="padding: 6px 10px;">Material Description</th>
+                  <th style="padding: 6px 10px; width: 90px; text-align: right;">Quantity</th>
+                  <th style="padding: 6px 10px; width: 120px; text-align: right;">Unit Price (Rs.)</th>
+                  <th style="padding: 6px 10px; width: 130px; text-align: right;">Line Total (Rs.)</th>
+                  <th style="padding: 6px 10px; width: 120px;">Storage Bin</th>
+                  <th style="padding: 6px 10px; width: 60px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="grnItemsTableBody">
+                <tr id="grnEmptyRow">
+                  <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material&quot;.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="desk-form-group" style="margin-bottom: 16px;">
-            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Remarks / Delivery Order / Invoice Ref</label>
-            <input type="text" name="remarks" class="desk-form-control" placeholder="Invoice reference, inspection note..." style="border: 1px solid #71717a; border-radius: 2px;">
-          </div>
-          <div style="display: flex; justify-content: flex-end;">
-            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
-              <?= Icon::get('plus', 13) ?> Create Draft GRN Receipt
+
+          <!-- BOTTOM ACTION BUTTONS: SAVE & CLEAR -->
+          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+            <button type="button" class="grn-action-btn" onclick="Desk.submitDetailedGrn()" style="background: #5b7c99; color: #ffffff;">
+              Save
+            </button>
+            <button type="button" class="grn-action-btn" onclick="Desk.clearDetailedGrn()" style="background: #7a8fa6; color: #ffffff;">
+              Clear
             </button>
           </div>
+
         </form>
       </div>
 
