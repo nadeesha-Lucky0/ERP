@@ -683,7 +683,12 @@
           </div>
           <div class="desk-form-group">
             <label>Initial Password *</label>
-            <input type="password" id="createUserPassword" name="password" class="desk-form-control" placeholder="Minimum 6 characters" required>
+            <div class="password-input-wrap">
+              <input type="password" id="createUserPassword" name="password" class="desk-form-control" placeholder="Minimum 6 characters" required>
+              <button type="button" class="password-toggle-btn" title="Show password" onclick="Desk.togglePassword('createUserPassword', this)">
+                <?= \App\Helpers\Icon::get('eye', 16) ?>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -751,7 +756,12 @@
           </div>
           <div class="desk-form-group">
             <label>Reset Password (leave empty to keep)</label>
-            <input type="password" id="editUserPassword" name="password" class="desk-form-control" placeholder="New password">
+            <div class="password-input-wrap">
+              <input type="password" id="editUserPassword" name="password" class="desk-form-control" placeholder="New password">
+              <button type="button" class="password-toggle-btn" title="Show password" onclick="Desk.togglePassword('editUserPassword', this)">
+                <?= \App\Helpers\Icon::get('eye', 16) ?>
+              </button>
+            </div>
           </div>
         </div>
       </div>
