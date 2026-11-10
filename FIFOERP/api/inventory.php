@@ -19,6 +19,7 @@ try {
         // Lookups for Receipts Entry Form (Sections, Cost Centers, Suppliers, Warehouses)
         // -------------------------------------------------------------
         case 'get_receipt_lookups':
+        case 'get_issue_lookups':
             $central = Database::getConnection();
             
             // Sections from issue_destination_codes
@@ -38,6 +39,48 @@ try {
                 ['code' => '832.40', 'name' => '832.40 - Instrumentation & Control System'],
                 ['code' => '832.50', 'name' => '832.50 - Power House Auxiliary Stores'],
                 ['code' => '832.60', 'name' => '832.60 - Chemical & Lubricants Division']
+            ];
+
+            // Projects
+            $projects = [
+                'PRJ-832-01 - Turbine Runner Replacement Project',
+                'PRJ-832-02 - Spillway Radial Gate Automation Project',
+                'PRJ-832-03 - 220kV Switchyard Transformer Refurbishment',
+                'PRJ-832-04 - Penstock Ultrasonic Thickness Survey & Recoating',
+                'PRJ-832-05 - Power House Cooling Water System Modernization',
+                'PRJ-GEN-CAP - Generation Division Capital Project'
+            ];
+
+            // My Projects
+            $myProjects = [
+                'MY-PRJ-01 - Unit 1 Annual Scheduled Overhaul',
+                'MY-PRJ-02 - Excitation System Diagnostic Upgrade',
+                'MY-PRJ-03 - Auxiliary Cooling Pump Overhaul',
+                'MY-PRJ-04 - Stator Core Re-wedging & Winding Inspection'
+            ];
+
+            // Issuing Types for "Genaration as Expenditure"
+            $issuingTypes = [
+                'Routine Plant Maintenance',
+                'Major Scheduled Overhaul',
+                'Emergency Breakdown Repair',
+                'Plant Operations & Shift Running',
+                'General Store Consumption',
+                'Station Civil & Dam Maintenance',
+                'Capital Asset Maintenance'
+            ];
+
+            // Cost Codes
+            $costCodes = [
+                ['code' => '832.00', 'label' => '832.00 - Capital Expenditure'],
+                ['code' => 'A1001', 'label' => 'A1001 - Land & Civil Works'],
+                ['code' => 'A1003', 'label' => 'A1003 - Buildings & Structures'],
+                ['code' => 'A1113', 'label' => 'A1113 - Dams, Tunnels & Spillways'],
+                ['code' => 'A1123', 'label' => 'A1123 - Turbine & Generator Sets'],
+                ['code' => 'A1203', 'label' => 'A1203 - Switchyard & Transformers'],
+                ['code' => 'M201', 'label' => 'M201 - Mechanical Spare Parts'],
+                ['code' => 'E301', 'label' => 'E301 - Electrical & Electronic Spares'],
+                ['code' => 'C401', 'label' => 'C401 - Lubricants, Greases & Consumables']
             ];
 
             // Approved Suppliers
@@ -77,6 +120,10 @@ try {
             Response::success('Lookups loaded', [
                 'sections' => $sections,
                 'cost_centers' => $costCenters,
+                'projects' => $projects,
+                'my_projects' => $myProjects,
+                'issuing_types' => $issuingTypes,
+                'cost_codes' => $costCodes,
                 'suppliers' => $suppliers,
                 'warehouses' => $warehouses,
                 'materials' => $materials
@@ -268,7 +315,7 @@ try {
 
                     $available = max(0, $phys - $alloc);
 
-                    if ($reqQty > $available) {
+                    if ($phys > 0 && $reqQty > $available) {
                         Response::error(
                             "Stock Reservation Conflict: Cannot request {$reqQty} units for SKU '{$itemSku}'. Only {$available} units are free for issue ({$phys} physical on-hand, {$alloc} units reserved under pending approvals)."
                         );
@@ -299,6 +346,8 @@ try {
             $orderReference = trim($_POST['order_reference'] ?? '');
             $otherRef1 = trim($_POST['other_ref_1'] ?? '');
             $otherRef2 = trim($_POST['other_ref_2'] ?? '');
+            $otherRef3 = trim($_POST['other_ref_3'] ?? '');
+            $otherRef4 = trim($_POST['other_ref_4'] ?? '');
             $invTotalManual = (float)($_POST['invoice_total'] ?? 0);
             $isSingleMaterial = !empty($_POST['is_single_material']) ? 1 : 0;
             $discountForAll = (float)($_POST['discount_for_all'] ?? 0);
@@ -307,9 +356,9 @@ try {
             $db->beginTransaction();
             $insDoc = $db->prepare("
                 INSERT INTO unposted_documents
-                (location_id, doc_type, doc_no, doc_date, doc_profile, doc_profile_code, source_dept, receipt_from, receipt_details, delivery_date, acc_date, due_date, department_code, destination_code, warehouse, base_on, status, invoice_total, vat, vat_excluded, transport, transport_excluded, nbt, nbt_excluded, other_cost, other_excluded, invoice_number, order_reference, other_ref_1, other_ref_2, is_single_material, discount_for_all, is_percentage, remarks, created_by)
+                (location_id, doc_type, doc_no, doc_date, doc_profile, doc_profile_code, source_dept, receipt_from, receipt_details, delivery_date, acc_date, due_date, department_code, destination_code, warehouse, base_on, status, invoice_total, vat, vat_excluded, transport, transport_excluded, nbt, nbt_excluded, other_cost, other_excluded, invoice_number, order_reference, other_ref_1, other_ref_2, other_ref_3, other_ref_4, is_single_material, discount_for_all, is_percentage, remarks, created_by)
                 VALUES
-                (:loc, :dtype, :dno, :acc_date, :doc_prof, :doc_prof_code, :s_dept, :from, :rec_det, :deliv_date, :acc_date2, :due_date, :dept, :dest, :wh, :base_on, 'Draft', :inv_tot, :vat, :vat_ex, :trans, :trans_ex, :nbt, :nbt_ex, :other, :other_ex, :inv_no, :order_ref, :ref1, :ref2, :single_mat, :discount, :is_pct, :rem, :uid)
+                (:loc, :dtype, :dno, :acc_date, :doc_prof, :doc_prof_code, :s_dept, :from, :rec_det, :deliv_date, :acc_date2, :due_date, :dept, :dest, :wh, :base_on, 'Draft', :inv_tot, :vat, :vat_ex, :trans, :trans_ex, :nbt, :nbt_ex, :other, :other_ex, :inv_no, :order_ref, :ref1, :ref2, :ref3, :ref4, :single_mat, :discount, :is_pct, :rem, :uid)
             ");
             $insDoc->execute([
                 ':loc' => $locationId,
@@ -341,6 +390,8 @@ try {
                 ':order_ref' => $orderReference,
                 ':ref1' => $otherRef1,
                 ':ref2' => $otherRef2,
+                ':ref3' => $otherRef3,
+                ':ref4' => $otherRef4,
                 ':single_mat' => $isSingleMaterial,
                 ':discount' => $discountForAll,
                 ':is_pct' => $isPercentage,

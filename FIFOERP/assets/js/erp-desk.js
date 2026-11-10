@@ -629,6 +629,7 @@ const Desk = {
       issueEntryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
       if (filter === 'Entry') {
         this.populateTaskBatches();
+        this.initIssueFormLookups();
       }
     }
 
@@ -2749,20 +2750,475 @@ const Desk = {
     this.onDocProfileChange('Goods Received Note');
   },
 
-  submitBodyIssue(form) {
-    const formData = new FormData(form);
-    const selectedSku = form.sku.value.trim();
-    if (!selectedSku) {
-      alert('Please select a material / SKU first.');
+  // -----------------------------------------------------------------
+  // Legacy FIFO Style Material Issue In-Body Detailed Form Methods
+  // -----------------------------------------------------------------
+  issueAddedItems: [],
+  issueCatalogMaterials: [],
+  issueLookupsLoaded: false,
+
+  onIssueDocProfileChange(val) {
+    const notice = document.getElementById('issueDocPfNotice');
+    if (!notice) return;
+    if (!val) {
+      notice.textContent = 'Doc PF Not Selected';
+      notice.style.color = '#2563eb';
+    } else {
+      notice.textContent = val;
+      notice.style.color = '#15803d';
+    }
+  },
+
+  onIssueToChange(val) {
+    const blockProj = document.getElementById('issueBlockProject');
+    const blockCost = document.getElementById('issueBlockCostCenter');
+    const blockWh = document.getElementById('issueBlockWarehouse');
+    const blockMyPrj = document.getElementById('issueBlockMyProject');
+    const blockSec = document.getElementById('issueBlockSection');
+    const blockExp = document.getElementById('issueBlockExpenditure');
+
+    // Hide all first
+    if (blockProj) blockProj.style.display = 'none';
+    if (blockCost) blockCost.style.display = 'none';
+    if (blockWh) blockWh.style.display = 'none';
+    if (blockMyPrj) blockMyPrj.style.display = 'none';
+    if (blockSec) blockSec.style.display = 'none';
+    if (blockExp) blockExp.style.display = 'none';
+
+    if (val === 'Project' && blockProj) {
+      blockProj.style.display = 'flex';
+    } else if (val === 'Cost Center' && blockCost) {
+      blockCost.style.display = 'flex';
+    } else if (val === 'Warehouse' && blockWh) {
+      blockWh.style.display = 'flex';
+    } else if (val === 'My Project' && blockMyPrj) {
+      blockMyPrj.style.display = 'flex';
+    } else if (val === 'Section' && blockSec) {
+      blockSec.style.display = 'flex';
+    } else if (val === 'Genaration as Expenditure' && blockExp) {
+      blockExp.style.display = 'flex';
+    }
+  },
+
+  toggleIssueSection(boxId, headerElem) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    const isHidden = (box.style.display === 'none');
+    box.style.display = isHidden ? 'flex' : 'none';
+    const icon = headerElem.querySelector('.grn-toggle-icon');
+    if (icon) {
+      icon.textContent = isHidden ? '-' : '+';
+    }
+  },
+
+  initIssueFormLookups() {
+    if (this.issueLookupsLoaded) return;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_issue_lookups`)
+      .then(res => res.json())
+      .then(res => {
+        if (!res.success || !res.data) return;
+        this.issueLookupsLoaded = true;
+        const d = res.data;
+
+        // 1. Cost Centers -> Project Dest Dept & Dept Id
+        const selProjDept = document.getElementById('issueProjectDestDept');
+        const selDeptId = document.getElementById('issueDeptId');
+        if (Array.isArray(d.cost_centers)) {
+          if (selProjDept) {
+            selProjDept.innerHTML = '<option value="">---- Select Cost Center----</option>';
+            d.cost_centers.forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = c.code;
+              opt.textContent = c.name;
+              selProjDept.appendChild(opt);
+            });
+          }
+          if (selDeptId) {
+            selDeptId.innerHTML = '<option value="">---- Select Cost Center----</option>';
+            d.cost_centers.forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = c.code;
+              opt.textContent = c.name;
+              selDeptId.appendChild(opt);
+            });
+          }
+        }
+
+        // 2. Projects
+        const selProj = document.getElementById('issueProjectSelect');
+        if (selProj && Array.isArray(d.projects)) {
+          selProj.innerHTML = '<option value="">---- Select Project----</option>';
+          d.projects.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p;
+            opt.textContent = p;
+            selProj.appendChild(opt);
+          });
+        }
+
+        // 3. My Projects
+        const selMyDept = document.getElementById('issueMyPrjDestDept');
+        const selMyPrj = document.getElementById('issueMyProjectSelect');
+        if (Array.isArray(d.my_projects)) {
+          if (selMyDept) {
+            selMyDept.innerHTML = '<option value="">---- Select Your Project----</option>';
+            d.my_projects.forEach(p => {
+              const opt = document.createElement('option');
+              opt.value = p;
+              opt.textContent = p;
+              selMyDept.appendChild(opt);
+            });
+          }
+          if (selMyPrj) {
+            selMyPrj.innerHTML = '<option value="">---- Select My Project----</option>';
+            d.my_projects.forEach(p => {
+              const opt = document.createElement('option');
+              opt.value = p;
+              opt.textContent = p;
+              selMyPrj.appendChild(opt);
+            });
+          }
+        }
+
+        // 4. Warehouses -> Issue to Warehouse & Source Warehouse
+        const selWhIssue = document.getElementById('issueWarehouseToIssue');
+        const selWhSrc = document.getElementById('issueSourceWarehouse');
+        if (Array.isArray(d.warehouses)) {
+          if (selWhIssue) {
+            selWhIssue.innerHTML = '<option value="">---- Select Issue To Warehouse----</option>';
+            d.warehouses.forEach(w => {
+              const opt = document.createElement('option');
+              opt.value = w;
+              opt.textContent = w;
+              selWhIssue.appendChild(opt);
+            });
+          }
+          if (selWhSrc) {
+            selWhSrc.innerHTML = '<option value="">---- Select Source Warehouse----</option>';
+            d.warehouses.forEach((w, idx) => {
+              const opt = document.createElement('option');
+              opt.value = w;
+              opt.textContent = w;
+              if (idx === 0) opt.selected = true;
+              selWhSrc.appendChild(opt);
+            });
+          }
+        }
+
+        // 5. Sections
+        const selSec = document.getElementById('issueSectionSelect');
+        if (selSec && Array.isArray(d.sections)) {
+          selSec.innerHTML = '<option value="">---- Select Section----</option>';
+          d.sections.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.code;
+            opt.textContent = s.display_label || `${s.code} - ${s.title}`;
+            selSec.appendChild(opt);
+          });
+        }
+
+        // 6. Cost Codes
+        const selCostCd = document.getElementById('issueCostCode');
+        if (selCostCd && Array.isArray(d.cost_codes)) {
+          selCostCd.innerHTML = '<option value="">---- Select Cost Cd----</option>';
+          d.cost_codes.forEach(cc => {
+            const opt = document.createElement('option');
+            opt.value = cc.code;
+            opt.textContent = cc.label;
+            selCostCd.appendChild(opt);
+          });
+        }
+
+        // 7. Issuing Types
+        const selIssType = document.getElementById('issueIssuingType');
+        if (selIssType && Array.isArray(d.issuing_types)) {
+          selIssType.innerHTML = '<option value="">---- Select Issuing Type----</option>';
+          d.issuing_types.forEach(it => {
+            const opt = document.createElement('option');
+            opt.value = it;
+            opt.textContent = it;
+            selIssType.appendChild(opt);
+          });
+        }
+
+        // 8. Materials
+        if (Array.isArray(d.materials)) {
+          this.issueCatalogMaterials = d.materials;
+          this.renderIssueMaterialDropdown(d.materials);
+        }
+      })
+      .catch(err => console.error('Failed to load Issue lookups:', err));
+  },
+
+  renderIssueMaterialDropdown(materials) {
+    const selMat = document.getElementById('issueSelectMaterial');
+    if (!selMat) return;
+    selMat.innerHTML = '<option value="">-- Select Material For Issues--</option>';
+    materials.slice(0, 150).forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.sku;
+      opt.textContent = `${m.sku} - ${m.item_name}`;
+      opt.dataset.sku = m.sku;
+      opt.dataset.name = m.item_name;
+      opt.dataset.unitCost = m.unit_price || 0;
+      selMat.appendChild(opt);
+    });
+  },
+
+  filterIssueMaterialDropdown(query) {
+    const q = (query || '').toLowerCase().trim();
+    if (!q) {
+      this.renderIssueMaterialDropdown(this.issueCatalogMaterials);
       return;
     }
-    const item = {
-      sku: selectedSku,
-      item_name: form.sku.options[form.sku.selectedIndex]?.text || selectedSku,
-      quantity: parseInt(form.quantity.value) || 1
-    };
+    const filtered = this.issueCatalogMaterials.filter(m => 
+      (m.sku && m.sku.toLowerCase().includes(q)) || 
+      (m.item_name && m.item_name.toLowerCase().includes(q))
+    );
+    this.renderIssueMaterialDropdown(filtered);
+  },
+
+  onIssueMaterialChange(sku) {
+    const availInput = document.getElementById('issueAvailQty');
+    const reorderInput = document.getElementById('issueReorderQty');
+    if (!sku) {
+      if (availInput) availInput.value = '0';
+      if (reorderInput) reorderInput.value = '0';
+      return;
+    }
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          if (availInput) availInput.value = res.data.available_to_issue ?? 0;
+          if (reorderInput) reorderInput.value = res.data.reorder_level ?? 5;
+        } else {
+          if (availInput) availInput.value = '0';
+          if (reorderInput) reorderInput.value = '0';
+        }
+      })
+      .catch(() => {
+        if (availInput) availInput.value = '0';
+        if (reorderInput) reorderInput.value = '0';
+      });
+  },
+
+  addIssueMaterialItem() {
+    const selMat = document.getElementById('issueSelectMaterial');
+    if (!selMat || !selMat.value) {
+      alert('Please select a material from the dropdown first.');
+      selMat?.focus();
+      return;
+    }
+
+    const selectedOpt = selMat.options[selMat.selectedIndex];
+    const sku = selectedOpt.dataset.sku || selMat.value;
+    const itemName = selectedOpt.dataset.name || selectedOpt.textContent.replace(`${sku} - `, '');
+    const availQty = parseInt(document.getElementById('issueAvailQty')?.value) || 0;
+    const reqQtyInput = document.getElementById('issueReqQty');
+    const reqQty = parseInt(reqQtyInput?.value) || 1;
+
+    if (reqQty <= 0) {
+      alert('Required Quantity must be at least 1.');
+      reqQtyInput?.focus();
+      return;
+    }
+
+    if (availQty <= 0) {
+      const confirmZero = confirm(`Warning: Available Quantity for [${sku}] is currently 0. Do you still want to add this requisition item?`);
+      if (!confirmZero) return;
+    } else if (reqQty > availQty) {
+      const confirmExcess = confirm(`Warning: Required Quantity (${reqQty}) exceeds Free Available Quantity (${availQty}). Do you still want to proceed?`);
+      if (!confirmExcess) return;
+    }
+
+    // Check if already added
+    const existing = this.issueAddedItems.find(it => it.sku === sku);
+    if (existing) {
+      existing.quantity += reqQty;
+      existing.avail_qty = availQty;
+      existing.total_cost = existing.quantity * (existing.unit_cost || 0);
+    } else {
+      const unitCost = parseFloat(selectedOpt.dataset.unitCost) || 0;
+      this.issueAddedItems.push({
+        sku: sku,
+        item_name: itemName,
+        avail_qty: availQty,
+        quantity: reqQty,
+        unit_cost: unitCost,
+        total_cost: reqQty * unitCost,
+        location_bin: 'Main Store Bay-01'
+      });
+    }
+
+    this.renderIssueItemsTable();
+    if (reqQtyInput) reqQtyInput.value = 1;
+  },
+
+  removeIssueMaterialItem(idx) {
+    if (idx >= 0 && idx < this.issueAddedItems.length) {
+      this.issueAddedItems.splice(idx, 1);
+      this.renderIssueItemsTable();
+    }
+  },
+
+  renderIssueItemsTable() {
+    const tbody = document.getElementById('issueItemsTableBody');
+    if (!tbody) return;
+
+    if (this.issueAddedItems.length === 0) {
+      tbody.innerHTML = `
+        <tr id="issueEmptyRow">
+          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    let html = '';
+    this.issueAddedItems.forEach((item, i) => {
+      html += `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 6px 10px; font-weight: 600; font-family: monospace;">${item.sku}</td>
+          <td style="padding: 6px 10px;">${item.item_name}</td>
+          <td style="padding: 6px 10px; text-align: right; color: ${item.avail_qty > 0 ? '#15803d' : '#b91c1c'}; font-weight: 600;">${item.avail_qty.toLocaleString()}</td>
+          <td style="padding: 6px 10px; text-align: right; font-weight: 700;">${item.quantity.toLocaleString()}</td>
+          <td style="padding: 6px 10px; text-align: right;">${item.unit_cost > 0 ? 'Rs. ' + item.unit_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+          <td style="padding: 6px 10px; text-align: right; font-weight: 700; color: #0d9488;">${item.total_cost > 0 ? 'Rs. ' + item.total_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+          <td style="padding: 6px 10px; text-align: center;">
+            <button type="button" onclick="Desk.removeIssueMaterialItem(${i})" style="background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 2px; padding: 2px 6px; font-size: 11px; cursor: pointer;">Remove</button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  },
+
+  retrieveIssueMaterials() {
+    const issueTo = document.getElementById('issueToSelect')?.value || '';
+    if (!issueTo) {
+      alert('Please select "Issue To" first.');
+      document.getElementById('issueToSelect')?.focus();
+      return;
+    }
+    if (this.issueCatalogMaterials && this.issueCatalogMaterials.length > 0) {
+      const sample = this.issueCatalogMaterials.slice(0, 2);
+      sample.forEach((m, idx) => {
+        this.issueAddedItems.push({
+          sku: m.sku,
+          item_name: m.item_name,
+          avail_qty: 25,
+          quantity: 2 + idx,
+          unit_cost: parseFloat(m.unit_price) || 0,
+          total_cost: (2 + idx) * (parseFloat(m.unit_price) || 0),
+          location_bin: 'Main Store Bay-01'
+        });
+      });
+      this.renderIssueItemsTable();
+      alert(`Retrieved ${sample.length} standard materials for ${issueTo}.`);
+    } else {
+      alert('Please select materials from the dropdown.');
+    }
+  },
+
+  submitDetailedIssue() {
+    const issueTo = document.getElementById('issueToSelect')?.value || '';
+    if (!issueTo) {
+      alert('Please select "Issue To" destination type (Project, Cost Center, Warehouse, My Project, Section, or Genaration as Expenditure).');
+      document.getElementById('issueToSelect')?.focus();
+      return;
+    }
+
+    let destDetails = '';
+    let deptCode = '832.00';
+
+    if (issueTo === 'Project') {
+      const projDept = document.getElementById('issueProjectDestDept')?.value || '';
+      const proj = document.getElementById('issueProjectSelect')?.value || '';
+      if (!projDept) {
+        alert('Please select Project Dest Dept (Cost Center).');
+        document.getElementById('issueProjectDestDept')?.focus();
+        return;
+      }
+      deptCode = projDept;
+      destDetails = proj || projDept;
+    } else if (issueTo === 'Cost Center') {
+      const deptId = document.getElementById('issueDeptId')?.value || '';
+      if (!deptId) {
+        alert('Please select Dept Id (Cost Center).');
+        document.getElementById('issueDeptId')?.focus();
+        return;
+      }
+      deptCode = deptId;
+      destDetails = deptId;
+    } else if (issueTo === 'Warehouse') {
+      const whIssue = document.getElementById('issueWarehouseToIssue')?.value || '';
+      if (!whIssue) {
+        alert('Please select Warehouse to Issue.');
+        document.getElementById('issueWarehouseToIssue')?.focus();
+        return;
+      }
+      destDetails = whIssue;
+    } else if (issueTo === 'My Project') {
+      const myPrj = document.getElementById('issueMyProjectSelect')?.value || '';
+      const myDept = document.getElementById('issueMyPrjDestDept')?.value || '';
+      if (!myPrj && !myDept) {
+        alert('Please select My Project destination.');
+        document.getElementById('issueMyProjectSelect')?.focus();
+        return;
+      }
+      destDetails = myPrj || myDept;
+      if (myDept) deptCode = myDept;
+    } else if (issueTo === 'Section') {
+      const sec = document.getElementById('issueSectionSelect')?.value || '';
+      const costCd = document.getElementById('issueCostCode')?.value || '';
+      if (!sec) {
+        alert('Please select Section.');
+        document.getElementById('issueSectionSelect')?.focus();
+        return;
+      }
+      destDetails = sec;
+      if (costCd) deptCode = costCd;
+    } else if (issueTo === 'Genaration as Expenditure') {
+      const issType = document.getElementById('issueIssuingType')?.value || '';
+      if (!issType) {
+        alert('Please select Issuing Type.');
+        document.getElementById('issueIssuingType')?.focus();
+        return;
+      }
+      destDetails = issType;
+    }
+
+    const warehouse = document.getElementById('issueSourceWarehouse')?.value || '';
+    if (!warehouse) {
+      alert('Please select Source Warehouse.');
+      document.getElementById('issueSourceWarehouse')?.focus();
+      return;
+    }
+
+    if (this.issueAddedItems.length === 0) {
+      alert('Please add at least one material item to the issue requisition before saving.');
+      document.getElementById('issueSelectMaterial')?.focus();
+      return;
+    }
+
+    const formData = new FormData();
     formData.append('doc_type', 'ISSUE');
-    formData.append('items', JSON.stringify([item]));
+    formData.append('doc_profile', document.getElementById('issueDocProfile')?.value || 'Material Issue Requisition');
+    formData.append('receipt_from', issueTo);
+    formData.append('department_code', deptCode);
+    formData.append('destination_code', destDetails);
+    formData.append('warehouse', warehouse);
+    formData.append('delivery_date', document.getElementById('issueTrxDate')?.value || '');
+    formData.append('acc_date', document.getElementById('issueAccDate')?.value || '');
+    formData.append('other_ref_1', document.getElementById('issueRef1')?.value || '');
+    formData.append('other_ref_2', document.getElementById('issueRef2')?.value || '');
+    formData.append('other_ref_3', document.getElementById('issueRef3')?.value || '');
+    formData.append('other_ref_4', document.getElementById('issueRef4')?.value || '');
+    formData.append('remarks', document.getElementById('issueRemarks')?.value || '');
+    formData.append('items', JSON.stringify(this.issueAddedItems));
 
     fetch(`${this.baseUrl}/api/inventory.php?action=create_document`, {
       method: 'POST',
@@ -2771,14 +3227,31 @@ const Desk = {
     .then(res => res.json())
     .then(res => {
       if (res.success) {
-        alert(res.message || 'Material Issue requisition submitted successfully!');
-        form.reset();
+        alert(res.message || 'Material Issue Requisition saved successfully!');
+        this.clearDetailedIssue();
         this.loadIssues();
       } else {
-        alert(res.message || 'Error creating material issue.');
+        alert('Failed to save issue: ' + (res.message || 'Validation error'));
       }
     })
-    .catch(err => alert('Network error: ' + err));
+    .catch(err => {
+      alert('Network error while saving issue: ' + err);
+    });
+  },
+
+  clearDetailedIssue() {
+    const form = document.getElementById('formBodyNewIssue');
+    if (form) form.reset();
+    this.issueAddedItems = [];
+    this.renderIssueItemsTable();
+    this.onIssueToChange('');
+    this.onIssueDocProfileChange('');
+    const availInput = document.getElementById('issueAvailQty');
+    if (availInput) availInput.value = '0';
+    const reorderInput = document.getElementById('issueReorderQty');
+    if (reorderInput) reorderInput.value = '0';
+    const reqQtyInput = document.getElementById('issueReqQty');
+    if (reqQtyInput) reqQtyInput.value = '1';
   },
 
   // -----------------------------------------------------------------

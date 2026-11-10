@@ -279,6 +279,8 @@ CREATE TABLE IF NOT EXISTS `unposted_documents` (
   `order_reference` varchar(60) DEFAULT NULL,
   `other_ref_1` varchar(100) DEFAULT NULL,
   `other_ref_2` varchar(100) DEFAULT NULL,
+  `other_ref_3` varchar(100) DEFAULT NULL,
+  `other_ref_4` varchar(100) DEFAULT NULL,
   `is_single_material` tinyint(1) DEFAULT 0,
   `discount_for_all` decimal(10,2) DEFAULT 0.00,
   `is_percentage` tinyint(1) DEFAULT 0,

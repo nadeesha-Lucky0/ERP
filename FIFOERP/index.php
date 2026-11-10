@@ -913,57 +913,275 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- In-Body Material Issue Entry Form (Visible on Entry Sub-Tab) -->
-      <div id="bodyIssueEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
-          <?= Icon::get('send', 16) ?> Enter Material Issue Requisition (FIFO Queue)
-        </h3>
-        <form id="formBodyNewIssue" onsubmit="event.preventDefault(); Desk.submitBodyIssue(this);">
-          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select Material (SKU) *</label>
-              <select name="sku" id="bodyIssueSku" class="desk-form-control" onchange="Desk.checkIssueStockAvailability(this.value)" required style="border: 1px solid #71717a; border-radius: 2px;">
-                <option value="">-- Select Material / SKU from Batches --</option>
-              </select>
+      <!-- In-Body Material Issue Entry Form (Legacy FIFO Requisition Form) -->
+      <div id="bodyIssueEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 20px 24px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
+        <form id="formBodyNewIssue" onsubmit="event.preventDefault(); Desk.submitDetailedIssue();">
+          
+          <!-- TOP FORM GRID -->
+          <div style="display: grid; grid-template-columns: 1fr 280px; gap: 24px; margin-bottom: 16px; align-items: start;">
+            
+            <!-- Left Column: Profiles, Issue To, Dynamic Fields, Warehouse -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              
+              <!-- Row 1: Document Profile & Status -->
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Document Profile</label>
+                <select id="issueDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onIssueDocProfileChange(this.value)" style="min-width: 190px;">
+                  <option value="">-Select DOC PF-</option>
+                  <option value="Material Issue Requisition" selected>Material Issue Requisition</option>
+                  <option value="Plant Maintenance Issue">Plant Maintenance Issue</option>
+                  <option value="Overhaul Capital Issue">Overhaul Capital Issue</option>
+                  <option value="Inter-Store Issue">Inter-Store Issue</option>
+                </select>
+                <span id="issueDocPfNotice" style="color: #2563eb; font-weight: 500; font-size: 13px;">Doc PF Not Selected</span>
+                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
+                  <span style="font-weight: 700; font-size: 13px; color: #000000;">Status</span>
+                  <select id="issueStatusSelect" name="doc_status" class="grn-input" style="width: 80px; height: 26px; padding: 0 4px; font-size: 12px; color: #64748b; background: #f8fafc;" disabled>
+                    <option value="New" selected>New</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Row 2: Issue To -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Issue To</label>
+                <select id="issueToSelect" name="issue_to" class="grn-input" onchange="Desk.onIssueToChange(this.value)" style="min-width: 220px;">
+                  <option value="">-- Select Issue To --</option>
+                  <option value="Project">Project</option>
+                  <option value="Cost Center">Cost Center</option>
+                  <option value="Warehouse">Warehouse</option>
+                  <option value="My Project">My Project</option>
+                  <option value="Section">Section</option>
+                  <option value="Genaration as Expenditure">Genaration as Expenditure</option>
+                </select>
+              </div>
+
+              <!-- DYNAMIC CONTAINER FOR THE 6 CHOICES -->
+
+              <!-- 1. Project Block -->
+              <div id="issueBlockProject" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Project Dest Dept</label>
+                  <select id="issueProjectDestDept" name="project_dest_dept" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Cost Center----</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Project</label>
+                  <select id="issueProjectSelect" name="project_code" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Project----</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 2. Cost Center Block -->
+              <div id="issueBlockCostCenter" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Dept Id</label>
+                  <select id="issueDeptId" name="dept_id" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Cost Center----</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 3. Warehouse Block -->
+              <div id="issueBlockWarehouse" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Warehouse to Issue</label>
+                  <select id="issueWarehouseToIssue" name="warehouse_to_issue" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Issue To Warehouse----</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 4. My Project Block -->
+              <div id="issueBlockMyProject" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">My Prj Dest Dept</label>
+                  <select id="issueMyPrjDestDept" name="my_prj_dest_dept" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Your Project----</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">My Project</label>
+                  <select id="issueMyProjectSelect" name="my_project" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select My Project----</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 5. Section Block -->
+              <div id="issueBlockSection" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Section</label>
+                  <select id="issueSectionSelect" name="section" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Section----</option>
+                  </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Cost Code</label>
+                  <select id="issueCostCode" name="cost_code" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Cost Cd----</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- 6. Genaration as Expenditure Block -->
+              <div id="issueBlockExpenditure" style="display: none; flex-direction: column; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Issuing Type</label>
+                  <select id="issueIssuingType" name="issuing_type" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                    <option value="">---- Select Issuing Type----</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Row: Warehouse (Source Warehouse) -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Warehouse</label>
+                <select name="warehouse" id="issueSourceWarehouse" class="grn-input" style="min-width: 320px; max-width: 440px;">
+                  <option value="">---- Select Source Warehouse----</option>
+                </select>
+              </div>
+
+              <!-- Retrieve Materials Button -->
+              <div style="margin-top: 4px;">
+                <button type="button" class="grn-classic-btn" onclick="Desk.retrieveIssueMaterials()" style="min-width: 140px;">
+                  Retrieve Materials
+                </button>
+              </div>
+
             </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Quantity to Issue *</label>
-              <input type="number" name="quantity" id="bodyIssueQty" class="desk-form-control" min="1" value="1" required style="border: 1px solid #71717a; border-radius: 2px;">
+
+            <!-- Right Column: Trx Date & Acc Date -->
+            <div style="display: flex; flex-direction: column; gap: 10px; background: #f8fafc; padding: 14px; border: 1px solid #e2e8f0; border-radius: 4px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Trx Date</label>
+                <input type="date" name="trx_date" id="issueTrxDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Acc Date</label>
+                <input type="date" name="acc_date" id="issueAccDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+              </div>
             </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Requesting Dept *</label>
-              <select name="department_code" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
-                <option value="Mechanical">Mechanical Maintenance</option>
-                <option value="Electrical">Electrical Maintenance</option>
-                <option value="Civil">Civil Works</option>
-                <option value="Operations">Operations Shift</option>
-                <option value="Administration">Administration &amp; Transport</option>
-              </select>
+
+          </div>
+
+          <!-- COLLAPSIBLE SECTION 1: Exapand to Add,Edit Or view Reference Data -->
+          <div style="margin-bottom: 12px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
+            <div class="grn-blue-header" onclick="Desk.toggleIssueSection('issueRefBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+              <span>Exapand to Add,Edit Or view Reference Data</span>
+              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">+</span>
+            </div>
+            <div id="issueRefBox" style="display: none; background: #bfdbfe; padding: 12px 16px; flex-direction: column; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 1</label>
+                <input type="text" name="other_ref_1" id="issueRef1" class="grn-input" style="width: 280px; background: #ffffff;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 2</label>
+                <input type="text" name="other_ref_2" id="issueRef2" class="grn-input" style="width: 280px; background: #ffffff;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 3</label>
+                <input type="text" name="other_ref_3" id="issueRef3" class="grn-input" style="width: 280px; background: #ffffff;">
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 4</label>
+                <input type="text" name="other_ref_4" id="issueRef4" class="grn-input" style="width: 280px; background: #ffffff;">
+              </div>
             </div>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Issue Destination / Plant Area *</label>
-              <select name="destination_code" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
-                <option value="DEST-GEN-U1">Unit 01 Francis Turbine &amp; Generator</option>
-                <option value="DEST-GEN-U2">Unit 02 Francis Turbine &amp; Generator</option>
-                <option value="DEST-PEN-01">Main Penstock Intake Valve 01</option>
-                <option value="DEST-PEN-02">Main Penstock Intake Valve 02</option>
-                <option value="DEST-SWG-220KV">220kV Outdoor Switchyard Bay</option>
-                <option value="DEST-DAM-SP01">Radial Spillway Gate No. 01</option>
-                <option value="DEST-ST-01">Central Spares Warehouse Bay 01</option>
-              </select>
+
+          <!-- COLLAPSIBLE SECTION 2: Exapand to Add,Edit Or view Remarks -->
+          <div style="margin-bottom: 16px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
+            <div class="grn-blue-header" onclick="Desk.toggleIssueSection('issueRemarksBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+              <span>Exapand to Add,Edit Or view Remarks</span>
+              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">+</span>
             </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Work Order / Purpose Ref</label>
-              <input type="text" name="remarks" class="desk-form-control" placeholder="e.g. WO-2026-GEN-01 Overhaul" style="border: 1px solid #71717a; border-radius: 2px;">
+            <div id="issueRemarksBox" style="display: none; background: #bfdbfe; padding: 12px 16px;">
+              <textarea name="remarks" id="issueRemarks" rows="2" style="width: 100%; border: 1px solid #71717a; border-radius: 2px; padding: 6px; font-size: 13px; background: #ffffff;" placeholder="Issue remarks, work order description, or destination details..."></textarea>
             </div>
           </div>
-          <div style="display: flex; justify-content: flex-end;">
-            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
-              <?= Icon::get('send', 13) ?> Submit Issue Requisition
+
+          <!-- MATERIAL SELECTION & QUANTITIES ROW -->
+          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;">
+              
+              <!-- Material Selection -->
+              <div style="display: flex; flex-direction: column; gap: 4px; flex: 2; min-width: 260px;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Material Selection</label>
+                <select id="issueSelectMaterial" class="grn-input" onchange="Desk.onIssueMaterialChange(this.value)" style="width: 100%; font-size: 13px;">
+                  <option value="">-- Select Material For Issues--</option>
+                </select>
+              </div>
+
+              <!-- Avail Quantity -->
+              <div style="display: flex; flex-direction: column; gap: 4px; width: 110px;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Avail Quantity</label>
+                <input type="text" id="issueAvailQty" readonly class="grn-input" style="width: 100%; background: #f8fafc; text-align: right;" value="0">
+              </div>
+
+              <!-- Re Order Qty Level -->
+              <div style="display: flex; flex-direction: column; gap: 4px; width: 130px;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Re Order Qty Level</label>
+                <input type="text" id="issueReorderQty" readonly class="grn-input" style="width: 100%; background: #f8fafc; text-align: right;" value="0">
+              </div>
+
+              <!-- Required Quantity -->
+              <div style="display: flex; flex-direction: column; gap: 4px; width: 130px;">
+                <label style="font-weight: 700; font-size: 13px; color: #000000;">Required Quantity</label>
+                <input type="number" id="issueReqQty" min="1" value="1" class="grn-input" style="width: 100%; text-align: right;">
+              </div>
+
+            </div>
+
+            <!-- Add Material To Issue Button -->
+            <div>
+              <button type="button" class="grn-classic-btn" onclick="Desk.addIssueMaterialItem()" style="min-width: 160px; height: 30px;">
+                Add Material To Issue
+              </button>
+            </div>
+
+            <!-- Search row -->
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+              <label style="width: 50px; font-weight: 700; font-size: 13px; color: #000000;">Search</label>
+              <input type="text" id="issueSearchMaterial" class="grn-input" style="flex: 1; max-width: 700px;" placeholder="Search material by code or description..." oninput="Desk.filterIssueMaterialDropdown(this.value)">
+            </div>
+          </div>
+
+          <!-- ADDED MATERIALS LIST TABLE -->
+          <div id="issueItemsTableWrap" style="margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 3px; overflow: hidden; background: #ffffff;">
+            <table class="desk-table" style="margin: 0; font-size: 12.5px;">
+              <thead style="background: #f1f5f9;">
+                <tr>
+                  <th style="padding: 6px 10px; width: 140px;">SKU / Code</th>
+                  <th style="padding: 6px 10px;">Material Description</th>
+                  <th style="padding: 6px 10px; width: 100px; text-align: right;">Avail Qty</th>
+                  <th style="padding: 6px 10px; width: 100px; text-align: right;">Req Qty</th>
+                  <th style="padding: 6px 10px; width: 110px; text-align: right;">Est. Unit Cost</th>
+                  <th style="padding: 6px 10px; width: 120px; text-align: right;">Line Total</th>
+                  <th style="padding: 6px 10px; width: 60px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="issueItemsTableBody">
+                <tr id="issueEmptyRow">
+                  <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- BOTTOM ACTION BUTTONS: SAVE & CLEAR ALL -->
+          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+            <button type="button" class="grn-action-btn" onclick="Desk.submitDetailedIssue()" style="background: #5b7c99; color: #ffffff;">
+              Save
+            </button>
+            <button type="button" class="grn-action-btn" onclick="Desk.clearDetailedIssue()" style="background: #7a8fa6; color: #ffffff;">
+              Clear All
             </button>
           </div>
+
         </form>
       </div>
 
