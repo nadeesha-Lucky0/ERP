@@ -776,15 +776,9 @@
       <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
       <input type="hidden" name="_save_permissions" value="1">
       <div class="desk-modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
-        <div class="desk-form-row">
-          <div class="desk-form-group" style="flex: 2;">
-            <label>Role Name / Designation *</label>
-            <input type="text" id="createRoleDisplayName" name="display_name" class="desk-form-control" placeholder="e.g. Assistant Storekeeper" required>
-          </div>
-          <div class="desk-form-group" style="flex: 1;">
-            <label>Role Code *</label>
-            <input type="text" id="createRoleCode" name="code" class="desk-form-control" placeholder="e.g. ASK" style="text-transform: uppercase;" required>
-          </div>
+        <div class="desk-form-group">
+          <label>Role Name / Designation *</label>
+          <input type="text" id="createRoleDisplayName" name="display_name" class="desk-form-control" placeholder="e.g. Assistant Storekeeper" required>
         </div>
 
         <div style="margin: 16px 0 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">
@@ -841,15 +835,9 @@
       <input type="hidden" name="_save_permissions" value="1">
       <input type="hidden" id="editRoleId" name="id">
       <div class="desk-modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
-        <div class="desk-form-row">
-          <div class="desk-form-group" style="flex: 2;">
-            <label>Role Name / Designation *</label>
-            <input type="text" id="editRoleDisplayName" name="display_name" class="desk-form-control" required>
-          </div>
-          <div class="desk-form-group" style="flex: 1;">
-            <label>Role Code *</label>
-            <input type="text" id="editRoleCode" name="code" class="desk-form-control" style="text-transform: uppercase;" required>
-          </div>
+        <div class="desk-form-group">
+          <label>Role Name / Designation *</label>
+          <input type="text" id="editRoleDisplayName" name="display_name" class="desk-form-control" required>
         </div>
 
         <div style="margin: 16px 0 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">

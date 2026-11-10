@@ -2590,7 +2590,7 @@ const Desk = {
   async openEditRoleModal(role) {
     document.getElementById('editRoleId').value = role.id;
     document.getElementById('editRoleDisplayName').value = role.display_name;
-    document.getElementById('editRoleCode').value = role.code || '';
+    if (document.getElementById('editRoleCode')) document.getElementById('editRoleCode').value = role.code || '';
 
     // Fetch and check active permissions for this role
     try {
