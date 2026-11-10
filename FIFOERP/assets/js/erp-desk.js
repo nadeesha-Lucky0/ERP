@@ -268,9 +268,11 @@ const Desk = {
         break;
       case 'tab-cost-adjust':
         this.loadCostAdjustments();
+        this.populateTaskBatches();
         break;
       case 'tab-qty-correct':
         this.loadQtyCorrections();
+        this.populateTaskBatches();
         break;
       case 'tab-dest-codes':
         this.loadDestinationCodes();
@@ -502,11 +504,16 @@ const Desk = {
     let docs = this.cachedReceipts;
     const filter = this.currentReceiptFilter;
 
+    const entryCard = document.getElementById('bodyGrnEntryCard');
+    if (entryCard) {
+      entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+    }
+
     if (filter === 'Entry') {
       docs = docs.filter(d => d.status.toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Receipts Entry (Draft Goods Received Notes)';
       if (subEl) subEl.textContent = 'Newly recorded consignments awaiting technical verification and store audit';
-      if (headerAction) headerAction.innerHTML = `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewGrn')">+ New GRN Receipt</button>`;
+      if (headerAction) headerAction.innerHTML = '';
     } else if (filter === 'Validation') {
       docs = docs.filter(d => d.status.toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
@@ -616,11 +623,19 @@ const Desk = {
     let docs = this.cachedIssues;
     const filter = this.currentIssueFilter;
 
+    const issueEntryCard = document.getElementById('bodyIssueEntryCard');
+    if (issueEntryCard) {
+      issueEntryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+      if (filter === 'Entry') {
+        this.populateTaskBatches();
+      }
+    }
+
     if (filter === 'Entry') {
       docs = docs.filter(d => d.status.toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Material Issues Entry (Draft Requisitions)';
       if (subEl) subEl.textContent = 'Draft material requisition notes waiting for technical audit validation';
-      if (headerAction) headerAction.innerHTML = `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewIssue')">+ New Material Issue</button>`;
+      if (headerAction) headerAction.innerHTML = '';
     } else if (filter === 'Validation') {
       docs = docs.filter(d => d.status.toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
@@ -2168,6 +2183,270 @@ const Desk = {
           tbody.innerHTML = html;
         }
       });
+  },
+
+  // -----------------------------------------------------------------
+  // In-Body Form Handlers & Batches Population (Zero Popups)
+  // -----------------------------------------------------------------
+  cachedActiveBatches: [],
+
+  populateTaskBatches() {
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_batches`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          this.cachedActiveBatches = res.data.batches || [];
+
+          // 1. Cost Adjust Batch Select
+          const costSel = document.getElementById('bodyCostAdjustBatch');
+          if (costSel) {
+            if (this.cachedActiveBatches.length === 0) {
+              costSel.innerHTML = '<option value="">-- No active batches in inventory (Create a GRN first) --</option>';
+            } else {
+              let opt = '<option value="">-- Select Active Batch to Adjust --</option>';
+              this.cachedActiveBatches.forEach(b => {
+                opt += `<option value="${b.id}" data-cost="${b.unit_cost}" data-sku="${b.sku}" data-name="${b.item_name}" data-qty="${b.remaining_quantity}">${b.batch_number} - ${b.sku} (${b.item_name}) [Current: Rs. ${parseFloat(b.unit_cost).toFixed(2)}]</option>`;
+              });
+              costSel.innerHTML = opt;
+            }
+          }
+
+          // 2. Qty Correct Batch Select
+          const qtySel = document.getElementById('bodyQtyCorrectBatch');
+          if (qtySel) {
+            if (this.cachedActiveBatches.length === 0) {
+              qtySel.innerHTML = '<option value="">-- No batches found in inventory --</option>';
+            } else {
+              let opt = '<option value="">-- Select Batch to Correct --</option>';
+              this.cachedActiveBatches.forEach(b => {
+                opt += `<option value="${b.id}" data-sku="${b.sku}" data-qty="${b.remaining_quantity}">${b.batch_number} - ${b.sku} (${b.item_name}) [Remaining: ${b.remaining_quantity}]</option>`;
+              });
+              qtySel.innerHTML = opt;
+            }
+          }
+
+          // 3. Issue Material SKU Select
+          const issueSel = document.getElementById('bodyIssueSku');
+          if (issueSel) {
+            if (this.cachedActiveBatches.length === 0) {
+              issueSel.innerHTML = '<option value="">-- No active inventory batches (Receive a GRN first) --</option>';
+            } else {
+              const skuMap = {};
+              this.cachedActiveBatches.forEach(b => {
+                if (!skuMap[b.sku]) {
+                  skuMap[b.sku] = b.item_name;
+                }
+              });
+              let opt = '<option value="">-- Select Material / SKU from Batches --</option>';
+              Object.keys(skuMap).forEach(sku => {
+                opt += `<option value="${sku}">${sku} - ${skuMap[sku]}</option>`;
+              });
+              issueSel.innerHTML = opt;
+            }
+          }
+        }
+      })
+      .catch(e => console.error('Error fetching batches:', e));
+  },
+
+  onCostAdjustBatchChange(selectEl) {
+    const selectedOpt = selectEl.options[selectEl.selectedIndex];
+    const costInput = document.getElementById('bodyCostAdjustCurrentCost');
+    const newCostInput = document.getElementById('bodyCostAdjustNewCost');
+    if (selectedOpt && selectedOpt.dataset.cost) {
+      const curCost = parseFloat(selectedOpt.dataset.cost).toFixed(2);
+      if (costInput) costInput.value = `Rs. ${curCost}`;
+      if (newCostInput) newCostInput.value = curCost;
+    } else {
+      if (costInput) costInput.value = '';
+    }
+  },
+
+  onQtyCorrectBatchChange(selectEl) {
+    const selectedOpt = selectEl.options[selectEl.selectedIndex];
+    const allocInput = document.getElementById('bodyQtyAllocBefore');
+    if (selectedOpt && selectedOpt.dataset.qty) {
+      if (allocInput) allocInput.value = selectedOpt.dataset.qty;
+    }
+  },
+
+  submitBodyCostAdjust(form) {
+    const formData = new FormData(form);
+    fetch(`${this.baseUrl}/api/tasks.php?action=add_cost_adjustment`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Cost Adjustment applied successfully!');
+        form.reset();
+        const curCost = document.getElementById('bodyCostAdjustCurrentCost');
+        if (curCost) curCost.value = '';
+        this.loadCostAdjustments();
+        this.populateTaskBatches();
+      } else {
+        alert(res.message || 'Error applying cost adjustment.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyQtyCorrect(form) {
+    const formData = new FormData(form);
+    fetch(`${this.baseUrl}/api/tasks.php?action=add_qty_correction`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Quantity correction applied and stock released!');
+        form.reset();
+        this.loadQtyCorrections();
+        this.populateTaskBatches();
+      } else {
+        alert(res.message || 'Error applying quantity correction.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyCashVoucher(form) {
+    const formData = new FormData(form);
+    fetch(`${this.baseUrl}/api/cashbook.php?action=add_entry`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Cash voucher created successfully!');
+        form.reset();
+        this.loadCashBook();
+      } else {
+        alert(res.message || 'Error recording voucher.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyPayslipCancel(form) {
+    const formData = new FormData(form);
+    fetch(`${this.baseUrl}/api/cashbook.php?action=request_payslip_cancellation`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Payslip cancellation requisition submitted for audit authorization!');
+        form.reset();
+        this.loadPayslipCancellations();
+      } else {
+        alert(res.message || 'Error requesting cancellation.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyCpcOrder(form) {
+    const formData = new FormData(form);
+    fetch(`${this.baseUrl}/api/reports.php?action=add_cpc_procurement`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'CPC Fuel Consignment recorded successfully!');
+        form.reset();
+        this.loadCpcProcurements();
+      } else {
+        alert(res.message || 'Error recording CPC procurement.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyDieselPrice(form) {
+    const formData = new FormData(form);
+    fetch(`${this.baseUrl}/api/reports.php?action=add_diesel_price`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Diesel Price Log saved successfully!');
+        form.reset();
+        this.loadDieselPriceLogs();
+      } else {
+        alert(res.message || 'Error saving price log.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyGrn(form) {
+    const formData = new FormData(form);
+    const item = {
+      sku: form.sku.value.trim(),
+      item_name: form.item_name.value.trim(),
+      quantity: parseInt(form.quantity.value) || 1,
+      unit_cost: parseFloat(form.unit_cost.value) || 0,
+      location_bin: form.location_bin.value.trim() || 'Bay-01'
+    };
+    formData.append('doc_type', 'GRN');
+    formData.append('items', JSON.stringify([item]));
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=create_document`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Draft GRN Receipt created successfully!');
+        form.reset();
+        this.loadReceipts();
+      } else {
+        alert(res.message || 'Error creating GRN.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
+  },
+
+  submitBodyIssue(form) {
+    const formData = new FormData(form);
+    const selectedSku = form.sku.value.trim();
+    if (!selectedSku) {
+      alert('Please select a material / SKU first.');
+      return;
+    }
+    const item = {
+      sku: selectedSku,
+      item_name: form.sku.options[form.sku.selectedIndex]?.text || selectedSku,
+      quantity: parseInt(form.quantity.value) || 1
+    };
+    formData.append('doc_type', 'ISSUE');
+    formData.append('items', JSON.stringify([item]));
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=create_document`, {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+      if (res.success) {
+        alert(res.message || 'Material Issue requisition submitted successfully!');
+        form.reset();
+        this.loadIssues();
+      } else {
+        alert(res.message || 'Error creating material issue.');
+      }
+    })
+    .catch(err => alert('Network error: ' + err));
   },
 
   // -----------------------------------------------------------------

@@ -455,16 +455,13 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Goods Received Notes Workflow (Entry &rarr; Validation &rarr; Approval &rarr; Posting)</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewGrn')">
-            <?= Icon::get('plus', 13) ?> New GRN Receipt
-          </button>
           <button class="desk-btn desk-btn-default" onclick="Desk.loadReceipts()">
             <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
       </div>
 
-      <!-- Real FIFO Workflow Sub-tabs (Fixed, Clean Wrap, Zero Side Scroll) -->
+      <!-- Real FIFO Workflow Sub-tabs -->
       <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
         <div id="receiptWorkflowPills" class="pv-pills-wrap">
           <button type="button" class="pv-pill-btn active" data-receipt-filter="Entry" onclick="Desk.filterReceipts('Entry', this)">
@@ -486,6 +483,61 @@ require_once __DIR__ . '/views/layouts/header.php';
             <?= Icon::get('x-circle', 12) ?> Unposted Cancellation
           </button>
         </div>
+      </div>
+
+      <!-- In-Body Receipts Entry Form (Visible on Entry Sub-Tab) -->
+      <div id="bodyGrnEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('plus-circle', 16) ?> Enter New Goods Received Note (GRN Draft)
+        </h3>
+        <form id="formBodyNewGrn" onsubmit="event.preventDefault(); Desk.submitBodyGrn(this);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Supplier / Source *</label>
+              <input type="text" name="receipt_from" class="desk-form-control" required placeholder="e.g. Lanka Lubricants Ltd / Supplier" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Warehouse Bay *</label>
+              <select name="warehouse" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="Main Store Bay-01">Main Store Bay-01</option>
+                <option value="Spares Warehouse Bay-02">Spares Warehouse Bay-02</option>
+                <option value="Chemical & Oil Depot Bay-03">Chemical & Oil Depot Bay-03</option>
+                <option value="Heavy Yard Bay-04">Heavy Yard Bay-04</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Storage Bin *</label>
+              <input type="text" name="location_bin" class="desk-form-control" value="Bin A-01" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 200px 1fr 140px 160px; gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Material SKU *</label>
+              <input type="text" name="sku" class="desk-form-control" required placeholder="e.g. 01-01-01-001" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Material Description *</label>
+              <input type="text" name="item_name" class="desk-form-control" required placeholder="e.g. Turbine Guide Vane Bushing" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Quantity *</label>
+              <input type="number" name="quantity" class="desk-form-control" min="1" value="10" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Unit Cost (Rs.) *</label>
+              <input type="number" name="unit_cost" class="desk-form-control" step="0.01" min="0" placeholder="0.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div class="desk-form-group" style="margin-bottom: 16px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Remarks / Delivery Order / Invoice Ref</label>
+            <input type="text" name="remarks" class="desk-form-control" placeholder="Invoice reference, inspection note..." style="border: 1px solid #71717a; border-radius: 2px;">
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('plus', 13) ?> Create Draft GRN Receipt
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
@@ -527,16 +579,13 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Spares &amp; Consumables Issue Workflow (Entry &rarr; Edit &rarr; Validation &rarr; Approval &rarr; Posting)</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewIssue')">
-            <?= Icon::get('plus', 13) ?> New Material Issue
-          </button>
           <button class="desk-btn desk-btn-default" onclick="Desk.loadIssues()">
             <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
       </div>
 
-      <!-- Real FIFO Workflow Sub-tabs (Fixed, Clean Wrap, Zero Side Scroll) -->
+      <!-- Real FIFO Workflow Sub-tabs -->
       <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
         <div id="issueWorkflowPills" class="pv-pills-wrap">
           <button type="button" class="pv-pill-btn active" data-issue-filter="Entry" onclick="Desk.filterIssues('Entry', this)">
@@ -558,6 +607,60 @@ require_once __DIR__ . '/views/layouts/header.php';
             <?= Icon::get('x-circle', 12) ?> Unposted Cancellation
           </button>
         </div>
+      </div>
+
+      <!-- In-Body Material Issue Entry Form (Visible on Entry Sub-Tab) -->
+      <div id="bodyIssueEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('send', 16) ?> Enter Material Issue Requisition (FIFO Queue)
+        </h3>
+        <form id="formBodyNewIssue" onsubmit="event.preventDefault(); Desk.submitBodyIssue(this);">
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select Material (SKU) *</label>
+              <select name="sku" id="bodyIssueSku" class="desk-form-control" onchange="Desk.checkIssueStockAvailability(this.value)" required style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="">-- Select Material / SKU from Batches --</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Quantity to Issue *</label>
+              <input type="number" name="quantity" id="bodyIssueQty" class="desk-form-control" min="1" value="1" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Requesting Dept *</label>
+              <select name="department_code" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="Mechanical">Mechanical Maintenance</option>
+                <option value="Electrical">Electrical Maintenance</option>
+                <option value="Civil">Civil Works</option>
+                <option value="Operations">Operations Shift</option>
+                <option value="Administration">Administration &amp; Transport</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Issue Destination / Plant Area *</label>
+              <select name="destination_code" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="DEST-GEN-U1">Unit 01 Francis Turbine &amp; Generator</option>
+                <option value="DEST-GEN-U2">Unit 02 Francis Turbine &amp; Generator</option>
+                <option value="DEST-PEN-01">Main Penstock Intake Valve 01</option>
+                <option value="DEST-PEN-02">Main Penstock Intake Valve 02</option>
+                <option value="DEST-SWG-220KV">220kV Outdoor Switchyard Bay</option>
+                <option value="DEST-DAM-SP01">Radial Spillway Gate No. 01</option>
+                <option value="DEST-ST-01">Central Spares Warehouse Bay 01</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Work Order / Purpose Ref</label>
+              <input type="text" name="remarks" class="desk-form-control" placeholder="e.g. WO-2026-GEN-01 Overhaul" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('send', 13) ?> Submit Issue Requisition
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
@@ -588,6 +691,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           </table>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- ============================================================
@@ -1453,10 +1557,50 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Receipts, Emergency Handling & Petty Cash</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewCashVoucher')">
-            <?= Icon::get('plus', 13) ?> Add Voucher
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadCashBook()">
+            <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
+      </div>
+
+      <!-- In-Body Cash Book Voucher Entry Form -->
+      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('dollar-sign', 16) ?> Enter Cash Book Voucher
+        </h3>
+        <form id="bodyCashVoucherForm" onsubmit="event.preventDefault(); Desk.submitBodyCashVoucher(this);">
+          <div style="display: grid; grid-template-columns: 180px 1fr 1fr 180px; gap: 14px; margin-bottom: 14px; align-items: flex-end;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Voucher Type *</label>
+              <select name="entry_type" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="Payment">Payment Voucher</option>
+                <option value="Receipt">Receipt Voucher</option>
+                <option value="Petty Cash">Petty Cash Voucher</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Account Title *</label>
+              <input type="text" name="account_title" class="desk-form-control" placeholder="e.g. Fuel Emergency / Spares Petty Cash" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Payee / Source *</label>
+              <input type="text" name="payee_or_source" class="desk-form-control" placeholder="e.g. CEB / CPC / Station Cashier" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Amount (Rs.) *</label>
+              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div class="desk-form-group" style="margin-bottom: 16px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Description / Remarks</label>
+            <input type="text" name="description" class="desk-form-control" placeholder="Details and authorization reference..." style="border: 1px solid #71717a; border-radius: 2px;">
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('plus', 13) ?> Record Cash Voucher
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
@@ -1495,10 +1639,50 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Review, Approval, and Reversals for Station Payroll</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-danger" onclick="Desk.openModal('modalPayslipCancel')">
-            <?= Icon::get('plus', 13) ?> Request Cancellation
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadPayslipCancellations()">
+            <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
+      </div>
+
+      <!-- In-Body Payslip Cancellation Form -->
+      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('alert-triangle', 16) ?> Enter Payslip Cancellation Requisition
+        </h3>
+        <form id="bodyPayslipCancelForm" onsubmit="event.preventDefault(); Desk.submitBodyPayslipCancel(this);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Payslip No *</label>
+              <input type="text" name="payslip_no" class="desk-form-control" placeholder="e.g. PS-2026-11-831-042" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Employee Name *</label>
+              <input type="text" name="employee_name" class="desk-form-control" placeholder="e.g. K. L. Bandara" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">EPF Number</label>
+              <input type="text" name="epf_no" class="desk-form-control" placeholder="e.g. EPF-55829" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Pay Period *</label>
+              <input type="text" name="pay_period" class="desk-form-control" value="<?= date('F Y') ?>" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Amount (Rs.) *</label>
+              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div class="desk-form-group" style="margin-bottom: 16px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason for Cancellation *</label>
+            <input type="text" name="reason" class="desk-form-control" placeholder="e.g. Disputed shift overtime calculation / Salary adjustment recalculation" required style="border: 1px solid #71717a; border-radius: 2px;">
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-danger" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('send', 13) ?> Submit Cancellation Requisition
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
@@ -1540,13 +1724,58 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Ceylon Petroleum Corporation Bulk Diesel Consignments</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewCpc')">
-            <?= Icon::get('plus', 13) ?> New CPC Consignment
-          </button>
           <button class="desk-btn desk-btn-default" onclick="Desk.loadCpcProcurements()">
             <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
+      </div>
+
+      <!-- In-Body CPC Fuel Consignment Entry Form -->
+      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('droplet', 16) ?> Enter CPC Fuel Procurement Order
+        </h3>
+        <form id="bodyCpcOrderForm" onsubmit="event.preventDefault(); Desk.submitBodyCpcOrder(this);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">CPC Order / Bowzer No *</label>
+              <input type="text" name="order_no" class="desk-form-control" placeholder="e.g. CPC-BWZ-2026-88" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Fuel Type *</label>
+              <select name="fuel_type" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="Auto Diesel">Auto Diesel (Standard)</option>
+                <option value="Super Diesel">Super Diesel (10ppm)</option>
+                <option value="Heavy Fuel Oil">Heavy Fuel Oil (Furnace Oil)</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Storage Tank ID *</label>
+              <input type="text" name="tank_id" class="desk-form-control" value="Main Tank T-01" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Quantity (Litres) *</label>
+              <input type="number" name="quantity_litres" class="desk-form-control" min="1" placeholder="e.g. 13200" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Unit Price LKR / Litre *</label>
+              <input type="number" name="unit_price_lkr" class="desk-form-control" step="0.01" min="1" placeholder="e.g. 348.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Consignment Date *</label>
+              <input type="date" name="consignment_date" class="desk-form-control" value="<?= date('Y-m-d') ?>" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div class="desk-form-group" style="margin-bottom: 16px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">CPC Invoice / Delivery Note Ref</label>
+            <input type="text" name="delivery_ref" class="desk-form-control" placeholder="e.g. CPC-INV-KOLONNAWA-4412" style="border: 1px solid #71717a; border-radius: 2px;">
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('check', 13) ?> Record CPC Consignment
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
@@ -1581,13 +1810,46 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Monthly Fuel Price Indices and Expenditure Trends</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalNewDiesel')">
-            <?= Icon::get('plus', 13) ?> Add Diesel Price Log
-          </button>
           <button class="desk-btn desk-btn-default" onclick="Desk.loadDieselPriceLogs()">
             <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
+      </div>
+
+      <!-- In-Body Diesel Price Log Form -->
+      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('trending-up', 16) ?> Enter Monthly Diesel Price Log
+        </h3>
+        <form id="bodyDieselPriceForm" onsubmit="event.preventDefault(); Desk.submitBodyDieselPrice(this);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Effective Month *</label>
+              <input type="month" name="effective_month" class="desk-form-control" value="<?= date('Y-m') ?>" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Fuel Type *</label>
+              <select name="fuel_type" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="Auto Diesel">Auto Diesel (Standard)</option>
+                <option value="Super Diesel">Super Diesel (10ppm)</option>
+                <option value="Heavy Fuel Oil">Heavy Fuel Oil (Furnace Oil)</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Average Price / Litre (LKR) *</label>
+              <input type="number" name="avg_price_per_litre" class="desk-form-control" step="0.01" min="1" placeholder="e.g. 348.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Total Procured Litres</label>
+              <input type="number" name="total_procured_litres" class="desk-form-control" min="0" placeholder="e.g. 45000" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('check', 13) ?> Save Price Log
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
@@ -1992,13 +2254,50 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Freight, Customs Cess & Valuation Surcharges</div>
         </div>
         <div class="header-action-btns">
-          <button class="desk-btn desk-btn-primary" onclick="Desk.openModal('modalCostAdjust')">
-            <?= Icon::get('plus', 13) ?> New Cost Adjustment
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadCostAdjustments(); Desk.populateTaskBatches();">
+            <?= Icon::get('refresh', 13) ?> Refresh
           </button>
         </div>
       </div>
 
+      <!-- In-Body Cost Adjustment Form -->
+      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('sliders', 16) ?> Enter Cost &amp; Valuation Adjustment
+        </h3>
+        <form id="bodyCostAdjustForm" onsubmit="event.preventDefault(); Desk.submitBodyCostAdjust(this);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select FIFO Batch to Adjust *</label>
+              <select name="batch_id" id="bodyCostAdjustBatch" class="desk-form-control" onchange="Desk.onCostAdjustBatchChange(this)" required style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="">-- Loading active inventory batches... --</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Current Unit Cost</label>
+              <input type="text" id="bodyCostAdjustCurrentCost" class="desk-form-control" readonly placeholder="Select a batch..." style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">New Unit Cost (Rs.) *</label>
+              <input type="number" name="new_unit_cost" id="bodyCostAdjustNewCost" class="desk-form-control" step="0.01" min="0" placeholder="e.g. 95000.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div class="desk-form-group" style="margin-bottom: 16px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason / Valuation Adjustment Justification *</label>
+            <input type="text" name="reason" class="desk-form-control" placeholder="e.g. Additional freight/customs cess surcharge allocation" required style="border: 1px solid #71717a; border-radius: 2px;">
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('check', 13) ?> Apply Valuation Adjustment
+            </button>
+          </div>
+        </form>
+      </div>
+
       <div class="desk-card">
+        <div class="desk-card-header">
+          <div class="desk-card-title">Valuation Adjustments History &amp; Audit Log</div>
+        </div>
         <div class="desk-table-wrapper">
           <table class="desk-table">
             <thead>
@@ -2028,9 +2327,55 @@ require_once __DIR__ . '/views/layouts/header.php';
           <h1>Allocated Quantity Corrections</h1>
           <div class="workspace-subtitle">Unlock Stuck Allocations & Restore Available Stock</div>
         </div>
+        <div class="header-action-btns">
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadQtyCorrections(); Desk.populateTaskBatches();">
+            <?= Icon::get('refresh', 13) ?> Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- In-Body Allocated Qty Correction Form -->
+      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('check-square', 16) ?> Enter Allocated Quantity Correction &amp; Stock Release
+        </h3>
+        <form id="bodyQtyCorrectForm" onsubmit="event.preventDefault(); Desk.submitBodyQtyCorrect(this);">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select FIFO Batch *</label>
+              <select name="batch_id" id="bodyQtyCorrectBatch" class="desk-form-control" onchange="Desk.onQtyCorrectBatchChange(this)" required style="border: 1px solid #71717a; border-radius: 2px;">
+                <option value="">-- Loading active inventory batches... --</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Allocated Qty Before</label>
+              <input type="number" name="allocated_qty_before" id="bodyQtyAllocBefore" class="desk-form-control" min="0" value="0" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Corrected Allocated Qty</label>
+              <input type="number" name="corrected_allocated_qty" id="bodyQtyAllocAfter" class="desk-form-control" min="0" value="0" required style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Work Order / Task Ref</label>
+              <input type="text" name="work_order_ref" class="desk-form-control" placeholder="e.g. WO-2026-TURB-01" style="border: 1px solid #71717a; border-radius: 2px;">
+            </div>
+          </div>
+          <div class="desk-form-group" style="margin-bottom: 16px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason for Correction *</label>
+            <input type="text" name="reason" class="desk-form-control" placeholder="e.g. Released stuck reservation from cancelled maintenance work order" required style="border: 1px solid #71717a; border-radius: 2px;">
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
+              <?= Icon::get('check', 13) ?> Apply Quantity Correction
+            </button>
+          </div>
+        </form>
       </div>
 
       <div class="desk-card">
+        <div class="desk-card-header">
+          <div class="desk-card-title">Allocation Corrections History &amp; Stock Release Log</div>
+        </div>
         <div class="desk-table-wrapper">
           <table class="desk-table">
             <thead>
