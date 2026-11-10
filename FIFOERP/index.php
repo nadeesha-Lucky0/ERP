@@ -692,7 +692,6 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
     </div>
-    </div>
 
     <!-- ============================================================
          PANE: PHYSICAL VERIFICATION (WORKFLOW DESK)

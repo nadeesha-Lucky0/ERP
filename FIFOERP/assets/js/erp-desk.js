@@ -2548,6 +2548,9 @@ const Desk = {
   currentAdminSubTab: 'admin-sub-locations',
 
   switchAdminSubTab(subTabId) {
+    if (!subTabId || !document.getElementById(subTabId)) {
+      subTabId = 'admin-sub-locations';
+    }
     this.currentAdminSubTab = subTabId;
     try {
       sessionStorage.setItem('fifoerp_active_admin_sub', subTabId);
