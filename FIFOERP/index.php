@@ -80,7 +80,8 @@ for ($m = 1; $m <= 11; $m++) {
 // =========================================================================
 // ADMIN DATA MODELS INITIALIZATION
 // =========================================================================
-$isAdmin = \App\Core\Auth::isAdmin();
+$isSuperAdmin = ($currentUser['role_name'] ?? '') === 'super_admin';
+$isAdmin = $isSuperAdmin;
 $locModel = new \App\Models\Location();
 $deptModel = new \App\Models\Department();
 $roleModel = new \App\Models\Role();

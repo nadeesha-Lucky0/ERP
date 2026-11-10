@@ -152,13 +152,5 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
     <?php endif; ?>
   <?php endif; ?>
 
-  <?php if ($permModel->canAccessTab('tab-admin', $roleId, $userId)): ?>
-    <div class="sidebar-section-title">Administration</div>
-    <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-admin') ?>" data-tab="tab-admin" data-admin-sub="admin-sub-locations">
-      <span class="sidebar-icon"><?= Icon::get('zap') ?></span>
-      <span>Admin Console</span>
-    </button>
-  <?php endif; ?>
-
 <?php endif; ?>
 </aside>
