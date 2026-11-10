@@ -2040,6 +2040,12 @@ const Desk = {
     if (modalId === 'modalNewIssue') {
       this.checkIssueStockAvailability();
     }
+    if (modalId === 'createUserModal') {
+      const locSelect = document.getElementById('createUserLocId');
+      const deptSelect = document.getElementById('createUserDept');
+      if (locSelect) locSelect.selectedIndex = 0;
+      if (deptSelect) deptSelect.innerHTML = '<option value="" disabled selected>-- Select Station First --</option>';
+    }
   },
 
   closeModal(modalId) {
@@ -2302,16 +2308,64 @@ const Desk = {
   },
 
   // User Handlers
+  escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    })[m]);
+  },
+
+  async onStationSelectChange(locationId, targetSelectId, selectedValue = '') {
+    const deptSelect = document.getElementById(targetSelectId);
+    if (!deptSelect) return;
+
+    if (!locationId) {
+      deptSelect.innerHTML = '<option value="" disabled selected>-- Select Station First --</option>';
+      return;
+    }
+
+    deptSelect.innerHTML = '<option value="" disabled selected>Loading departments...</option>';
+    deptSelect.disabled = true;
+
+    try {
+      const res = await fetch(`${this.baseUrl}/api/departments.php?action=list&location_id=${locationId}`);
+      const data = await res.json();
+      deptSelect.disabled = false;
+
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        let optionsHtml = '<option value="" disabled' + (!selectedValue ? ' selected' : '') + '>-- Select Department / Store --</option>';
+        data.data.forEach(d => {
+          const isSel = (selectedValue && (selectedValue === d.name || selectedValue === String(d.id))) ? ' selected' : '';
+          optionsHtml += `<option value="${this.escapeHtml(d.name)}"${isSel}>${this.escapeHtml(d.name)} (${this.escapeHtml(d.code)})</option>`;
+        });
+        deptSelect.innerHTML = optionsHtml;
+      } else {
+        deptSelect.innerHTML = '<option value="" disabled selected>-- No departments found for this station --</option>';
+      }
+    } catch (err) {
+      console.error('Error fetching departments:', err);
+      deptSelect.disabled = false;
+      deptSelect.innerHTML = '<option value="" disabled selected>Error loading departments</option>';
+    }
+  },
+
   openEditUserModal(user) {
     document.getElementById('editUserId').value = user.id;
     document.getElementById('editUserLocId').value = user.location_id || 1;
-    document.getElementById('editUserDept').value = user.department || '';
     document.getElementById('editUserRoleId').value = user.role_id;
     document.getElementById('editUserStatus').value = user.status;
     document.getElementById('editUserFullName').value = user.full_name;
     document.getElementById('editUserUsername').value = user.username;
     document.getElementById('editUserEmail').value = user.email;
     document.getElementById('editUserPassword').value = '';
+
+    // Dynamically load departments of this station and select user's department
+    this.onStationSelectChange(user.location_id || 1, 'editUserDept', user.department || '');
+
     this.openModal('editUserModal');
   },
 

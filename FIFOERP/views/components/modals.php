@@ -645,16 +645,18 @@
         <div class="desk-form-row">
           <div class="desk-form-group">
             <label>Power Station / Location *</label>
-            <select id="createUserLocId" name="location_id" class="desk-form-control" required>
+            <select id="createUserLocId" name="location_id" class="desk-form-control" required onchange="Desk.onStationSelectChange(this.value, 'createUserDept')">
               <option value="" disabled selected>-- Select Station --</option>
               <?php foreach (($locations ?? []) as $loc): ?>
-                <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+                <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?> (<?= htmlspecialchars($loc['code']) ?>)</option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="desk-form-group">
-            <label>Department *</label>
-            <input type="text" id="createUserDept" name="department" class="desk-form-control" placeholder="e.g. Mechanical Maintenance" required>
+            <label>Department / Store *</label>
+            <select id="createUserDept" name="department" class="desk-form-control" required>
+              <option value="" disabled selected>-- Select Station First --</option>
+            </select>
           </div>
         </div>
 
@@ -726,15 +728,17 @@
         <div class="desk-form-row">
           <div class="desk-form-group">
             <label>Power Station / Location *</label>
-            <select id="editUserLocId" name="location_id" class="desk-form-control" required>
+            <select id="editUserLocId" name="location_id" class="desk-form-control" required onchange="Desk.onStationSelectChange(this.value, 'editUserDept')">
               <?php foreach (($locations ?? []) as $loc): ?>
-                <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+                <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?> (<?= htmlspecialchars($loc['code']) ?>)</option>
               <?php endforeach; ?>
             </select>
           </div>
           <div class="desk-form-group">
-            <label>Department *</label>
-            <input type="text" id="editUserDept" name="department" class="desk-form-control" required>
+            <label>Department / Store *</label>
+            <select id="editUserDept" name="department" class="desk-form-control" required>
+              <option value="" disabled selected>-- Select Department --</option>
+            </select>
           </div>
         </div>
 
