@@ -166,9 +166,15 @@ const Desk = {
       targetPane.style.display = 'block';
     }
 
-    const navBtn = document.querySelector(`[data-tab="${tabId}"]`);
-    if (navBtn) {
-      navBtn.classList.add('active');
+    if (tabId === 'tab-admin') {
+      const activeAdminSub = adminSubToActivate || this.currentAdminSubTab || 'admin-sub-locations';
+      const adminNavBtn = document.querySelector(`.sidebar-nav-item[data-admin-sub="${activeAdminSub}"]`) || document.querySelector(`[data-tab="tab-admin"]`);
+      if (adminNavBtn) adminNavBtn.classList.add('active');
+    } else {
+      const navBtn = document.querySelector(`[data-tab="${tabId}"]`);
+      if (navBtn) {
+        navBtn.classList.add('active');
+      }
     }
 
     this.currentTab = tabId;

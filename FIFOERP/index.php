@@ -6,6 +6,9 @@ use App\Helpers\Icon;
 
 // Require authentication
 Auth::requireLogin();
+$currentUser = Auth::user();
+$isSuperAdmin = ($currentUser['role_name'] ?? '') === 'super_admin';
+$isAdmin = $isSuperAdmin;
 
 // =========================================================================
 // MONTHLY CUMULATIVE TRANSACTION DATA (HOME REPORT & CHART)
@@ -137,10 +140,11 @@ require_once __DIR__ . '/views/layouts/header.php';
   <!-- Main Desk Content -->
   <main class="desk-content">
 
+    <?php if (!$isAdmin): ?>
     <!-- ============================================================
-         PANE 1: Home Dashboard Workspace
+         PANE 1: Home Dashboard Workspace (Operational Power Stations Only)
          ============================================================ -->
-    <div id="tab-dashboard" class="tab-pane" <?= $isAdmin ? 'style="display: none;"' : '' ?>>
+    <div id="tab-dashboard" class="tab-pane">
       <div class="workspace-header" style="margin-bottom: 16px;">
         <div class="workspace-title-box">
           <h1>Home Desk</h1>
@@ -439,6 +443,7 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
     </div>
+    <?php endif; ?>
 
     <!-- ============================================================
          PANE 3A: Receipts (GRN) Management
