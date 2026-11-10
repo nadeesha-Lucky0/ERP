@@ -19,7 +19,14 @@ const Desk = {
     const storedTab = sessionStorage.getItem('fifoerp_active_tab');
     const firstActiveBtn = document.querySelector('.sidebar-nav-item.active') || document.querySelector('.sidebar-nav-item');
     const defaultTab = firstActiveBtn ? firstActiveBtn.getAttribute('data-tab') : 'tab-dashboard';
-    const targetTab = hashTab || storedTab || defaultTab;
+    
+    // Ensure restored tab is actually permitted by checking if its sidebar nav item exists
+    let targetTab = defaultTab;
+    if (hashTab && (document.querySelector(`.sidebar-nav-item[data-tab="${hashTab}"]`) || hashTab === 'tab-admin')) {
+      targetTab = hashTab;
+    } else if (storedTab && (document.querySelector(`.sidebar-nav-item[data-tab="${storedTab}"]`) || storedTab === 'tab-admin')) {
+      targetTab = storedTab;
+    }
     const defaultSub = firstActiveBtn ? firstActiveBtn.getAttribute('data-admin-sub') : null;
 
     if (targetTab && document.getElementById(targetTab)) {
@@ -27,6 +34,8 @@ const Desk = {
       if (defaultSub && targetTab === 'tab-admin') {
         this.switchAdminSubTab(defaultSub);
       }
+    } else if (defaultTab && document.getElementById(defaultTab)) {
+      this.switchTab(defaultTab);
     } else {
       this.loadDashboardData();
     }
@@ -70,6 +79,15 @@ const Desk = {
       qohSubTabToActivate = 'qoh-sub-material';
     } else if (tabId === 'tab-transactions') {
       tabId = 'tab-receipts';
+    }
+
+    // Verify that this tab is permitted for the current user (has a visible sidebar nav button, or is tab-admin)
+    const isPermitted = document.querySelector(`.sidebar-nav-item[data-tab="${tabId}"]`) || (tabId === 'tab-admin');
+    if (!isPermitted) {
+      const fallbackBtn = document.querySelector('.sidebar-nav-item.active') || document.querySelector('.sidebar-nav-item');
+      if (fallbackBtn) {
+        tabId = fallbackBtn.getAttribute('data-tab');
+      }
     }
 
     // Hide all tab panes

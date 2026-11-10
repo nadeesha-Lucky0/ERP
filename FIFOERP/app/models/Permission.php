@@ -543,4 +543,57 @@ class Permission {
         }
         return true;
     }
+
+    public function canAccessTab(string $tabId, int $roleId, ?int $userId = null): bool {
+        $role = ($roleId > 0) ? (new Role())->findById($roleId) : null;
+        if ($role && $role['name'] === 'super_admin') {
+            return true;
+        }
+
+        $tabPermMapping = [
+            'tab-dashboard' => ['tab-user-home'],
+            'tab-receipts' => [
+                'tab-user-receipts-entry', 'tab-user-receipts-validation', 'tab-user-receipts-approval',
+                'tab-user-receipts-edit', 'tab-user-receipts-posted-cancel', 'tab-user-receipts-unposted-cancel'
+            ],
+            'tab-issues' => [
+                'tab-user-issue-entry', 'tab-user-issue-edit', 'tab-user-issue-validation',
+                'tab-user-issue-approval', 'tab-user-issue-posted-cancel', 'tab-user-issue-unposted-cancel',
+                'tab-user-posting'
+            ],
+            'tab-pv-workflow' => [
+                'tab-user-pv-freeze', 'tab-user-pv-generate-sheet', 'tab-user-pv-entry', 'tab-user-pv-edit',
+                'tab-user-pv-validation', 'tab-user-pv-approval', 'tab-user-pv-posting', 'tab-user-pv-gl-posting',
+                'tab-user-pv-unfreeze'
+            ],
+            'tab-pv-reports' => [
+                'tab-user-pv-report-avg-consumption', 'tab-user-pv-report-final', 'tab-user-pv-report-other',
+                'tab-user-pv-report-sheet-summary', 'tab-user-pv-report-av7-summary'
+            ],
+            'tab-payslips' => ['tab-user-payslip-cancellation'],
+            'tab-qoh' => ['tab-user-report-qoh-batch', 'tab-user-report-qoh-material'],
+            'tab-report-transfers' => ['tab-user-report-monthly-transfers'],
+            'tab-report-diesel' => ['tab-user-report-avg-diesel'],
+            'tab-report-cpc' => ['tab-user-report-cpc-procurement'],
+            'tab-report-inventory-inquiry' => ['tab-user-report-inventory-inquiry'],
+            'tab-report-jobs' => ['tab-user-report-job-issue'],
+            'tab-report-monthly-tx' => ['tab-user-report-monthly-tx'],
+            'tab-report-grn-issue-summary' => ['tab-user-report-grn-issue-summary'],
+            'tab-report-material-flow' => ['tab-user-report-material-flow'],
+            'tab-cost-adjust' => ['tab-user-task-cost-adjustment'],
+            'tab-qty-correct' => ['tab-user-task-qty-correction'],
+            'tab-admin' => ['tab-user-code-roles', 'tab-user-code-locations', 'tab-user-code-departments']
+        ];
+
+        if (isset($tabPermMapping[$tabId])) {
+            foreach ($tabPermMapping[$tabId] as $permKey) {
+                if ($this->hasPermission($roleId, $permKey, $userId)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return $this->hasPermission($roleId, $tabId, $userId);
+    }
 }
