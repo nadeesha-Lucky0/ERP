@@ -99,6 +99,15 @@ class Location {
     }
 
     public function create(array $data): int {
+        $dbName = trim($data['database_name'] ?? '');
+        if (empty($dbName)) {
+            try {
+                $dbName = \App\Core\StationDatabase::createStationDb($data['code'], $data['name']);
+            } catch (\Throwable $e) {
+                $dbName = \App\Core\StationDatabase::getDbName($data['code'], $data['name']);
+            }
+        }
+
         $stmt = $this->db->prepare("
             INSERT INTO locations (name, code, database_name, type, capacity_mw, province, district, description, status)
             VALUES (:name, :code, :database_name, :type, :capacity_mw, :province, :district, :description, :status)
@@ -107,7 +116,7 @@ class Location {
         $stmt->execute([
             ':name' => trim($data['name']),
             ':code' => strtoupper(trim($data['code'])),
-            ':database_name' => trim($data['database_name'] ?? ''),
+            ':database_name' => $dbName,
             ':type' => trim($data['type'] ?? 'Hydroelectric'),
             ':capacity_mw' => trim($data['capacity_mw'] ?? ''),
             ':province' => trim($data['province'] ?? ''),

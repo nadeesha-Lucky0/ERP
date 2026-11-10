@@ -18,7 +18,7 @@ class FifoEngine {
         ?string $departmentName = null,
         ?int $userId = 1
     ): array {
-        $db = Database::getConnection();
+        $db = Database::getStationConnection($locationId);
         $db->beginTransaction();
 
         try {
@@ -136,7 +136,7 @@ class FifoEngine {
         ?string $expiryDate = null,
         ?int $userId = 1
     ): int {
-        $db = Database::getConnection();
+        $db = Database::getStationConnection($locationId);
         $db->beginTransaction();
 
         try {
@@ -195,7 +195,7 @@ class FifoEngine {
      * Freeze or Unfreeze all batches for Physical Verification session
      */
     public static function setBatchFreeze(int $locationId, bool $freeze, int $sessionId, int $userId): void {
-        $db = Database::getConnection();
+        $db = Database::getStationConnection($locationId);
         $status = $freeze ? 'frozen' : 'unfrozen';
         $sessId = $freeze ? $sessionId : null;
 

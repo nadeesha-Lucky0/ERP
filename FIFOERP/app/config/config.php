@@ -36,11 +36,11 @@ if ($subPath === '/') {
 define('BASE_PATH', $subPath);
 define('BASE_URL', rtrim($protocol . $host . $subPath, '/'));
 
-// Database configuration for 'fifonew'
+// Database configuration for central 'fifo' platform
 define('DB_DRIVER', 'mysql');
 define('DB_HOST', 'localhost');
 define('DB_PORT', '3306');
-define('DB_NAME', 'fifonew');
+define('DB_NAME', 'fifo');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
