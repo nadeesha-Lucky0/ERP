@@ -8,10 +8,10 @@ use App\Config\Database;
 header('Content-Type: application/json; charset=utf-8');
 
 $report = $_GET['report'] ?? '';
-$locationId = $_POST['location_id'] ?? $_GET['location_id'] ?? ($_SESSION['user']['location_id'] ?? ($_SESSION['location_id'] ?? 1));
+$locationId = (int)($_SESSION['location_id'] ?? 1);
 
 try {
-    $db = Database::getStationConnection($locationId);
+    $db = Database::getConnection();
 
     switch ($report) {
         // -------------------------------------------------------------
