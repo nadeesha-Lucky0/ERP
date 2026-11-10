@@ -2501,9 +2501,9 @@ const Desk = {
     document.getElementById('editUserLocId').value = user.location_id || 1;
     document.getElementById('editUserRoleId').value = user.role_id;
     document.getElementById('editUserStatus').value = user.status;
-    document.getElementById('editUserFullName').value = user.full_name;
+    if (document.getElementById('editUserFullName')) document.getElementById('editUserFullName').value = user.full_name || '';
     document.getElementById('editUserUsername').value = user.username;
-    document.getElementById('editUserEmail').value = user.email;
+    if (document.getElementById('editUserEmail')) document.getElementById('editUserEmail').value = user.email || '';
     document.getElementById('editUserPassword').value = '';
 
     // Dynamically load departments of this station and select user's department

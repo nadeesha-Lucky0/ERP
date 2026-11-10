@@ -2239,7 +2239,7 @@ require_once __DIR__ . '/views/layouts/header.php';
             <table class="desk-table">
               <thead>
                 <tr>
-                  <th>User Profile</th>
+                  <th>Username</th>
                   <th>Assigned Station &amp; Dept</th>
                   <th>Role</th>
                   <th>Status</th>
@@ -2253,11 +2253,10 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <td>
                       <div style="display: flex; align-items: center; gap: 10px;">
                         <div style="width: 32px; height: 32px; border-radius: 50%; background: <?= htmlspecialchars($u['avatar_color'] ?? '#650b2b') ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem;">
-                          <?= strtoupper(substr($u['full_name'], 0, 1)) ?>
+                          <?= strtoupper(substr($u['username'], 0, 1)) ?>
                         </div>
                         <div>
-                          <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;"><?= htmlspecialchars($u['full_name']) ?></div>
-                          <div style="font-size: 0.76rem; color: #64748b;">@<?= htmlspecialchars($u['username']) ?> &bull; <?= htmlspecialchars($u['email']) ?></div>
+                          <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;"><?= htmlspecialchars($u['username']) ?></div>
                         </div>
                       </div>
                     </td>

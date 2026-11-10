@@ -628,14 +628,14 @@
      ADMIN MODAL 5: CREATE USER
      ============================================================ -->
 <div id="createUserModal" class="desk-modal-backdrop">
-  <div class="desk-modal" style="max-width: 560px;">
+  <div class="desk-modal" style="max-width: 540px;">
     <div class="desk-modal-header">
       <h3>Add New User Account</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeModal('createUserModal')">&times;</button>
     </div>
-    <form id="createUserForm" onsubmit="event.preventDefault(); Desk.submitCreateUser();">
+    <form id="createUserForm" onsubmit="event.preventDefault(); Desk.submitCreateUser();" style="display: flex; flex-direction: column; flex: 1; min-height: 0; margin: 0;">
       <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
-      <div class="desk-modal-body">
+      <div class="desk-modal-body" style="overflow-y: auto; flex: 1; min-height: 0; padding: 20px;">
         <div class="desk-form-row">
           <div class="desk-form-group">
             <label>Power Station / Location *</label>
@@ -678,19 +678,8 @@
 
         <div class="desk-form-row">
           <div class="desk-form-group">
-            <label>Full Name *</label>
-            <input type="text" id="createUserFullName" name="full_name" class="desk-form-control" placeholder="e.g. Mahinda Jayasinghe" required>
-          </div>
-          <div class="desk-form-group">
             <label>Username *</label>
             <input type="text" id="createUserUsername" name="username" class="desk-form-control" placeholder="e.g. 832sk" required>
-          </div>
-        </div>
-
-        <div class="desk-form-row">
-          <div class="desk-form-group">
-            <label>Corporate Email *</label>
-            <input type="email" id="createUserEmail" name="email" class="desk-form-control" placeholder="e.g. mj@egl.lk" required>
           </div>
           <div class="desk-form-group">
             <label>Initial Password *</label>
@@ -698,9 +687,9 @@
           </div>
         </div>
       </div>
-      <div class="desk-modal-footer">
+      <div class="desk-modal-footer" style="flex-shrink: 0; padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
         <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('createUserModal')">Cancel</button>
-        <button type="submit" class="desk-btn desk-btn-primary">Create User</button>
+        <button type="submit" class="desk-btn desk-btn-primary">+ Create User</button>
       </div>
     </form>
   </div>
@@ -710,15 +699,15 @@
      ADMIN MODAL 6: EDIT USER
      ============================================================ -->
 <div id="editUserModal" class="desk-modal-backdrop">
-  <div class="desk-modal" style="max-width: 560px;">
+  <div class="desk-modal" style="max-width: 540px;">
     <div class="desk-modal-header">
       <h3>Edit User Account</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeModal('editUserModal')">&times;</button>
     </div>
-    <form id="editUserForm" onsubmit="event.preventDefault(); Desk.submitEditUser();">
+    <form id="editUserForm" onsubmit="event.preventDefault(); Desk.submitEditUser();" style="display: flex; flex-direction: column; flex: 1; min-height: 0; margin: 0;">
       <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
       <input type="hidden" id="editUserId" name="id">
-      <div class="desk-modal-body">
+      <div class="desk-modal-body" style="overflow-y: auto; flex: 1; min-height: 0; padding: 20px;">
         <div class="desk-form-row">
           <div class="desk-form-group">
             <label>Power Station / Location *</label>
@@ -757,19 +746,8 @@
 
         <div class="desk-form-row">
           <div class="desk-form-group">
-            <label>Full Name *</label>
-            <input type="text" id="editUserFullName" name="full_name" class="desk-form-control" required>
-          </div>
-          <div class="desk-form-group">
             <label>Username</label>
             <input type="text" id="editUserUsername" name="username" class="desk-form-control" readonly style="background: #f1f5f9; cursor: not-allowed;">
-          </div>
-        </div>
-
-        <div class="desk-form-row">
-          <div class="desk-form-group">
-            <label>Corporate Email *</label>
-            <input type="email" id="editUserEmail" name="email" class="desk-form-control" required>
           </div>
           <div class="desk-form-group">
             <label>Reset Password (leave empty to keep)</label>
@@ -777,7 +755,7 @@
           </div>
         </div>
       </div>
-      <div class="desk-modal-footer">
+      <div class="desk-modal-footer" style="flex-shrink: 0; padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; border-top: 1px solid #e2e8f0;">
         <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('editUserModal')">Cancel</button>
         <button type="submit" class="desk-btn desk-btn-primary">Save Changes</button>
       </div>
