@@ -798,6 +798,7 @@
     </div>
     <form id="createRoleForm" onsubmit="event.preventDefault(); Desk.submitCreateRole();" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
       <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" name="_save_permissions" value="1">
       <div class="desk-modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
         <div class="desk-form-row">
           <div class="desk-form-group" style="flex: 2;">
@@ -861,6 +862,7 @@
     </div>
     <form id="editRoleForm" onsubmit="event.preventDefault(); Desk.submitEditRole();" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
       <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" name="_save_permissions" value="1">
       <input type="hidden" id="editRoleId" name="id">
       <div class="desk-modal-body" style="overflow-y: auto; max-height: calc(90vh - 140px);">
         <div class="desk-form-row">

@@ -63,13 +63,9 @@ class LocationController {
             Response::error('A location/station with code "' . $code . '" already exists.');
         }
 
-        // Automatically create and provision dedicated micro-database for this station
-        $stationDbName = \App\Core\StationDatabase::createStationDb($code, $name);
-
         $id = $this->locModel->create([
             'name' => $name,
             'code' => $code,
-            'database_name' => $stationDbName,
             'type' => $type,
             'capacity_mw' => $capacity,
             'province' => $province,
@@ -78,11 +74,10 @@ class LocationController {
             'status' => $status
         ]);
 
-        Logger::log('create_location', 'location', $id, "Super Admin defined location: {$name} ({$code}) with dedicated DB [{$stationDbName}]");
+        Logger::log('create_location', 'location', $id, "Super Admin defined location: {$name} ({$code})");
 
-        Response::success('Location / Power Station added and dedicated database created successfully.', [
+        Response::success('Power Station / Location added successfully.', [
             'id' => $id,
-            'database_name' => $stationDbName,
             'location' => $this->locModel->findById($id)
         ]);
     }
@@ -155,16 +150,9 @@ class LocationController {
             Response::error('Location not found.', [], 404);
         }
 
-        // Drop dedicated station database
-        $dbName = !empty($loc['database_name']) 
-            ? $loc['database_name'] 
-            : \App\Core\StationDatabase::getDbName($loc['code'], $loc['name']);
-        
-        \App\Core\StationDatabase::deleteStationDb($dbName);
-
         $this->locModel->delete($id);
-        Logger::log('delete_location', 'location', $id, "Super Admin deleted location: {$loc['name']} and dropped DB [{$dbName}]");
+        Logger::log('delete_location', 'location', $id, "Super Admin deleted location: {$loc['name']}");
 
-        Response::success("Location '{$loc['name']}' and dedicated database deleted successfully.");
+        Response::success("Location '{$loc['name']}' deleted successfully.");
     }
 }

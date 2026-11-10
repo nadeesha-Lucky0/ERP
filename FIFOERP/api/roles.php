@@ -18,6 +18,9 @@ switch ($action) {
     case 'update':
         $controller->update();
         break;
+    case 'get_permissions':
+        $controller->getPermissions();
+        break;
     case 'delete':
         $controller->delete();
         break;

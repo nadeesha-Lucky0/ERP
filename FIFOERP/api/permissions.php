@@ -10,7 +10,7 @@ use App\Models\User;
 
 Auth::requireAdmin();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
     Response::error('Method not allowed', [], 405);
 }
 

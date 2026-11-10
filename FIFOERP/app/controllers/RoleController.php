@@ -31,7 +31,7 @@ class RoleController {
             Response::error('Access restricted. Only Administrators can configure system roles and codes.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 
@@ -126,7 +126,7 @@ class RoleController {
             Response::error('Access restricted. Only Administrators can configure system roles and codes.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 
@@ -196,13 +196,28 @@ class RoleController {
         }
     }
 
+    public function getPermissions(): void {
+        Auth::requireAdmin();
+        $roleId = (int)($_GET['role_id'] ?? ($_POST['role_id'] ?? 0));
+        if ($roleId <= 0) {
+            Response::error('Invalid role ID.');
+        }
+        $permModel = new \App\Models\Permission();
+        $matrix = $permModel->getMatrix();
+        $rolePerms = [];
+        foreach ($matrix as $key => $roles) {
+            $rolePerms[$key] = isset($roles[$roleId]) ? (int)$roles[$roleId] : 1;
+        }
+        Response::success('Permissions retrieved', ['permissions' => $rolePerms]);
+    }
+
     public function delete(): void {
         Auth::requireAdmin();
         if (!in_array(Auth::role(), ['super_admin', 'admin', 'code_admin'])) {
             Response::error('Access restricted. Only Administrators can delete roles.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 

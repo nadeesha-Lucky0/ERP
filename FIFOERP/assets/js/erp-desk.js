@@ -2127,33 +2127,49 @@ const Desk = {
 
   async submitCreateLocation() {
     const form = document.getElementById('createLocationForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'create');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Power Station added successfully!');
-      this.closeModal('createLocationModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to add location.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Power Station added successfully!');
+        this.closeModal('createLocationModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to add location.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while saving location.', true);
     }
   },
 
   async submitEditLocation() {
     const form = document.getElementById('editLocationForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'update');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Location updated successfully!');
-      this.closeModal('editLocationModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to update location.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Location updated successfully!');
+        this.closeModal('editLocationModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to update location.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while updating location.', true);
     }
   },
 
@@ -2167,14 +2183,19 @@ const Desk = {
     fd.append('id', id);
     fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Location deleted successfully.');
-      const row = document.getElementById(`loc-row-${id}`);
-      if (row) row.remove();
-    } else {
-      this.showToast(data.message || 'Could not delete location.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/locations.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Location deleted successfully.');
+        const row = document.getElementById(`loc-row-${id}`);
+        if (row) row.remove();
+      } else {
+        this.showToast(data.message || 'Could not delete location.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while deleting location.', true);
     }
   },
 
@@ -2190,33 +2211,49 @@ const Desk = {
 
   async submitCreateDepartment() {
     const form = document.getElementById('createDepartmentForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'create');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Department added successfully!');
-      this.closeModal('createDepartmentModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to add department.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Department added successfully!');
+        this.closeModal('createDepartmentModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to add department.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while saving department.', true);
     }
   },
 
   async submitEditDepartment() {
     const form = document.getElementById('editDepartmentForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'update');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Department updated successfully!');
-      this.closeModal('editDepartmentModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to update department.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Department updated successfully!');
+        this.closeModal('editDepartmentModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to update department.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while updating department.', true);
     }
   },
 
@@ -2230,14 +2267,19 @@ const Desk = {
     fd.append('id', id);
     fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Department deleted successfully.');
-      const row = document.getElementById(`dept-row-${id}`);
-      if (row) row.remove();
-    } else {
-      this.showToast(data.message || 'Could not delete department.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/departments.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Department deleted successfully.');
+        const row = document.getElementById(`dept-row-${id}`);
+        if (row) row.remove();
+      } else {
+        this.showToast(data.message || 'Could not delete department.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while deleting department.', true);
     }
   },
 
@@ -2257,33 +2299,49 @@ const Desk = {
 
   async submitCreateUser() {
     const form = document.getElementById('createUserForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'create');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('User account created successfully!');
-      this.closeModal('createUserModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to create user.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'User account created successfully!');
+        this.closeModal('createUserModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to create user.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while creating user.', true);
     }
   },
 
   async submitEditUser() {
     const form = document.getElementById('editUserForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'update');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('User account updated successfully!');
-      this.closeModal('editUserModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to update user.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'User account updated successfully!');
+        this.closeModal('editUserModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to update user.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while updating user.', true);
     }
   },
 
@@ -2297,22 +2355,49 @@ const Desk = {
     fd.append('id', id);
     fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('User deleted successfully.');
-      const row = document.getElementById(`user-row-${id}`);
-      if (row) row.remove();
-    } else {
-      this.showToast(data.message || 'Could not delete user.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/users.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'User deleted successfully.');
+        const row = document.getElementById(`user-row-${id}`);
+        if (row) row.remove();
+      } else {
+        this.showToast(data.message || 'Could not delete user.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while deleting user.', true);
     }
   },
 
   // Role Handlers
-  openEditRoleModal(role) {
+  async openEditRoleModal(role) {
     document.getElementById('editRoleId').value = role.id;
     document.getElementById('editRoleDisplayName').value = role.display_name;
     document.getElementById('editRoleCode').value = role.code || '';
+
+    // Fetch and check active permissions for this role
+    try {
+      const res = await fetch(`${this.baseUrl}/api/roles.php?action=get_permissions&role_id=${role.id}`);
+      const data = await res.json();
+      if (data.success && data.data && data.data.permissions) {
+        const perms = data.data.permissions;
+        const form = document.getElementById('editRoleForm');
+        if (form) {
+          form.querySelectorAll('input.edit-role-perm').forEach(cb => {
+            const match = cb.name.match(/\[(.*?)\]/);
+            if (match && match[1]) {
+              const permKey = match[1];
+              cb.checked = perms[permKey] !== undefined ? (Number(perms[permKey]) === 1) : true;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch role permissions:', e);
+    }
+
     this.openModal('editRoleModal');
   },
 
@@ -2326,33 +2411,49 @@ const Desk = {
 
   async submitCreateRole() {
     const form = document.getElementById('createRoleForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'create');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Role created successfully!');
-      this.closeModal('createRoleModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to create role.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Role created successfully!');
+        this.closeModal('createRoleModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to create role.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while creating role.', true);
     }
   },
 
   async submitEditRole() {
     const form = document.getElementById('editRoleForm');
+    if (!form) return;
     const fd = new FormData(form);
     fd.append('action', 'update');
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (!fd.has('_csrf_token') && token) fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Role updated successfully!');
-      this.closeModal('editRoleModal');
-      setTimeout(() => location.reload(), 600);
-    } else {
-      this.showToast(data.message || 'Failed to update role.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Role updated successfully!');
+        this.closeModal('editRoleModal');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        this.showToast(data.message || 'Failed to update role.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while updating role.', true);
     }
   },
 
@@ -2366,14 +2467,19 @@ const Desk = {
     fd.append('id', id);
     fd.append('_csrf_token', token);
 
-    const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
-    const data = await res.json();
-    if (data.success) {
-      this.showToast('Role deleted successfully.');
-      const row = document.getElementById(`role-row-${id}`);
-      if (row) row.remove();
-    } else {
-      this.showToast(data.message || 'Could not delete role.', true);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/roles.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message || 'Role deleted successfully.');
+        const row = document.getElementById(`role-row-${id}`);
+        if (row) row.remove();
+      } else {
+        this.showToast(data.message || 'Could not delete role.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while deleting role.', true);
     }
   },
 

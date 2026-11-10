@@ -63,7 +63,7 @@ class UserController {
             Response::error('Access restricted. Only Super Administrators can create user accounts.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 
@@ -182,7 +182,7 @@ class UserController {
             Response::error('Access restricted. Only Super Administrators can update user accounts.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 
@@ -237,6 +237,15 @@ class UserController {
             $department = !empty($role['location_name']) ? $role['location_name'] : ($targetUser['department'] ?? 'General');
         }
 
+        $email = trim($_POST['email'] ?? '');
+        if (!empty($email) && $email !== $targetUser['email']) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors['email'] = 'A valid corporate email is required.';
+            } elseif ($this->userModel->isEmailTaken($email, $userId)) {
+                $errors['email'] = 'This email is already registered to another account.';
+            }
+        }
+
         if (!empty($newPassword) && strlen($newPassword) < 6) {
             $errors['password'] = 'New password must be at least 6 characters.';
         }
@@ -253,6 +262,9 @@ class UserController {
             'phone' => $phone,
             'status' => $status
         ];
+        if (!empty($email)) {
+            $updateData['email'] = $email;
+        }
 
         $success = $this->userModel->update($userId, $updateData);
 
@@ -282,7 +294,7 @@ class UserController {
             Response::error('Access restricted. Only Super Administrators can modify account statuses.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 
@@ -322,7 +334,7 @@ class UserController {
             Response::error('Access restricted. Only Super Administrators can delete user accounts.', [], 403);
         }
 
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'POST') !== 'POST') {
             Response::error('Method not allowed', [], 405);
         }
 
