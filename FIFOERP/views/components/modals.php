@@ -561,18 +561,12 @@
           <label>Department / Store Name *</label>
           <input type="text" id="createDeptName" name="name" class="desk-form-control" placeholder="e.g. Electrical Generation" required>
         </div>
-        <div class="desk-form-row">
-          <div class="desk-form-group">
-            <label>Department Code *</label>
-            <input type="text" id="createDeptCode" name="code" class="desk-form-control" placeholder="e.g. ELEC-GEN" required>
-          </div>
-          <div class="desk-form-group">
-            <label>Status</label>
-            <select id="createDeptStatus" name="status" class="desk-form-control">
-              <option value="active" selected>Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
+        <div class="desk-form-group">
+          <label>Status</label>
+          <select id="createDeptStatus" name="status" class="desk-form-control">
+            <option value="active" selected>Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
       </div>
       <div class="desk-modal-footer">

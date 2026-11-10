@@ -44,8 +44,26 @@ class DepartmentController {
         }
 
         if (empty($code)) {
-            // Auto generate code if empty
-            $code = 'EGL-' . strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 5));
+            // Auto generate code from department name if not provided
+            $words = preg_split('/[\s_-]+/', trim($name));
+            $initials = '';
+            foreach ($words as $w) {
+                if (!empty($w)) $initials .= strtoupper(substr($w, 0, 1));
+            }
+            if (strlen($initials) >= 2) {
+                $baseCode = substr($initials, 0, 6);
+            } else {
+                $baseCode = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name), 0, 6));
+            }
+            if (empty($baseCode)) {
+                $baseCode = 'DEP';
+            }
+            $code = $baseCode;
+            $counter = 1;
+            while ($this->deptModel->isCodeTaken($code, null, $locationId)) {
+                $code = $baseCode . '-' . $counter;
+                $counter++;
+            }
         }
 
         if ($this->deptModel->isNameTaken($name, null, $locationId)) {
