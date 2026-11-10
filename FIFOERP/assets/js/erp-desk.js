@@ -14,26 +14,78 @@ const Desk = {
     this.baseUrl = baseUrl || '';
     this.bindEvents();
 
-    // Auto-restore active tab from URL hash, first active sidebar button, or sessionStorage on refresh
-    const hashTab = window.location.hash ? window.location.hash.replace('#', '') : '';
+    // Auto-restore active tab and sub-tab from URL hash, sessionStorage, or first active sidebar button on refresh
+    let rawHash = window.location.hash ? window.location.hash.replace(/^#/, '') : '';
+    let hashMain = '';
+    let hashSub = '';
+
+    if (rawHash.includes('/')) {
+      const parts = rawHash.split('/');
+      hashMain = parts[0];
+      hashSub = parts[1];
+    } else if (rawHash.startsWith('admin-sub-')) {
+      hashMain = 'tab-admin';
+      hashSub = rawHash;
+    } else if (rawHash.startsWith('qoh-sub-')) {
+      hashMain = 'tab-qoh';
+      hashSub = rawHash;
+    } else if (rawHash.startsWith('pv-sub-')) {
+      if (['pv-sub-avg', 'pv-sub-final', 'pv-sub-other', 'pv-sub-summary', 'pv-sub-av7'].includes(rawHash)) {
+        hashMain = 'tab-pv-reports';
+      } else {
+        hashMain = 'tab-pv-workflow';
+      }
+      hashSub = rawHash;
+    } else if (rawHash) {
+      hashMain = rawHash;
+    }
+
     const storedTab = sessionStorage.getItem('fifoerp_active_tab');
     const firstActiveBtn = document.querySelector('.sidebar-nav-item.active') || document.querySelector('.sidebar-nav-item');
     const defaultTab = firstActiveBtn ? firstActiveBtn.getAttribute('data-tab') : 'tab-dashboard';
-    
-    // Ensure restored tab is actually permitted by checking if its sidebar nav item exists
+
+    // Verify permission helper: tab must have a visible sidebar nav button or be tab-admin (if admin pane exists)
+    const isTabPermitted = (t) => {
+      if (!t) return false;
+      if (t === 'tab-admin') {
+        return !!document.getElementById('tab-admin');
+      }
+      return !!document.querySelector(`.sidebar-nav-item[data-tab="${t}"]`);
+    };
+
     let targetTab = defaultTab;
-    if (hashTab && (document.querySelector(`.sidebar-nav-item[data-tab="${hashTab}"]`) || hashTab === 'tab-admin')) {
-      targetTab = hashTab;
-    } else if (storedTab && (document.querySelector(`.sidebar-nav-item[data-tab="${storedTab}"]`) || storedTab === 'tab-admin')) {
+    if (hashMain && isTabPermitted(hashMain)) {
+      targetTab = hashMain;
+    } else if (storedTab && isTabPermitted(storedTab)) {
       targetTab = storedTab;
     }
-    const defaultSub = firstActiveBtn ? firstActiveBtn.getAttribute('data-admin-sub') : null;
+
+    // Determine sub-tab to restore
+    let targetSub = hashSub;
+    if (!targetSub) {
+      if (targetTab === 'tab-admin') {
+        targetSub = sessionStorage.getItem('fifoerp_active_admin_sub') || (firstActiveBtn ? firstActiveBtn.getAttribute('data-admin-sub') : 'admin-sub-locations');
+      } else if (targetTab === 'tab-qoh') {
+        targetSub = sessionStorage.getItem('fifoerp_active_qoh_sub') || 'qoh-sub-batch';
+      } else if (targetTab === 'tab-pv-workflow') {
+        targetSub = sessionStorage.getItem('fifoerp_active_pv_sub') || 'pv-sub-freeze';
+      } else if (targetTab === 'tab-pv-reports') {
+        targetSub = sessionStorage.getItem('fifoerp_active_pv_report_sub') || 'pv-sub-avg';
+      }
+    }
+
+    // Restore cached filters if any
+    const storedReceiptFilter = sessionStorage.getItem('fifoerp_active_receipt_filter');
+    if (storedReceiptFilter) {
+      this.currentReceiptFilter = storedReceiptFilter;
+    }
+    const storedIssueFilter = sessionStorage.getItem('fifoerp_active_issue_filter');
+    if (storedIssueFilter) {
+      this.currentIssueFilter = storedIssueFilter;
+    }
 
     if (targetTab && document.getElementById(targetTab)) {
-      this.switchTab(targetTab);
-      if (defaultSub && targetTab === 'tab-admin') {
-        this.switchAdminSubTab(defaultSub);
-      }
+      this.switchTab(targetTab, targetSub);
     } else if (defaultTab && document.getElementById(defaultTab)) {
       this.switchTab(defaultTab);
     } else {
@@ -58,10 +110,11 @@ const Desk = {
     }, 3500);
   },
 
-  switchTab(tabId) {
+  switchTab(tabId, subTabId = null) {
     let reportSubTabToActivate = null;
     let qohSubTabToActivate = null;
     let adminSubToActivate = null;
+    let pvWorkflowSubToActivate = null;
 
     if (tabId && tabId.startsWith('admin-sub-')) {
       adminSubToActivate = tabId;
@@ -81,8 +134,15 @@ const Desk = {
       tabId = 'tab-receipts';
     }
 
-    // Verify that this tab is permitted for the current user (has a visible sidebar nav button, or is tab-admin)
-    const isPermitted = document.querySelector(`.sidebar-nav-item[data-tab="${tabId}"]`) || (tabId === 'tab-admin');
+    if (subTabId) {
+      if (tabId === 'tab-admin') adminSubToActivate = subTabId;
+      else if (tabId === 'tab-qoh') qohSubTabToActivate = subTabId;
+      else if (tabId === 'tab-pv-workflow') pvWorkflowSubToActivate = subTabId;
+      else if (tabId === 'tab-pv-reports') reportSubTabToActivate = subTabId;
+    }
+
+    // Verify that this tab is permitted for the current user
+    const isPermitted = document.querySelector(`.sidebar-nav-item[data-tab="${tabId}"]`) || (tabId === 'tab-admin' && document.getElementById('tab-admin'));
     if (!isPermitted) {
       const fallbackBtn = document.querySelector('.sidebar-nav-item.active') || document.querySelector('.sidebar-nav-item');
       if (fallbackBtn) {
@@ -114,7 +174,17 @@ const Desk = {
     this.currentTab = tabId;
     try {
       sessionStorage.setItem('fifoerp_active_tab', tabId);
-      history.replaceState(null, '', '#' + tabId);
+      let hash = '#' + tabId;
+      if (tabId === 'tab-admin' && (adminSubToActivate || this.currentAdminSubTab)) {
+        hash += '/' + (adminSubToActivate || this.currentAdminSubTab);
+      } else if (tabId === 'tab-qoh' && (qohSubTabToActivate || this.currentQohSubTab)) {
+        hash += '/' + (qohSubTabToActivate || this.currentQohSubTab);
+      } else if (tabId === 'tab-pv-workflow' && (pvWorkflowSubToActivate || this.currentPvSubTab)) {
+        hash += '/' + (pvWorkflowSubToActivate || this.currentPvSubTab);
+      } else if (tabId === 'tab-pv-reports' && (reportSubTabToActivate || this.currentPvReportSubTab)) {
+        hash += '/' + (reportSubTabToActivate || this.currentPvReportSubTab);
+      }
+      history.replaceState(null, '', hash);
     } catch (e) {}
 
     // Trigger tab-specific data load
@@ -123,25 +193,39 @@ const Desk = {
         this.loadDashboardData();
         break;
       case 'tab-qoh':
-        this.switchQohSubTab(qohSubTabToActivate || this.currentQohSubTab || 'qoh-sub-batch');
+        this.switchQohSubTab(qohSubTabToActivate || this.currentQohSubTab || sessionStorage.getItem('fifoerp_active_qoh_sub') || 'qoh-sub-batch');
         break;
       case 'tab-batches':
         this.loadBatches();
         break;
       case 'tab-receipts':
+        if (sessionStorage.getItem('fifoerp_active_receipt_filter')) {
+          this.currentReceiptFilter = sessionStorage.getItem('fifoerp_active_receipt_filter');
+        }
+        document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(btn => {
+          const fn = btn.getAttribute('onclick') || '';
+          btn.classList.toggle('active', fn.includes(`'${this.currentReceiptFilter}'`));
+        });
         this.loadReceipts();
         break;
       case 'tab-issues':
+        if (sessionStorage.getItem('fifoerp_active_issue_filter')) {
+          this.currentIssueFilter = sessionStorage.getItem('fifoerp_active_issue_filter');
+        }
+        document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(btn => {
+          const fn = btn.getAttribute('onclick') || '';
+          btn.classList.toggle('active', fn.includes(`'${this.currentIssueFilter}'`));
+        });
         this.loadIssues();
         break;
       case 'tab-transactions':
         this.loadDocuments();
         break;
       case 'tab-pv-workflow':
-        this.switchPvSubTab('pv-sub-freeze');
+        this.switchPvSubTab(pvWorkflowSubToActivate || this.currentPvSubTab || sessionStorage.getItem('fifoerp_active_pv_sub') || 'pv-sub-freeze');
         break;
       case 'tab-pv-reports':
-        this.switchPvReportSubTab(reportSubTabToActivate || 'pv-sub-avg');
+        this.switchPvReportSubTab(reportSubTabToActivate || this.currentPvReportSubTab || sessionStorage.getItem('fifoerp_active_pv_report_sub') || 'pv-sub-avg');
         break;
       case 'tab-cashbook':
         this.loadCashBook();
@@ -186,7 +270,7 @@ const Desk = {
         this.loadDestinationCodes();
         break;
       case 'tab-admin':
-        this.switchAdminSubTab(adminSubToActivate || this.currentAdminSubTab || 'admin-sub-locations');
+        this.switchAdminSubTab(adminSubToActivate || this.currentAdminSubTab || sessionStorage.getItem('fifoerp_active_admin_sub') || 'admin-sub-locations');
         break;
     }
   },
@@ -199,9 +283,8 @@ const Desk = {
         const tab = btn.getAttribute('data-tab');
         const adminSub = btn.getAttribute('data-admin-sub');
         if (tab) {
-          Desk.switchTab(tab);
+          Desk.switchTab(tab, adminSub || null);
           if (adminSub && tab === 'tab-admin') {
-            Desk.switchAdminSubTab(adminSub);
             document.querySelectorAll('.sidebar-nav-item').forEach(el => el.classList.remove('active'));
             btn.classList.add('active');
           }
@@ -373,6 +456,14 @@ const Desk = {
       .then(res => {
         if (res.success) {
           this.cachedReceipts = res.data.documents;
+          const savedFilter = sessionStorage.getItem('fifoerp_active_receipt_filter');
+          if (savedFilter) {
+            this.currentReceiptFilter = savedFilter;
+          }
+          document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(el => {
+            const fn = el.getAttribute('onclick') || '';
+            el.classList.toggle('active', fn.includes(`'${this.currentReceiptFilter}'`));
+          });
           this.renderReceiptsTable();
         }
       });
@@ -380,8 +471,17 @@ const Desk = {
 
   filterReceipts(status, btn) {
     this.currentReceiptFilter = status;
-    document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(el => el.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+    try {
+      sessionStorage.setItem('fifoerp_active_receipt_filter', status);
+    } catch (e) {}
+    document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(el => {
+      if (btn) {
+        el.classList.toggle('active', el === btn);
+      } else {
+        const fn = el.getAttribute('onclick') || '';
+        el.classList.toggle('active', fn.includes(`'${status}'`));
+      }
+    });
     this.renderReceiptsTable();
   },
 
@@ -470,6 +570,14 @@ const Desk = {
       .then(res => {
         if (res.success) {
           this.cachedIssues = res.data.documents;
+          const savedFilter = sessionStorage.getItem('fifoerp_active_issue_filter');
+          if (savedFilter) {
+            this.currentIssueFilter = savedFilter;
+          }
+          document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(el => {
+            const fn = el.getAttribute('onclick') || '';
+            el.classList.toggle('active', fn.includes(`'${this.currentIssueFilter}'`));
+          });
           this.renderIssuesTable();
         }
       });
@@ -477,8 +585,17 @@ const Desk = {
 
   filterIssues(status, btn) {
     this.currentIssueFilter = status;
-    document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(el => el.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+    try {
+      sessionStorage.setItem('fifoerp_active_issue_filter', status);
+    } catch (e) {}
+    document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(el => {
+      if (btn) {
+        el.classList.toggle('active', el === btn);
+      } else {
+        const fn = el.getAttribute('onclick') || '';
+        el.classList.toggle('active', fn.includes(`'${status}'`));
+      }
+    });
     this.renderIssuesTable();
   },
 
@@ -725,6 +842,12 @@ const Desk = {
   // Quantity On Hand (QOH) Sub-tabs (Batch Wise & Material Wise)
   // -----------------------------------------------------------------
   switchQohSubTab(subTabId) {
+    this.currentQohSubTab = subTabId;
+    try {
+      sessionStorage.setItem('fifoerp_active_qoh_sub', subTabId);
+      history.replaceState(null, '', '#tab-qoh/' + subTabId);
+    } catch (e) {}
+
     document.querySelectorAll('#qohPills .pv-pill-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-qoh-btn') === subTabId);
     });
@@ -734,8 +857,6 @@ const Desk = {
       pane.classList.toggle('active', isActive);
       pane.style.display = isActive ? 'block' : 'none';
     });
-
-    this.currentQohSubTab = subTabId;
 
     if (subTabId === 'qoh-sub-batch') {
       this.loadBatches();
@@ -756,6 +877,12 @@ const Desk = {
   // Physical Verification (Workflows vs Reports Desks)
   // -----------------------------------------------------------------
   switchPvSubTab(subTabId) {
+    this.currentPvSubTab = subTabId;
+    try {
+      sessionStorage.setItem('fifoerp_active_pv_sub', subTabId);
+      history.replaceState(null, '', '#tab-pv-workflow/' + subTabId);
+    } catch (e) {}
+
     document.querySelectorAll('#pvWorkflowPills .pv-pill-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
     });
@@ -801,6 +928,12 @@ const Desk = {
   },
 
   switchPvReportSubTab(subTabId) {
+    this.currentPvReportSubTab = subTabId;
+    try {
+      sessionStorage.setItem('fifoerp_active_pv_report_sub', subTabId);
+      history.replaceState(null, '', '#tab-pv-reports/' + subTabId);
+    } catch (e) {}
+
     document.querySelectorAll('#pvReportsPills .pv-pill-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
     });
@@ -2118,6 +2251,10 @@ const Desk = {
 
   switchAdminSubTab(subTabId) {
     this.currentAdminSubTab = subTabId;
+    try {
+      sessionStorage.setItem('fifoerp_active_admin_sub', subTabId);
+      history.replaceState(null, '', '#tab-admin/' + subTabId);
+    } catch (e) {}
     document.querySelectorAll('.admin-sub-tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-admin-sub') === subTabId);
     });

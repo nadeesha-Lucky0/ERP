@@ -2075,10 +2075,11 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
     </div>
 
+    <?php if ($isAdmin): ?>
     <!-- ============================================================
          PANE 16: Administration & Governance
          ============================================================ -->
-    <div id="tab-admin" class="tab-pane" <?= $isAdmin ? 'style="display: block;"' : 'style="display: none;"' ?>>
+    <div id="tab-admin" class="tab-pane" style="display: block;">
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Administration &amp; Governance Console</h1>
@@ -2518,6 +2519,7 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
     </div>
+    <?php endif; ?>
 
   </main>
 </div>
