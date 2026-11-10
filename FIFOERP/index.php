@@ -2423,7 +2423,9 @@ require_once __DIR__ . '/views/layouts/header.php';
                     System Navigation Tab / Sub-Tab
                   </th>
                   <?php if (empty($groupedUsersByStation)): ?>
-                    <th style="text-align: center; color: #94a3b8; padding: 12px;">No active users</th>
+                    <th style="text-align: center; color: #94a3b8; padding: 16px 20px; font-weight: normal; font-size: 0.82rem;">
+                      No operational user accounts created yet. Use the <strong>User Accounts</strong> tab above to create users and configure their tab access matrix.
+                    </th>
                   <?php else: ?>
                     <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
                       <th colspan="<?= count($stUsers) ?>" style="text-align: center; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.74rem; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; border-left: 2px solid #cbd5e1; padding: 6px 8px; white-space: nowrap;">
@@ -2434,20 +2436,24 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </tr>
                 <!-- Tier 2: User Account Headers -->
                 <tr>
-                  <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
-                    <?php foreach ($stUsers as $idx => $u): ?>
-                      <th class="matrix-user-col" style="text-align: center; background: #ffffff; padding: 6px 4px; white-space: nowrap; border-bottom: 1px solid #cbd5e1; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : '' ?>">
-                        <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; text-transform: uppercase;">
-                          <?= htmlspecialchars($u['username']) ?>
-                        </div>
-                        <div>
-                          <span class="desk-badge badge-draft" style="font-size: 0.62rem; padding: 1px 4px;">
-                            <?= htmlspecialchars($u['role_display_name'] ?? 'User') ?>
-                          </span>
-                        </div>
-                      </th>
+                  <?php if (empty($groupedUsersByStation)): ?>
+                    <th style="display: none;"></th>
+                  <?php else: ?>
+                    <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                      <?php foreach ($stUsers as $idx => $u): ?>
+                        <th class="matrix-user-col" style="text-align: center; background: #ffffff; padding: 6px 4px; white-space: nowrap; border-bottom: 1px solid #cbd5e1; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : '' ?>">
+                          <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; text-transform: uppercase;">
+                            <?= htmlspecialchars($u['username']) ?>
+                          </div>
+                          <div>
+                            <span class="desk-badge badge-draft" style="font-size: 0.62rem; padding: 1px 4px;">
+                              <?= htmlspecialchars($u['role_display_name'] ?? 'User') ?>
+                            </span>
+                          </div>
+                        </th>
+                      <?php endforeach; ?>
                     <?php endforeach; ?>
-                  <?php endforeach; ?>
+                  <?php endif; ?>
                 </tr>
               </thead>
               <tbody>
@@ -2456,11 +2462,15 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <td class="matrix-nav-col" style="background: #fdf2f5 !important; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
                       <strong style="color: #650b2b;"><?= htmlspecialchars($categoryName) ?></strong>
                     </td>
-                    <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
-                      <?php foreach ($stUsers as $idx => $u): ?>
-                        <td class="matrix-user-col" style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : 'border-left: 1px solid #f1f5f9;' ?>"></td>
+                    <?php if (empty($groupedUsersByStation)): ?>
+                      <td style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0;"></td>
+                    <?php else: ?>
+                      <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                        <?php foreach ($stUsers as $idx => $u): ?>
+                          <td class="matrix-user-col" style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : 'border-left: 1px solid #f1f5f9;' ?>"></td>
+                        <?php endforeach; ?>
                       <?php endforeach; ?>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                   </tr>
 
                   <?php foreach ($perms as $permKey => $permMeta):
@@ -2471,29 +2481,33 @@ require_once __DIR__ . '/views/layouts/header.php';
                       <td class="<?= $levelClass ?> matrix-nav-col" style="border-right: 1px solid #e2e8f0;">
                         <span class="matrix-perm-title"><?= htmlspecialchars($permMeta['label']) ?></span>
                       </td>
-                      <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
-                        <?php foreach ($stUsers as $idx => $u):
-                          if (isset($userPermissionsMatrix[$permKey][$u['id']])) {
-                            $isGranted = ((int)$userPermissionsMatrix[$permKey][$u['id']] === 1);
-                          } elseif (isset($permissionsMatrix[$permKey][$u['role_id']])) {
-                            $isGranted = ((int)$permissionsMatrix[$permKey][$u['role_id']] === 1);
-                          } else {
-                            $isGranted = true;
-                          }
-                        ?>
-                          <td class="matrix-user-col" style="text-align: center; padding: 4px 3px; <?= ($idx === 0) ? 'border-left: 2px solid #f1f5f9;' : '' ?>">
-                            <label class="matrix-switch" title="Toggle <?= htmlspecialchars($permMeta['label']) ?> for <?= htmlspecialchars($u['username']) ?>">
-                              <input type="checkbox" class="matrix-perm-toggle"
-                                data-user-id="<?= $u['id'] ?>"
-                                data-permission-key="<?= htmlspecialchars($permKey) ?>"
-                                data-target-name="<?= htmlspecialchars($u['username']) ?>"
-                                data-perm-label="<?= htmlspecialchars($permMeta['label']) ?>"
-                                <?= $isGranted ? 'checked' : '' ?>>
-                              <span class="matrix-slider"></span>
-                            </label>
-                          </td>
+                      <?php if (empty($groupedUsersByStation)): ?>
+                        <td style="text-align: center; color: #cbd5e1; font-size: 0.8rem; padding: 4px;">—</td>
+                      <?php else: ?>
+                        <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                          <?php foreach ($stUsers as $idx => $u):
+                            if (isset($userPermissionsMatrix[$permKey][$u['id']])) {
+                              $isGranted = ((int)$userPermissionsMatrix[$permKey][$u['id']] === 1);
+                            } elseif (isset($permissionsMatrix[$permKey][$u['role_id']])) {
+                              $isGranted = ((int)$permissionsMatrix[$permKey][$u['role_id']] === 1);
+                            } else {
+                              $isGranted = true;
+                            }
+                          ?>
+                            <td class="matrix-user-col" style="text-align: center; padding: 4px 3px; <?= ($idx === 0) ? 'border-left: 2px solid #f1f5f9;' : '' ?>">
+                              <label class="matrix-switch" title="Toggle <?= htmlspecialchars($permMeta['label']) ?> for <?= htmlspecialchars($u['username']) ?>">
+                                <input type="checkbox" class="matrix-perm-toggle"
+                                  data-user-id="<?= $u['id'] ?>"
+                                  data-permission-key="<?= htmlspecialchars($permKey) ?>"
+                                  data-target-name="<?= htmlspecialchars($u['username']) ?>"
+                                  data-perm-label="<?= htmlspecialchars($permMeta['label']) ?>"
+                                  <?= $isGranted ? 'checked' : '' ?>>
+                                <span class="matrix-slider"></span>
+                              </label>
+                            </td>
+                          <?php endforeach; ?>
                         <?php endforeach; ?>
-                      <?php endforeach; ?>
+                      <?php endif; ?>
                     </tr>
                   <?php endforeach; ?>
                 <?php endforeach; ?>
