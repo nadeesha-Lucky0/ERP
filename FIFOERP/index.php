@@ -3496,31 +3496,27 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 <!-- Modal 2: Get Items From Cost Center -->
 
-<!-- Modal: Get Items From Purchase Order with Predefined Suppliers -->
+<!-- Modal: Select Purchase Order with Predefined Suppliers -->
 <div id="modalGetItemsFromPO" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 780px; width: 92%; border-radius: 8px; background: #fff;">
+  <div class="desk-modal" style="max-width: 580px; width: 90%; border-radius: 8px; background: #fff;">
     <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Get Items From Purchase Order</h3>
+      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Purchase Order &amp; Supplier</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closePoSelectionModal()">&times;</button>
     </div>
-    <div class="desk-modal-body" style="padding: 18px 20px;">
+    <div class="desk-modal-body" style="padding: 20px 24px;">
       
-      <!-- Top Grid: Predefined Supplier & PO Ref -->
-      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 14px;">
-        <div>
-          <label class="frappe-label">Predefined Supplier <span style="color: #e02424;">*</span></label>
-          <select id="modalPoSupplierSelect" class="frappe-control" style="font-weight: 500;" onchange="Desk.onModalSupplierChanged(this.value)">
-            <option value="">-- Select Predefined Supplier --</option>
-          </select>
-        </div>
+      <div style="margin-bottom: 16px;">
+        <label class="frappe-label">Predefined Supplier <span style="color: #e02424;">*</span></label>
+        <select id="modalPoSupplierSelect" class="frappe-control" style="font-weight: 500;" onchange="Desk.onModalSupplierChanged(this.value)">
+          <option value="">-- Select Predefined Supplier --</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px;">
         <div>
           <label class="frappe-label">Purchase Order Ref <span style="color: #e02424;">*</span></label>
           <input type="text" id="modalPoRefInput" class="frappe-control" placeholder="e.g. PO-2026-081" value="PO-2026-081">
         </div>
-      </div>
-
-      <!-- Second Row: Target Warehouse & Search Filter -->
-      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; margin-bottom: 16px;">
         <div>
           <label class="frappe-label">Target Warehouse</label>
           <select id="modalPoWarehouseSelect" class="frappe-control">
@@ -3530,38 +3526,12 @@ require_once __DIR__ . '/views/layouts/header.php';
             <option value="Central Warehouse - Main Store">Central Warehouse - Main Store</option>
           </select>
         </div>
-        <div>
-          <label class="frappe-label">Search Master Items to Receive</label>
-          <input type="text" id="modalPoSearchInput" class="frappe-control" placeholder="Type SKU or description to filter..." oninput="Desk.filterPoItems(this.value)">
-        </div>
-      </div>
-
-      <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-        <span>Select Consignment Items to Receive into Store</span>
-        <span style="font-size: 11.5px; color: #6c7680; font-weight: 400;">Items arriving from this supplier</span>
-      </div>
-
-      <div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-        <table class="frappe-table" id="modalPoItemsTable">
-          <thead>
-            <tr>
-              <th style="width: 36px; text-align: center;"><input type="checkbox" id="modalPoCheckAll" onchange="Desk.toggleModalPoCheckAll(this.checked)" checked></th>
-              <th>Item Code / Description</th>
-              <th style="width: 70px; text-align: center;">UOM</th>
-              <th style="width: 110px; text-align: right;">Unit Rate</th>
-              <th style="width: 100px; text-align: right;">Receive Qty</th>
-            </tr>
-          </thead>
-          <tbody id="modalPoItemsBody">
-            <!-- Populated via Desk.renderPoSupplierItems(supplier) -->
-          </tbody>
-        </table>
       </div>
 
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 24px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closePoSelectionModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromPO()">Get Items</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromPO()">Apply to Stock Entry</button>
     </div>
   </div>
 </div>
