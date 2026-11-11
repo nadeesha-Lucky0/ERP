@@ -3937,6 +3937,39 @@ const Desk = {
 
       populateWh(defSource, 'Main Store Bay-01');
       populateWh(defTarget, 'Main Store Bay-01');
+
+      // Populate Suppliers
+      const supSel = document.getElementById(`${context}SupplierSelect`);
+      if (supSel && supSel.children.length <= 1 && Array.isArray(lookups.suppliers)) {
+        lookups.suppliers.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          supSel.appendChild(opt);
+        });
+      }
+
+      // Populate Cost Centers
+      const ccSel = document.getElementById(`${context}CostCenterSelect`);
+      if (ccSel && ccSel.children.length <= 1 && Array.isArray(lookups.cost_centers)) {
+        lookups.cost_centers.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.code;
+          opt.textContent = c.name;
+          ccSel.appendChild(opt);
+        });
+      }
+
+      // Populate Projects
+      const prjSel = document.getElementById(`${context}ProjectSelect`);
+      if (prjSel && prjSel.children.length <= 1 && Array.isArray(lookups.projects)) {
+        lookups.projects.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          prjSel.appendChild(opt);
+        });
+      }
     }
 
     // Initialize 1 default row if table empty
@@ -4112,19 +4145,27 @@ const Desk = {
     const whHeader = document.getElementById(`${context}ColWhHeader`);
     const srcGrp = document.getElementById(`${context}SourceWhGroup`);
     const tgtGrp = document.getElementById(`${context}TargetWhGroup`);
+    const purchaseSec = document.getElementById(`${context}PurchaseSection`);
+    const costCenterSec = document.getElementById(`${context}CostCenterSection`);
 
     if (type === 'Material Receipt') {
       if (whHeader) whHeader.textContent = 'Target Warehouse';
       if (srcGrp) srcGrp.style.display = 'none';
       if (tgtGrp) tgtGrp.style.display = 'block';
+      if (purchaseSec) purchaseSec.style.display = 'block';
+      if (costCenterSec) costCenterSec.style.display = 'none';
     } else if (type === 'Material Issue') {
       if (whHeader) whHeader.textContent = 'Source Warehouse';
       if (srcGrp) srcGrp.style.display = 'block';
       if (tgtGrp) tgtGrp.style.display = 'none';
+      if (purchaseSec) purchaseSec.style.display = 'none';
+      if (costCenterSec) costCenterSec.style.display = 'block';
     } else {
       if (whHeader) whHeader.textContent = 'Warehouse';
       if (srcGrp) srcGrp.style.display = 'block';
       if (tgtGrp) tgtGrp.style.display = 'block';
+      if (purchaseSec) purchaseSec.style.display = 'block';
+      if (costCenterSec) costCenterSec.style.display = 'block';
     }
   },
 
@@ -4543,9 +4584,352 @@ const Desk = {
     this.showToast('Duplicated entries ready as New Stock Entry.');
   },
 
+  // Purchase Order & Cost Center Data & Selection Modals
+  samplePurchaseOrders: {
+    'PO-2026-081': {
+      po_no: 'PO-2026-081',
+      supplier: 'Lanka Lubricants Ltd',
+      date: '10-Nov-2026',
+      warehouse: 'Main Store Bay-01',
+      items: [
+        { sku: '1-01-01-001', name: 'SUPER GLUE TUBE (3G)', uom: 'NO', qty: 50, rate: 185.00 },
+        { sku: '1-01-01-003', name: 'ARALDITE HIGH PERFORMANCE (2 X 15ML RAPID)', uom: 'NO.', qty: 20, rate: 750.00 },
+        { sku: '1-01-01-015', name: 'JB WELD KWIK WELD QUICK SETTING STEEL 2 OZ', uom: 'NO', qty: 15, rate: 1450.00 }
+      ]
+    },
+    'PO-2026-082': {
+      po_no: 'PO-2026-082',
+      supplier: 'Colombo Electrical Supplies Ltd',
+      date: '08-Nov-2026',
+      warehouse: 'Electrical Supplies Sub-Store',
+      items: [
+        { sku: '1-01-01-004', name: 'ARALDITE PACK (17G)', uom: 'NO', qty: 30, rate: 320.00 },
+        { sku: '1-01-01-005', name: 'ARALDITE 2000+ (50ML)', uom: 'NO', qty: 10, rate: 2100.00 }
+      ]
+    },
+    'PO-2026-083': {
+      po_no: 'PO-2026-083',
+      supplier: 'Industrial Spares (Pvt) Ltd',
+      date: '05-Nov-2026',
+      warehouse: 'Mechanical Stores',
+      items: [
+        { sku: '1-01-01-001', name: 'SUPER GLUE TUBE (3G)', uom: 'NO', qty: 100, rate: 180.00 },
+        { sku: '1-01-01-003', name: 'ARALDITE HIGH PERFORMANCE (2 X 15ML RAPID)', uom: 'NO.', qty: 40, rate: 720.00 }
+      ]
+    },
+    'PO-2026-084': {
+      po_no: 'PO-2026-084',
+      supplier: 'Diesel & Motor Engineering (DIMO)',
+      date: '03-Nov-2026',
+      warehouse: 'Main Store Bay-01',
+      items: [
+        { sku: '1-01-01-015', name: 'JB WELD KWIK WELD QUICK SETTING STEEL 2 OZ', uom: 'NO', qty: 25, rate: 1420.00 }
+      ]
+    },
+    'PO-2026-085': {
+      po_no: 'PO-2026-085',
+      supplier: 'Kelani Cables PLC',
+      date: '01-Nov-2026',
+      warehouse: 'Electrical Supplies Sub-Store',
+      items: [
+        { sku: '1-01-01-005', name: 'ARALDITE 2000+ (50ML)', uom: 'NO', qty: 15, rate: 2050.00 }
+      ]
+    }
+  },
+
+  activePoContext: 'grn',
+  activeCostCenterContext: 'issue',
+
+  // PO Selection Dialog
+  openPoSelectionModal(context) {
+    this.activePoContext = context;
+    const modal = document.getElementById('modalGetItemsFromPO');
+    if (!modal) return;
+
+    // Reset dropdown
+    const sel = document.getElementById('modalPoSelector');
+    if (sel) {
+      sel.value = 'PO-2026-081';
+      this.onModalPoSelected('PO-2026-081');
+    }
+    modal.style.display = 'flex';
+  },
+
+  closePoSelectionModal() {
+    const modal = document.getElementById('modalGetItemsFromPO');
+    if (modal) modal.style.display = 'none';
+  },
+
+  onModalPoSelected(poNo) {
+    const box = document.getElementById('modalPoDetailsBox');
+    const tbody = document.getElementById('modalPoItemsBody');
+    const po = this.samplePurchaseOrders[poNo];
+
+    if (!po) {
+      if (box) box.style.display = 'none';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #8d99a6; padding: 20px;">Please select a Purchase Order above.</td></tr>';
+      return;
+    }
+
+    if (box) {
+      document.getElementById('modalPoSupplierName').textContent = po.supplier;
+      document.getElementById('modalPoDate').textContent = po.date;
+      document.getElementById('modalPoWarehouse').textContent = po.warehouse;
+      box.style.display = 'block';
+    }
+
+    if (tbody) {
+      let html = '';
+      po.items.forEach((it, idx) => {
+        html += `
+          <tr data-po-sku="${it.sku}">
+            <td style="text-align: center;">
+              <input type="checkbox" class="po-item-chk" value="${it.sku}" data-name="${it.name}" data-uom="${it.uom}" data-rate="${it.rate}" data-qty="${it.qty}" checked style="accent-color: #18181b; cursor: pointer;">
+            </td>
+            <td>
+              <div style="font-weight: 600; font-size: 12.5px;">${it.sku}</div>
+              <div style="font-size: 11.5px; color: #6c7680;">${it.name}</div>
+            </td>
+            <td style="text-align: center; font-size: 12px; color: #6c7680;">${it.uom}</td>
+            <td style="text-align: right; font-size: 12px; font-weight: 500;">${it.qty}</td>
+            <td style="text-align: right; font-size: 12px;">Rs. ${it.rate.toFixed(2)}</td>
+            <td style="text-align: right;">
+              <input type="number" step="0.001" min="0" class="frappe-control po-recv-qty" style="height: 28px; width: 85px; text-align: right; font-size: 12px; font-weight: 600;" value="${it.qty}">
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+  },
+
+  toggleModalPoCheckAll(checked) {
+    document.querySelectorAll('.po-item-chk').forEach(c => c.checked = checked);
+  },
+
+  confirmGetItemsFromPO() {
+    const ctx = this.activePoContext || 'grn';
+    const selPo = document.getElementById('modalPoSelector')?.value || '';
+    const po = this.samplePurchaseOrders[selPo];
+    const state = this.stockEntryState[ctx];
+    const defWh = po ? po.warehouse : 'Main Store Bay-01';
+
+    let count = 0;
+    document.querySelectorAll('#modalPoItemsBody tr').forEach(tr => {
+      const chk = tr.querySelector('.po-item-chk');
+      if (chk && chk.checked) {
+        const sku = chk.value;
+        const name = chk.getAttribute('data-name');
+        const uom = chk.getAttribute('data-uom');
+        const rate = parseFloat(chk.getAttribute('data-rate') || 0);
+        const qty = parseFloat(tr.querySelector('.po-recv-qty')?.value || 1);
+
+        // Check if first row is blank
+        if (state.items.length === 1 && !state.items[0].item_code) {
+          state.items[0].item_code = sku;
+          state.items[0].item_name = name;
+          state.items[0].uom = uom;
+          state.items[0].basic_rate = rate;
+          state.items[0].qty = qty;
+          state.items[0].warehouse = defWh;
+        } else {
+          state.items.push({
+            id: state.nextId++,
+            warehouse: defWh,
+            item_code: sku,
+            item_name: name,
+            uom: uom,
+            qty: qty,
+            basic_rate: rate
+          });
+        }
+        count++;
+      }
+    });
+
+    // Populate on-form fields
+    if (po) {
+      const poSel = document.getElementById(`${ctx}PoSelect`);
+      if (poSel) poSel.value = selPo;
+
+      const poRefInput = document.getElementById(`${ctx}PoRef`);
+      if (poRefInput) poRefInput.value = selPo;
+
+      const supSel = document.getElementById(`${ctx}SupplierSelect`);
+      if (supSel) supSel.value = po.supplier;
+
+      const partyInput = document.getElementById(`${ctx}PartyName`);
+      if (partyInput) partyInput.value = po.supplier;
+
+      const whTarget = document.getElementById(`${ctx}DefTargetWh`);
+      if (whTarget && ctx === 'grn') whTarget.value = defWh;
+    }
+
+    this.closePoSelectionModal();
+    this.renderStockEntryRows(ctx);
+    this.showToast(`Loaded ${count} items from ${selPo}.`);
+  },
+
+  onPoSelectChange(context, val) {
+    const customInput = document.getElementById(`${context}CustomPoInput`);
+    const poRef = document.getElementById(`${context}PoRef`);
+    const supSel = document.getElementById(`${context}SupplierSelect`);
+    const partyName = document.getElementById(`${context}PartyName`);
+
+    if (val === 'CUSTOM') {
+      if (customInput) customInput.style.display = 'block';
+      if (poRef) poRef.value = customInput?.value || '';
+    } else {
+      if (customInput) customInput.style.display = 'none';
+      if (poRef) poRef.value = val;
+
+      const po = this.samplePurchaseOrders[val];
+      if (po) {
+        if (supSel) supSel.value = po.supplier;
+        if (partyName) partyName.value = po.supplier;
+      }
+    }
+  },
+
+  onSupplierSelectChange(context, val) {
+    const partyName = document.getElementById(`${context}PartyName`);
+    if (partyName) partyName.value = val;
+  },
+
+  // Cost Center Selection Dialog
+  openCostCenterSelectionModal(context) {
+    this.activeCostCenterContext = context;
+    const modal = document.getElementById('modalGetItemsFromCostCenter');
+    if (!modal) return;
+
+    const sel = document.getElementById('modalCostCenterSelector');
+    if (sel && sel.children.length <= 1) {
+      const lookups = this.cachedStockLookups || { cost_centers: [] };
+      (lookups.cost_centers || []).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.code;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    if (sel && sel.options.length > 1) {
+      sel.selectedIndex = 1;
+      this.onModalCostCenterSelected(sel.value);
+    }
+
+    modal.style.display = 'flex';
+  },
+
+  closeCostCenterSelectionModal() {
+    const modal = document.getElementById('modalGetItemsFromCostCenter');
+    if (modal) modal.style.display = 'none';
+  },
+
+  onModalCostCenterSelected(code) {
+    const tbody = document.getElementById('modalCostCenterItemsBody');
+    if (!tbody) return;
+
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const materials = (lookups.materials || []).slice(0, 15);
+
+    if (materials.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #8d99a6; padding: 20px;">No items configured for this Cost Center.</td></tr>';
+      return;
+    }
+
+    let html = '';
+    materials.forEach(m => {
+      html += `
+        <tr class="cc-modal-item-row" data-sku="${m.sku}" data-name="${(m.item_name||'').toLowerCase()}">
+          <td style="text-align: center;">
+            <input type="checkbox" class="cc-item-chk" value="${m.sku}" data-name="${m.item_name}" data-uom="${m.uom||'Nos'}" data-rate="${m.unit_price||0}" checked style="accent-color: #18181b; cursor: pointer;">
+          </td>
+          <td>
+            <div style="font-weight: 600; font-size: 12.5px;">${m.sku}</div>
+            <div style="font-size: 11.5px; color: #6c7680;">${m.item_name}</div>
+          </td>
+          <td style="text-align: center; font-size: 12px; color: #6c7680;">${m.uom || 'Nos'}</td>
+          <td style="text-align: right; font-size: 12px;">Rs. ${parseFloat(m.unit_price||0).toFixed(2)}</td>
+          <td style="text-align: right;">
+            <input type="number" step="0.001" min="0" class="frappe-control cc-req-qty" style="height: 28px; width: 85px; text-align: right; font-size: 12px; font-weight: 600;" value="1.000">
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  },
+
+  filterCostCenterItems(query) {
+    const q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('.cc-modal-item-row').forEach(tr => {
+      const sku = (tr.getAttribute('data-sku') || '').toLowerCase();
+      const name = (tr.getAttribute('data-name') || '').toLowerCase();
+      tr.style.display = (!q || sku.includes(q) || name.includes(q)) ? '' : 'none';
+    });
+  },
+
+  toggleModalCostCenterCheckAll(checked) {
+    document.querySelectorAll('.cc-item-chk').forEach(c => c.checked = checked);
+  },
+
+  confirmGetItemsFromCostCenter() {
+    const ctx = this.activeCostCenterContext || 'issue';
+    const selCode = document.getElementById('modalCostCenterSelector')?.value || '';
+    const state = this.stockEntryState[ctx];
+    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'Main Store Bay-01';
+
+    let count = 0;
+    document.querySelectorAll('#modalCostCenterItemsBody tr').forEach(tr => {
+      const chk = tr.querySelector('.cc-item-chk');
+      if (chk && chk.checked) {
+        const sku = chk.value;
+        const name = chk.getAttribute('data-name');
+        const uom = chk.getAttribute('data-uom');
+        const rate = parseFloat(chk.getAttribute('data-rate') || 0);
+        const qty = parseFloat(tr.querySelector('.cc-req-qty')?.value || 1);
+
+        if (state.items.length === 1 && !state.items[0].item_code) {
+          state.items[0].item_code = sku;
+          state.items[0].item_name = name;
+          state.items[0].uom = uom;
+          state.items[0].basic_rate = rate;
+          state.items[0].qty = qty;
+          state.items[0].warehouse = defWh;
+        } else {
+          state.items.push({
+            id: state.nextId++,
+            warehouse: defWh,
+            item_code: sku,
+            item_name: name,
+            uom: uom,
+            qty: qty,
+            basic_rate: rate
+          });
+        }
+        count++;
+      }
+    });
+
+    // Populate on-form fields
+    const ccSel = document.getElementById(`${ctx}CostCenterSelect`);
+    if (ccSel) ccSel.value = selCode;
+
+    const partyInput = document.getElementById(`${ctx}PartyName`);
+    if (partyInput && selCode) partyInput.value = `Cost Center: ${selCode}`;
+
+    this.closeCostCenterSelectionModal();
+    this.renderStockEntryRows(ctx);
+    this.showToast(`Loaded ${count} items for Cost Center ${selCode}.`);
+  },
+
+  onCostCenterSelectChange(context, val) {
+    const partyInput = document.getElementById(`${context}PartyName`);
+    if (partyInput) partyInput.value = val ? `Cost Center: ${val}` : '';
+  },
+
   getItemsFromPO(context) {
-    this.showToast('Select items from Purchase Order list:');
-    this.openAddMultipleModal(context);
+    this.openPoSelectionModal(context);
   },
 
   getItemsFromMaterialRequest(context) {

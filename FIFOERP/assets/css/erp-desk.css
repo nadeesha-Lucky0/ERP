@@ -1321,6 +1321,41 @@ textarea.desk-form-control {
   background: #e9ecef;
 }
 
+/* Frappe Top Bar Dropdown Menus */
+.frappe-dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  min-width: 220px;
+  padding: 6px 0;
+}
+.frappe-dropdown-item {
+  display: block !important;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #1f272e !important;
+  text-decoration: none !important;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.frappe-dropdown-item:hover {
+  background: #f1f3f5;
+  color: #0f172a !important;
+}
+.frappe-dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}
+
 
 
 
