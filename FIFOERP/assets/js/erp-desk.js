@@ -4236,11 +4236,6 @@ const Desk = {
         whOptions += `<option value="${w}" ${row.warehouse === w ? 'selected' : ''}>${w}</option>`;
       });
 
-      let matOptions = '<option value="">Select or type Item Code...</option>';
-      materials.forEach(m => {
-        matOptions += `<option value="${m.sku}" ${row.item_code === m.sku ? 'selected' : ''}>${m.sku} - ${m.item_name}</option>`;
-      });
-
       html += `
         <tr data-row-id="${row.id}" style="${isChecked ? 'background: #f8fafc;' : ''}">
           <td style="text-align: center;">
@@ -4254,13 +4249,36 @@ const Desk = {
               ${whOptions}
             </select>
           </td>
-          <td>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <select class="frappe-control frappe-select" style="height: 30px; font-size: 12px; font-weight: 500;" onchange="Desk.onStockEntryItemSelect('${context}', ${row.id}, this.value)">
-                ${matOptions}
-              </select>
+          <td style="position: relative;">
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <div style="position: relative; flex: 1;">
+                <input type="text"
+                       class="frappe-control item-code-search-input"
+                       id="itemCodeInput_${context}_${row.id}"
+                       style="height: 30px; font-size: 12px; font-weight: 600; font-family: monospace; width: 100%; padding-right: ${row.item_code ? '24px' : '8px'};"
+                       placeholder="Search Code or Name..."
+                       value="${Desk.escapeHtml(row.item_code || '')}"
+                       autocomplete="off"
+                       onfocus="Desk.searchStockEntryItem('${context}', ${row.id}, this.value)"
+                       oninput="Desk.searchStockEntryItem('${context}', ${row.id}, this.value)"
+                       onkeydown="Desk.handleItemSearchKeydown(event, '${context}', ${row.id})"
+                       onblur="setTimeout(() => Desk.closeItemSearchDropdown('${context}', ${row.id}), 250)">
+                ${row.item_code ? `
+                  <button type="button" 
+                          onclick="Desk.clearStockEntryItem('${context}', ${row.id})"
+                          style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 14px; line-height: 1; padding: 2px;"
+                          title="Clear Item">&times;</button>
+                ` : ''}
+                <div id="itemSearchDropdown_${context}_${row.id}" 
+                     class="desk-item-search-dropdown" 
+                     style="display: none; position: absolute; left: 0; top: 34px; width: 380px; max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 1050; text-align: left;">
+                </div>
+              </div>
+              <button type="button" class="frappe-table-btn" style="height: 30px; width: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; color: #475569;" title="Search All Master Items" onclick="Desk.openItemCodeSearchModal('${context}', ${row.id})">
+                🔍
+              </button>
             </div>
-            ${row.item_name ? `<div style="font-size: 11px; color: #6c7680; margin-top: 2px;">${row.item_name} ${row.uom ? `(${row.uom})` : ''}</div>` : ''}
+            ${row.item_name ? `<div id="itemSubtitle_${context}_${row.id}" style="font-size: 11px; color: #64748b; margin-top: 2px; line-height: 1.3;">${Desk.escapeHtml(row.item_name)} ${row.uom ? `<span style="color: #94a3b8;">(${Desk.escapeHtml(row.uom)})</span>` : ''}</div>` : ''}
           </td>
           <td>
             <input type="number" step="0.001" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${parseFloat(row.qty || 0).toFixed(3)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)">
@@ -4354,6 +4372,266 @@ const Desk = {
       row.item_name = '';
     }
     this.renderStockEntryRows(context);
+  },
+
+  itemSearchDebounce: null,
+  searchItemTargetContext: 'grn',
+  searchItemTargetRowId: null,
+
+  searchStockEntryItem(context, rowId, query) {
+    const dropdown = document.getElementById(`itemSearchDropdown_${context}_${rowId}`);
+    if (!dropdown) return;
+
+    const q = (query || '').trim().toLowerCase();
+    const state = this.stockEntryState[context];
+    const row = state?.items?.find(r => r.id === rowId);
+    if (row) {
+      row.item_code = query;
+    }
+
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const allMaterials = lookups.materials || [];
+
+    const renderDropdown = (items) => {
+      if (items.length === 0) {
+        dropdown.innerHTML = `
+          <div style="padding: 14px; font-size: 12px; color: #64748b; text-align: center;">
+            No material item matches "<strong>${Desk.escapeHtml(q)}</strong>"<br>
+            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 8px; font-size: 11px;" onmousedown="Desk.openRequestItemCodeModal('${context}', '${Desk.escapeHtml(q)}')">
+              + Request & Add Unlisted Code
+            </button>
+          </div>
+        `;
+      } else {
+        let listHtml = `<div style="padding: 4px 0;">`;
+        items.forEach((m, i) => {
+          const rateFormatted = m.unit_price ? `Rs. ${parseFloat(m.unit_price).toFixed(2)}` : '';
+          const uomBadge = m.uom ? `<span style="display:inline-block; font-size: 10px; background: #e2e8f0; color: #475569; padding: 1px 5px; border-radius: 3px; margin-left: 4px;">${Desk.escapeHtml(m.uom)}</span>` : '';
+          listHtml += `
+            <div class="search-result-item" 
+                 data-idx="${i}"
+                 style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;"
+                 onmouseenter="this.style.background='#f1f5f9'"
+                 onmouseleave="this.style.background='transparent'"
+                 onmousedown="Desk.selectStockEntryItem('${context}', ${rowId}, '${m.sku}')">
+              <div style="min-width: 0; flex: 1;">
+                <div style="font-weight: 700; color: #1e293b; font-size: 12px; font-family: monospace;">${Desk.escapeHtml(m.sku)} ${uomBadge}</div>
+                <div style="font-size: 11.5px; color: #475569; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${Desk.escapeHtml(m.item_name || '')}</div>
+              </div>
+              ${rateFormatted ? `<div style="font-size: 11.5px; font-weight: 600; color: #0284c7; white-space: nowrap; margin-left: 10px;">${rateFormatted}</div>` : ''}
+            </div>
+          `;
+        });
+        listHtml += `</div>`;
+        dropdown.innerHTML = listHtml;
+      }
+      dropdown.style.display = 'block';
+    };
+
+    // Filter local materials first
+    let matches = allMaterials.filter(m => {
+      if (!q) return true;
+      const sku = (m.sku || '').toLowerCase();
+      const name = (m.item_name || '').toLowerCase();
+      return sku.includes(q) || name.includes(q);
+    }).slice(0, 30);
+
+    renderDropdown(matches);
+
+    // If query has 2+ characters, also do background fetch to search server master items
+    if (q.length >= 2) {
+      clearTimeout(this.itemSearchDebounce);
+      this.itemSearchDebounce = setTimeout(() => {
+        fetch(`${this.baseUrl}/api/inventory.php?action=search_materials&q=${encodeURIComponent(q)}`)
+          .then(r => r.json())
+          .then(res => {
+            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+              res.data.forEach(rm => {
+                if (!allMaterials.some(lm => lm.sku === rm.sku)) {
+                  allMaterials.push(rm);
+                }
+              });
+              renderDropdown(res.data.slice(0, 30));
+            }
+          })
+          .catch(() => {});
+      }, 250);
+    }
+  },
+
+  selectStockEntryItem(context, rowId, sku) {
+    const state = this.stockEntryState[context];
+    const row = state?.items?.find(r => r.id === rowId);
+    if (!row) return;
+
+    row.item_code = sku;
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const mat = (lookups.materials || []).find(m => m.sku === sku);
+    if (mat) {
+      row.item_name = mat.item_name;
+      row.uom = mat.uom || 'Nos';
+      if (mat.unit_price) {
+        row.basic_rate = parseFloat(mat.unit_price) || 0;
+      }
+    }
+
+    this.closeItemSearchDropdown(context, rowId);
+    this.renderStockEntryRows(context);
+    this.calculateStockEntryTotals(context);
+  },
+
+  clearStockEntryItem(context, rowId) {
+    const state = this.stockEntryState[context];
+    const row = state?.items?.find(r => r.id === rowId);
+    if (!row) return;
+
+    row.item_code = '';
+    row.item_name = '';
+    row.uom = '';
+    row.basic_rate = 0;
+    this.renderStockEntryRows(context);
+    this.calculateStockEntryTotals(context);
+  },
+
+  closeItemSearchDropdown(context, rowId) {
+    const dropdown = document.getElementById(`itemSearchDropdown_${context}_${rowId}`);
+    if (dropdown) dropdown.style.display = 'none';
+  },
+
+  handleItemSearchKeydown(event, context, rowId) {
+    const dropdown = document.getElementById(`itemSearchDropdown_${context}_${rowId}`);
+    if (!dropdown || dropdown.style.display === 'none') {
+      if (event.key === 'ArrowDown') {
+        this.searchStockEntryItem(context, rowId, event.target.value);
+        event.preventDefault();
+      }
+      return;
+    }
+
+    const items = dropdown.querySelectorAll('.search-result-item');
+    if (items.length === 0) return;
+
+    let activeIdx = -1;
+    items.forEach((item, idx) => {
+      if (item.classList.contains('active-search-item')) activeIdx = idx;
+    });
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (activeIdx >= 0) {
+        items[activeIdx].classList.remove('active-search-item');
+        items[activeIdx].style.background = 'transparent';
+      }
+      const nextIdx = (activeIdx + 1) % items.length;
+      items[nextIdx].classList.add('active-search-item');
+      items[nextIdx].style.background = '#e2e8f0';
+      items[nextIdx].scrollIntoView({ block: 'nearest' });
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (activeIdx >= 0) {
+        items[activeIdx].classList.remove('active-search-item');
+        items[activeIdx].style.background = 'transparent';
+      }
+      const prevIdx = (activeIdx - 1 + items.length) % items.length;
+      items[prevIdx].classList.add('active-search-item');
+      items[prevIdx].style.background = '#e2e8f0';
+      items[prevIdx].scrollIntoView({ block: 'nearest' });
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      if (activeIdx >= 0) {
+        items[activeIdx].dispatchEvent(new MouseEvent('mousedown'));
+      } else if (items.length > 0) {
+        items[0].dispatchEvent(new MouseEvent('mousedown'));
+      }
+    } else if (event.key === 'Escape') {
+      this.closeItemSearchDropdown(context, rowId);
+    }
+  },
+
+  openItemCodeSearchModal(context, rowId) {
+    this.searchItemTargetContext = context || 'grn';
+    this.searchItemTargetRowId = rowId;
+    const modal = document.getElementById('modalSearchItemCode');
+    if (!modal) return;
+
+    const input = document.getElementById('masterItemSearchInput');
+    if (input) input.value = '';
+
+    this.filterMasterItemsModal('');
+    this.openModal('modalSearchItemCode');
+    setTimeout(() => {
+      if (input) input.focus();
+    }, 100);
+  },
+
+  filterMasterItemsModal(query) {
+    const tbody = document.getElementById('masterItemSearchResultsBody');
+    const countEl = document.getElementById('masterItemSearchCount');
+    if (!tbody) return;
+
+    const q = (query || '').trim().toLowerCase();
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const allMaterials = lookups.materials || [];
+
+    const renderTable = (items) => {
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 24px;">No master materials found matching "<strong>${Desk.escapeHtml(q)}</strong>".</td></tr>`;
+        if (countEl) countEl.textContent = '0 items found';
+        return;
+      }
+
+      let html = '';
+      items.forEach(m => {
+        const rateFormatted = m.unit_price ? `Rs. ${parseFloat(m.unit_price).toFixed(2)}` : '-';
+        html += `
+          <tr>
+            <td><code style="font-weight: 700; color: #0f172a; font-size: 12px;">${Desk.escapeHtml(m.sku)}</code></td>
+            <td><strong style="color: #1e293b;">${Desk.escapeHtml(m.item_name || '')}</strong></td>
+            <td><span class="desk-badge" style="background: #f1f5f9; color: #475569;">${Desk.escapeHtml(m.uom || 'Nos')}</span></td>
+            <td style="text-align: right; font-weight: 600; color: #0284c7;">${rateFormatted}</td>
+            <td style="text-align: center;">
+              <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="font-size: 11px; padding: 2px 10px;" onclick="Desk.selectModalMasterItem('${m.sku}')">
+                Select
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+      if (countEl) countEl.textContent = `${items.length} item(s) found`;
+    };
+
+    let matches = allMaterials.filter(m => {
+      if (!q) return true;
+      const sku = (m.sku || '').toLowerCase();
+      const name = (m.item_name || '').toLowerCase();
+      return sku.includes(q) || name.includes(q);
+    }).slice(0, 50);
+
+    renderTable(matches);
+
+    if (q.length >= 2) {
+      fetch(`${this.baseUrl}/api/inventory.php?action=search_materials&q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+            res.data.forEach(rm => {
+              if (!allMaterials.some(lm => lm.sku === rm.sku)) {
+                allMaterials.push(rm);
+              }
+            });
+            renderTable(res.data.slice(0, 50));
+          }
+        })
+        .catch(() => {});
+    }
+  },
+
+  selectModalMasterItem(sku) {
+    if (this.searchItemTargetRowId !== null) {
+      this.selectStockEntryItem(this.searchItemTargetContext, this.searchItemTargetRowId, sku);
+    }
+    this.closeModal('modalSearchItemCode');
   },
 
   applyDefaultWarehouse(context) {

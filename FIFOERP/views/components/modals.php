@@ -518,6 +518,51 @@
   </div>
 </div>
 
+<!-- ==============================================================
+     MODAL: Search & Select Master Item Code
+     ============================================================== -->
+<div id="modalSearchItemCode" class="desk-modal-backdrop">
+  <div class="desk-modal" style="max-width: 750px; width: 95%;">
+    <div class="desk-modal-header">
+      <h3 id="searchItemModalTitle">Search Master Item Code</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('modalSearchItemCode')">&times;</button>
+    </div>
+    <div class="desk-modal-body" style="padding: 16px 20px;">
+      <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <div style="position: relative; flex: 1;">
+          <input type="text" id="masterItemSearchInput" class="desk-form-control" placeholder="Search by SKU / Item Code or Description..." oninput="Desk.filterMasterItemsModal(this.value)">
+          <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none;">🔍</span>
+        </div>
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.filterMasterItemsModal('')">Clear</button>
+      </div>
+
+      <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+        <table class="desk-table" style="margin: 0; font-size: 12.5px;">
+          <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 2;">
+            <tr>
+              <th style="width: 130px;">Item Code</th>
+              <th>Description / Specifications</th>
+              <th style="width: 80px;">UOM</th>
+              <th style="width: 120px; text-align: right;">Unit Price</th>
+              <th style="width: 80px; text-align: center;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="masterItemSearchResultsBody">
+            <tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Loading master items...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;">
+        <span id="masterItemSearchCount"></span>
+        <span>Item not found? <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.closeModal('modalSearchItemCode'); Desk.openRequestItemCodeModal(Desk.searchItemTargetContext);">+ Request New Code</button></span>
+      </div>
+    </div>
+    <div class="desk-modal-footer">
+      <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('modalSearchItemCode')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============================================================
      ADMIN MODAL 1: CREATE LOCATION
      ============================================================ -->
