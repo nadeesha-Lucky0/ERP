@@ -822,7 +822,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <label class="frappe-label" style="margin-bottom: 8px;">Items</label>
 
               <!-- Child Table -->
-              <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px;">
+              <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; min-height: 280px;">
                 <table class="frappe-table" id="grnItemsTable">
                   <thead>
                     <tr>
@@ -1346,7 +1346,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <label class="frappe-label" style="margin-bottom: 8px;">Items</label>
 
               <!-- Child Table -->
-              <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px;">
+              <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; min-height: 280px;">
                 <table class="frappe-table" id="issueItemsTable">
                   <thead>
                     <tr>
