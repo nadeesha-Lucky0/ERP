@@ -4800,9 +4800,13 @@ const Desk = {
     // Update Series
     const seriesEl = document.getElementById(`${context}Series`);
     if (seriesEl) {
-      const matchOpt = Array.from(seriesEl.options).find(o => o.value.startsWith(type));
-      if (matchOpt) {
-        seriesEl.value = matchOpt.value;
+      if (seriesEl.options) {
+        const matchOpt = Array.from(seriesEl.options).find(o => o.value.startsWith(type));
+        if (matchOpt) {
+          seriesEl.value = matchOpt.value;
+        }
+      } else {
+        seriesEl.value = `${type}-.YYYY.-`;
       }
     }
 

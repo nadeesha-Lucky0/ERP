@@ -634,44 +634,24 @@ require_once __DIR__ . '/views/layouts/header.php';
           <!-- TAB CONTENT: DETAILS -->
           <div id="tabContent-grn-details" class="frappe-tab-content">
             
-            <!-- 2-COLUMN GRID: Series, Stock Entry Type, Posting Date & Time -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 18px;">
-              <div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Series <span style="color: #e02424;">*</span></label>
-                  <select name="series" id="grnSeries" class="frappe-control" style="font-weight: 500;">
-                    <option value="GRN-.YYYY.-" selected>GRN-.YYYY.-</option>
-                    <option value="GRSP-.YYYY.-">GRSP-.YYYY.-</option>
-                    <option value="MRA-.YYYY.-">MRA-.YYYY.-</option>
-                    <option value="MAT-STE-.YYYY.-">MAT-STE-.YYYY.-</option>
-                    <option value="MAT-STE-RET-.YYYY.-">MAT-STE-RET-.YYYY.-</option>
-                  </select>
-                </div>
+            <input type="hidden" name="series" id="grnSeries" value="GRN-.YYYY.-">
+            <input type="hidden" name="stock_entry_type" id="grnStockEntryType" value="Material Receipt">
 
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Stock Entry Type <span style="color: #e02424;">*</span></label>
-                  <select name="stock_entry_type" id="grnStockEntryType" class="frappe-control" onchange="Desk.onStockEntryTypeChange('grn', this.value)">
-                    <option value="Material Issue" >Material Issue</option>
-                    <option value="Material Receipt" selected>Material Receipt</option>
-                    <option value="Material Transfer" >Material Transfer</option>
-                    <option value="Manufacture">Manufacture</option>
-                    <option value="Repack">Repack</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            <!-- Posting Date & Time Section -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #1f272e;">Posting Date &amp; Time</span>
+                <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
                   <input type="checkbox" id="grnEditPosting" onchange="Desk.toggleEditPostingDate('grn', this.checked)" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
-                  <label for="grnEditPosting" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Edit Posting Date and Time</label>
-                </div>
-
-                <div style="margin-bottom: 16px;">
+                  Edit Posting Date and Time
+                </label>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                <div>
                   <label class="frappe-label">Posting Date</label>
                   <input type="date" name="posting_date" id="grnPostingDate" class="frappe-control" readonly>
                 </div>
-
-                <div style="margin-bottom: 16px;">
+                <div>
                   <label class="frappe-label">Posting Time</label>
                   <input type="time" step="1" name="posting_time" id="grnPostingTime" class="frappe-control" readonly>
                 </div>
@@ -740,34 +720,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Inspection Required Checkbox -->
-            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" id="grnInspectionRequired" name="inspection_required" value="1" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
-              <label for="grnInspectionRequired" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Inspection Required</label>
-            </div>
 
-            <!-- BOM Info (Collapsible) -->
-            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 14px;">
-              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('grnBomSection', this)">
-                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8250;</span> BOM Info
-              </div>
-              <div id="grnBomSection" style="display: none; padding: 12px 0 6px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                  <div>
-                    <label class="frappe-label">From BOM</label>
-                    <input type="checkbox" id="grnFromBom" name="from_bom" value="1" style="accent-color: #18181b;">
-                    <div style="margin-top: 10px;">
-                      <label class="frappe-label">BOM No</label>
-                      <input type="text" name="bom_no" id="grnBomNo" class="frappe-control" placeholder="Select or enter BOM...">
-                    </div>
-                  </div>
-                  <div>
-                    <label class="frappe-label">Qty to Manufacture</label>
-                    <input type="number" step="0.001" name="qty_to_manufacture" id="grnQtyToManufacture" class="frappe-control" value="1.000">
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Default Warehouse (Collapsible, OPEN by default) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
@@ -1103,44 +1056,24 @@ require_once __DIR__ . '/views/layouts/header.php';
           <!-- TAB CONTENT: DETAILS -->
           <div id="tabContent-issue-details" class="frappe-tab-content">
             
-            <!-- 2-COLUMN GRID: Series, Stock Entry Type, Posting Date & Time -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 18px;">
-              <div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Series <span style="color: #e02424;">*</span></label>
-                  <select name="series" id="issueSeries" class="frappe-control" style="font-weight: 500;">
-                    <option value="GRN-.YYYY.-">GRN-.YYYY.-</option>
-                    <option value="GRSP-.YYYY.-">GRSP-.YYYY.-</option>
-                    <option value="MRA-.YYYY.-" selected>MRA-.YYYY.-</option>
-                    <option value="MAT-STE-.YYYY.-">MAT-STE-.YYYY.-</option>
-                    <option value="MAT-STE-RET-.YYYY.-">MAT-STE-RET-.YYYY.-</option>
-                  </select>
-                </div>
+            <input type="hidden" name="series" id="issueSeries" value="MRA-.YYYY.-">
+            <input type="hidden" name="stock_entry_type" id="issueStockEntryType" value="Material Issue">
 
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Stock Entry Type <span style="color: #e02424;">*</span></label>
-                  <select name="stock_entry_type" id="issueStockEntryType" class="frappe-control" onchange="Desk.onStockEntryTypeChange('issue', this.value)">
-                    <option value="Material Issue" selected>Material Issue</option>
-                    <option value="Material Receipt" >Material Receipt</option>
-                    <option value="Material Transfer" >Material Transfer</option>
-                    <option value="Manufacture">Manufacture</option>
-                    <option value="Repack">Repack</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            <!-- Posting Date & Time Section -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 600; color: #1f272e;">Posting Date &amp; Time</span>
+                <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
                   <input type="checkbox" id="issueEditPosting" onchange="Desk.toggleEditPostingDate('issue', this.checked)" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
-                  <label for="issueEditPosting" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Edit Posting Date and Time</label>
-                </div>
-
-                <div style="margin-bottom: 16px;">
+                  Edit Posting Date and Time
+                </label>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                <div>
                   <label class="frappe-label">Posting Date</label>
                   <input type="date" name="posting_date" id="issuePostingDate" class="frappe-control" readonly>
                 </div>
-
-                <div style="margin-bottom: 16px;">
+                <div>
                   <label class="frappe-label">Posting Time</label>
                   <input type="time" step="1" name="posting_time" id="issuePostingTime" class="frappe-control" readonly>
                 </div>
@@ -1209,34 +1142,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Inspection Required Checkbox -->
-            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" id="issueInspectionRequired" name="inspection_required" value="1" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
-              <label for="issueInspectionRequired" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Inspection Required</label>
-            </div>
 
-            <!-- BOM Info (Collapsible) -->
-            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 14px;">
-              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('issueBomSection', this)">
-                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8250;</span> BOM Info
-              </div>
-              <div id="issueBomSection" style="display: none; padding: 12px 0 6px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                  <div>
-                    <label class="frappe-label">From BOM</label>
-                    <input type="checkbox" id="issueFromBom" name="from_bom" value="1" style="accent-color: #18181b;">
-                    <div style="margin-top: 10px;">
-                      <label class="frappe-label">BOM No</label>
-                      <input type="text" name="bom_no" id="issueBomNo" class="frappe-control" placeholder="Select or enter BOM...">
-                    </div>
-                  </div>
-                  <div>
-                    <label class="frappe-label">Qty to Manufacture</label>
-                    <input type="number" step="0.001" name="qty_to_manufacture" id="issueQtyToManufacture" class="frappe-control" value="1.000">
-                  </div>
-                </div>
-              </div>
-            </div>
 
             <!-- Default Warehouse (Collapsible, OPEN by default) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
