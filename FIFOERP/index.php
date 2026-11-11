@@ -620,9 +620,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('grn')">Purchase Order</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('grn')">Cost Center</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('grn')">Section</a>
-                  <div class="frappe-dropdown-divider"></div>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromMaterialRequest('grn')">Material Request</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromBOM('grn')">Bill of Materials (BOM)</a>
                 </div>
               </div>
 
@@ -999,9 +996,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('issue')">Purchase Order</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('issue')">Cost Center</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('issue')">Section</a>
-                  <div class="frappe-dropdown-divider"></div>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromMaterialRequest('issue')">Material Request</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromBOM('issue')">Bill of Materials (BOM)</a>
                 </div>
               </div>
 
