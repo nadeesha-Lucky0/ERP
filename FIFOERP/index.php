@@ -781,10 +781,26 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </div>
               </div>
 
-              <div style="margin-bottom: 24px;">
-                <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('grn')">
-                  Update Rate and Availability
-                </button>
+              <!-- Draft & Request Code Action Row -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('grn', true)" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save Draft
+                  </button>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('grn')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Request &amp; Add Code
+                  </button>
+                  <span style="font-size: 11.5px; color: #64748b; margin-left: 4px;">
+                    Item not in database? Save draft and request/add code to continue.
+                  </span>
+                </div>
+                <div>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('grn')">
+                    Update Rate and Availability
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -924,6 +940,29 @@ require_once __DIR__ . '/views/layouts/header.php';
                   </select>
                 </div>
 
+              </div>
+            </div>
+
+            <!-- BOTTOM APPLICATION ACTIONS (SAVE AT END OF FORM) -->
+            <div style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('grn', true)" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save Draft
+                </button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('grn')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Request &amp; Add Code
+                </button>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('grn')" style="background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
+                  Cancel
+                </button>
+                <button type="submit" class="frappe-btn frappe-btn-primary" style="background: #18181b; color: #ffffff; font-weight: 600; padding: 9px 24px; border-radius: 6px; font-size: 13.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Save Stock Entry
+                </button>
               </div>
             </div>
 
@@ -1199,10 +1238,26 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </div>
               </div>
 
-              <div style="margin-bottom: 24px;">
-                <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('issue')">
-                  Update Rate and Availability
-                </button>
+              <!-- Draft & Request Code Action Row -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('issue', true)" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Save Draft
+                  </button>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('issue')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Request &amp; Add Code
+                  </button>
+                  <span style="font-size: 11.5px; color: #64748b; margin-left: 4px;">
+                    Item not in database? Save draft and request/add code to continue.
+                  </span>
+                </div>
+                <div>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('issue')">
+                    Update Rate and Availability
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1233,6 +1288,29 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <textarea name="remarks" id="issueRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- BOTTOM APPLICATION ACTIONS (SAVE AT END OF FORM) -->
+            <div style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('issue', true)" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save Draft
+                </button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('issue')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Request &amp; Add Code
+                </button>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('issue')" style="background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
+                  Cancel
+                </button>
+                <button type="submit" class="frappe-btn frappe-btn-primary" style="background: #18181b; color: #ffffff; font-weight: 600; padding: 9px 24px; border-radius: 6px; font-size: 13.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Save Stock Entry
+                </button>
               </div>
             </div>
 
@@ -3589,6 +3667,89 @@ require_once __DIR__ . '/views/layouts/header.php';
       <button type="button" class="frappe-btn" onclick="Desk.closeSectionSelectionModal()">Cancel</button>
       <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromSection()">Apply Section</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal 5: Request & Add New Item Code -->
+<div id="modalRequestItemCode" class="desk-modal-backdrop" style="display: none; align-items: center; justify-content: center; z-index: 1050;">
+  <div class="desk-modal" style="max-width: 600px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 16px 36px rgba(0,0,0,0.22); overflow: hidden;">
+    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #fafbfc;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #eef2ff; color: #4338ca; border-radius: 6px; font-weight: 700; font-size: 15px;">➕</span>
+        <div>
+          <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #0f172a;">Request &amp; Add New Item Code</h3>
+          <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Register an unlisted material so you can continue this Stock Entry immediately.</div>
+        </div>
+      </div>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeRequestItemCodeModal()" style="font-size: 20px; line-height: 1;">&times;</button>
+    </div>
+    <form id="formRequestItemCode" onsubmit="event.preventDefault(); Desk.submitRequestItemCode();">
+      <div class="desk-modal-body" style="padding: 22px 26px; max-height: calc(85vh - 130px); overflow-y: auto;">
+        
+        <div style="margin-bottom: 16px;">
+          <label class="frappe-label">Material / Item Name <span style="color: #e02424;">*</span></label>
+          <input type="text" id="reqItemName" class="frappe-control" placeholder="e.g. Centrifugal Pump Impeller 125mm" required style="width: 100%;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div>
+            <label class="frappe-label">Suggested Code / SKU (Optional)</label>
+            <input type="text" id="reqItemCode" class="frappe-control" placeholder="Auto-generated if empty" style="width: 100%;">
+            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">Leave blank to auto-generate CEB tier code.</div>
+          </div>
+          <div>
+            <label class="frappe-label">Category / Classification <span style="color: #e02424;">*</span></label>
+            <select id="reqItemCategory" class="frappe-control frappe-select" style="width: 100%;">
+              <option value="Mechanical" selected>Mechanical Spares (Tier 1)</option>
+              <option value="Electrical">Electrical Spares (Tier 2)</option>
+              <option value="Civil">Civil Engineering (Tier 3)</option>
+              <option value="Consumable">Consumables &amp; Hardware (Tier 4)</option>
+              <option value="Lubricant">Chemical &amp; Lubricants (Tier 5)</option>
+              <option value="Instrumentation">Instrumentation &amp; Control (Tier 6)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+          <div>
+            <label class="frappe-label">Unit of Measure (UOM) <span style="color: #e02424;">*</span></label>
+            <select id="reqItemUom" class="frappe-control frappe-select" style="width: 100%;">
+              <option value="Nos" selected>Nos (Each / Units)</option>
+              <option value="Sets">Sets</option>
+              <option value="Liters">Liters</option>
+              <option value="Meters">Meters</option>
+              <option value="Kg">Kg</option>
+              <option value="Rolls">Rolls</option>
+              <option value="Bottles">Bottles</option>
+              <option value="Packs">Packs</option>
+              <option value="Tins">Tins</option>
+              <option value="Pairs">Pairs</option>
+            </select>
+          </div>
+          <div>
+            <label class="frappe-label">Estimated Unit Cost (LKR)</label>
+            <input type="number" step="0.01" min="0" id="reqItemPrice" class="frappe-control" placeholder="0.00" style="width: 100%;">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label class="frappe-label">Technical Specification / Notes (Optional)</label>
+          <textarea id="reqItemSpecs" class="frappe-control" style="width: 100%; height: 60px; padding: 6px 10px; resize: vertical;" placeholder="Part number, model, brand, or justification..."></textarea>
+        </div>
+
+        <div style="background: #f1f5f9; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; color: #475569; display: flex; align-items: center; gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>This code will be added to the material database and immediately inserted into your active items table row.</span>
+        </div>
+
+      </div>
+      <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 10px; background: #fafbfc;">
+        <button type="button" class="frappe-btn" onclick="Desk.closeRequestItemCodeModal()">Cancel</button>
+        <button type="submit" class="frappe-btn frappe-btn-primary" id="reqItemSubmitBtn" style="background: #18181b; color: #fff; font-weight: 600; padding: 8px 20px;">
+          Save &amp; Add to Table
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 

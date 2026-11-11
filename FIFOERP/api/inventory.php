@@ -143,6 +143,90 @@ try {
             break;
 
         // -------------------------------------------------------------
+        // Request & Add New Material Item Code
+        // -------------------------------------------------------------
+        case 'request_add_material_code':
+            $itemName = trim($_POST['item_name'] ?? '');
+            if (empty($itemName)) {
+                Response::error('Material Item Name is required.');
+            }
+
+            $userCode = trim($_POST['code'] ?? '');
+            $uom = trim($_POST['uom'] ?? 'Nos');
+            $unitPrice = (float)($_POST['unit_price'] ?? 0);
+            $category = trim($_POST['category'] ?? 'Mechanical');
+            $specifications = trim($_POST['specifications'] ?? '');
+
+            $central = Database::getConnection();
+
+            if (!empty($userCode)) {
+                $formattedCode = $userCode;
+                $rawCode = preg_replace('/[^A-Za-z0-9]/', '', $userCode);
+                $tier1 = 1;
+                $tier2 = 1;
+                $tier3 = 1;
+                $tier4Seq = 1;
+            } else {
+                $tier1 = match($category) {
+                    'Electrical' => 2,
+                    'Civil' => 3,
+                    'Consumable' => 4,
+                    'Lubricant' => 5,
+                    'Instrumentation' => 6,
+                    default => 1 // Mechanical
+                };
+                $tier2 = 1;
+                $tier3 = 1;
+                
+                $maxSeqRow = $central->query("SELECT MAX(tier4_seq) as max_seq, MAX(id) as max_id FROM fifo_master_items WHERE tier1 = {$tier1}")->fetch();
+                $tier4Seq = ((int)($maxSeqRow['max_seq'] ?? 0)) + 1;
+                $formattedCode = sprintf("%d-%02d-%02d-%03d", $tier1, $tier2, $tier3, $tier4Seq);
+                $rawCode = sprintf("%02d%02d%02d%03d", $tier1, $tier2, $tier3, $tier4Seq);
+            }
+
+            // Check if code collision
+            $chk = $central->prepare("SELECT id FROM fifo_master_items WHERE formatted_code = :c OR raw_code = :r LIMIT 1");
+            $chk->execute([':c' => $formattedCode, ':r' => $rawCode]);
+            if ($chk->fetch()) {
+                $suffix = substr((string)time(), -4);
+                $formattedCode .= '-' . $suffix;
+                $rawCode .= $suffix;
+            }
+
+            $stmt = $central->prepare("
+                INSERT INTO fifo_master_items 
+                (tier1, tier2, tier3, tier4_seq, formatted_code, raw_code, item_name, specifications, uom, unit_price, status, created_by, origin_station_id)
+                VALUES 
+                (:t1, :t2, :t3, :t4, :fcode, :rcode, :name, :spec, :uom, :price, 'ACTIVE', :uid, :station)
+            ");
+            $stmt->execute([
+                ':t1' => $tier1,
+                ':t2' => $tier2,
+                ':t3' => $tier3,
+                ':t4' => $tier4Seq,
+                ':fcode' => $formattedCode,
+                ':rcode' => $rawCode,
+                ':name' => $itemName,
+                ':spec' => $specifications,
+                ':uom' => $uom ?: 'Nos',
+                ':price' => $unitPrice > 0 ? $unitPrice : null,
+                ':uid' => Auth::id() ?? 1,
+                ':station' => $locationId
+            ]);
+            $newId = (int)$central->lastInsertId();
+
+            Response::success('New material item code created successfully', [
+                'item' => [
+                    'id' => $newId,
+                    'sku' => $formattedCode,
+                    'item_name' => $itemName,
+                    'uom' => $uom ?: 'Nos',
+                    'unit_price' => $unitPrice
+                ]
+            ]);
+            break;
+
+        // -------------------------------------------------------------
         // Batches List (Quantity On Hand) with Live Reservation Data
         // -------------------------------------------------------------
         case 'get_batches':

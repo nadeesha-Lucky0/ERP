@@ -4587,13 +4587,13 @@ const Desk = {
     this.showToast('Rates and availability refreshed from master.');
   },
 
-  async submitStockEntryForm(context) {
+  async submitStockEntryForm(context, isDraft = false) {
     const state = this.stockEntryState[context];
     const docType = context === 'grn' ? 'GRN' : 'ISSUE';
 
-    const validItems = state.items.filter(r => r.item_code && r.qty > 0);
+    const validItems = state.items.filter(r => (r.item_code || isDraft) && r.qty > 0);
     if (validItems.length === 0) {
-      this.showToast('Please add at least one item with valid Item Code and Quantity.', true);
+      this.showToast('Please add at least one item before saving.', true);
       return;
     }
 
@@ -4619,8 +4619,8 @@ const Desk = {
       const lineTotal = (parseFloat(r.qty) || 0) * (parseFloat(r.basic_rate) || 0);
       invTotal += lineTotal;
       return {
-        sku: r.item_code,
-        item_name: r.item_name || r.item_code,
+        sku: r.item_code || 'UNLISTED-REQ',
+        item_name: r.item_name || r.item_code || 'Pending Code Request',
         quantity: parseFloat(r.qty) || 1,
         unit_cost: parseFloat(r.basic_rate) || 0,
         warehouse: r.warehouse || defWh
@@ -4628,6 +4628,7 @@ const Desk = {
     });
 
     let fullRemarks = `[Type: ${entryType}] [Acc: ${accDate}] [Deliv: ${deliveryDate}]`;
+    if (isDraft) fullRemarks += ` [Saved as Draft]`;
     if (supplierRef) fullRemarks += ` [Supplier Ref: ${supplierRef}]`;
     if (invoiceDate) fullRemarks += ` [Inv Date: ${invoiceDate}]`;
     if (remarks) fullRemarks += ` ${remarks}`;
@@ -4671,7 +4672,11 @@ const Desk = {
           titleEl.textContent = docNo;
         }
 
-        this.showToast(`Stock Entry ${docNo} created successfully as Draft!`);
+        if (isDraft) {
+          this.showToast(`Draft ${docNo} saved successfully! You can request unlisted codes or continue anytime.`);
+        } else {
+          this.showToast(`Stock Entry ${docNo} saved successfully as Draft!`);
+        }
 
         if (context === 'grn') {
           this.loadReceipts();
@@ -5204,6 +5209,160 @@ const Desk = {
   },
 
 
+
+  openRequestItemCodeModal(context) {
+    this.activeItemCodeContext = context || 'grn';
+    const modal = document.getElementById('modalRequestItemCode');
+    if (!modal) return;
+
+    // Reset inputs
+    const nameIn = document.getElementById('reqItemName');
+    const codeIn = document.getElementById('reqItemCode');
+    const priceIn = document.getElementById('reqItemPrice');
+    const specsIn = document.getElementById('reqItemSpecs');
+    const catIn = document.getElementById('reqItemCategory');
+    const uomIn = document.getElementById('reqItemUom');
+
+    if (nameIn) nameIn.value = '';
+    if (codeIn) codeIn.value = '';
+    if (priceIn) priceIn.value = '';
+    if (specsIn) specsIn.value = '';
+    if (catIn) catIn.selectedIndex = 0;
+    if (uomIn) uomIn.value = 'Nos';
+
+    // If an item in current state has a typed code or name that is unlisted, pre-fill it
+    const state = this.stockEntryState[this.activeItemCodeContext];
+    if (state && state.items.length > 0) {
+      const last = state.items[state.items.length - 1];
+      if (last && (last.item_name || last.item_code)) {
+        if (nameIn && !nameIn.value) nameIn.value = last.item_name || last.item_code;
+        if (codeIn && !codeIn.value && last.item_code && !last.item_code.includes(' ')) {
+          codeIn.value = last.item_code;
+        }
+      }
+    }
+
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      if (nameIn) nameIn.focus();
+    }, 50);
+  },
+
+  closeRequestItemCodeModal() {
+    const modal = document.getElementById('modalRequestItemCode');
+    if (modal) modal.style.display = 'none';
+  },
+
+  async submitRequestItemCode() {
+    const nameIn = document.getElementById('reqItemName');
+    const itemName = nameIn?.value.trim() || '';
+    if (!itemName) {
+      this.showToast('Please enter Material / Item Name.', true);
+      nameIn?.focus();
+      return;
+    }
+
+    const code = document.getElementById('reqItemCode')?.value.trim() || '';
+    const category = document.getElementById('reqItemCategory')?.value || 'Mechanical';
+    const uom = document.getElementById('reqItemUom')?.value || 'Nos';
+    const price = parseFloat(document.getElementById('reqItemPrice')?.value || 0);
+    const specs = document.getElementById('reqItemSpecs')?.value.trim() || '';
+
+    const btn = document.getElementById('reqItemSubmitBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+    }
+
+    const fd = new FormData();
+    fd.append('action', 'request_add_material_code');
+    fd.append('item_name', itemName);
+    fd.append('code', code);
+    fd.append('category', category);
+    fd.append('uom', uom);
+    fd.append('unit_price', price);
+    fd.append('specifications', specs);
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (token) fd.append('_csrf_token', token);
+
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php`, {
+        method: 'POST',
+        body: fd
+      });
+      const data = await res.json();
+      if (data.success && data.data?.item) {
+        const newItem = data.data.item;
+
+        // Ensure cachedStockLookups includes the new item
+        if (!this.cachedStockLookups) {
+          this.cachedStockLookups = { materials: [], warehouses: [] };
+        }
+        if (!Array.isArray(this.cachedStockLookups.materials)) {
+          this.cachedStockLookups.materials = [];
+        }
+        this.cachedStockLookups.materials.push({
+          sku: newItem.sku,
+          item_name: newItem.item_name,
+          uom: newItem.uom || 'Nos',
+          unit_price: newItem.unit_price || 0
+        });
+
+        // Insert or populate into active items table
+        const ctx = this.activeItemCodeContext || 'grn';
+        const state = this.stockEntryState[ctx];
+        const defWh = (ctx === 'grn' ? document.getElementById(`${ctx}DefTargetWh`)?.value : document.getElementById(`${ctx}DefSourceWh`)?.value) || 'WH 831.00 --VICTORIA WAREHOUSE';
+
+        const lastRow = state.items[state.items.length - 1];
+        if (lastRow && (!lastRow.item_code || lastRow.item_code === 'UNLISTED-REQ')) {
+          lastRow.item_code = newItem.sku;
+          lastRow.item_name = newItem.item_name;
+          lastRow.uom = newItem.uom || 'Nos';
+          lastRow.basic_rate = parseFloat(newItem.unit_price || 0);
+        } else {
+          state.items.push({
+            id: state.nextId++,
+            warehouse: defWh,
+            item_code: newItem.sku,
+            item_name: newItem.item_name,
+            uom: newItem.uom || 'Nos',
+            qty: 1.0,
+            basic_rate: parseFloat(newItem.unit_price || 0)
+          });
+        }
+
+        this.renderStockEntryRows(ctx);
+        this.closeRequestItemCodeModal();
+        this.showToast(`Code [${newItem.sku}] registered & added to table! You can continue your entry.`);
+      } else {
+        this.showToast(data.message || 'Failed to create item code.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while requesting item code.', true);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Save & Add to Table';
+      }
+    }
+  },
+
+  cancelStockEntryForm(context) {
+    const card = document.getElementById(context === 'grn' ? 'bodyGrnEntryCard' : 'bodyIssueEntryCard');
+    if (card) {
+      card.style.display = 'none';
+    }
+    if (context === 'grn') {
+      this.setTab('receipts');
+      this.loadReceipts();
+    } else {
+      this.setTab('issues');
+      this.loadIssues();
+    }
+    this.showToast('Stock Entry cancelled.');
+  },
 
   getItemsFromMaterialRequest(context) {
     this.showToast('Select items from Material Request list:');
