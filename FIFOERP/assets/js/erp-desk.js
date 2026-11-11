@@ -234,20 +234,12 @@ const Desk = {
         if (sessionStorage.getItem('fifoerp_active_receipt_filter')) {
           this.currentReceiptFilter = sessionStorage.getItem('fifoerp_active_receipt_filter');
         }
-        document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(btn => {
-          const fn = btn.getAttribute('onclick') || '';
-          btn.classList.toggle('active', fn.includes(`'${this.currentReceiptFilter}'`));
-        });
         this.loadReceipts();
         break;
       case 'tab-issues':
         if (sessionStorage.getItem('fifoerp_active_issue_filter')) {
           this.currentIssueFilter = sessionStorage.getItem('fifoerp_active_issue_filter');
         }
-        document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(btn => {
-          const fn = btn.getAttribute('onclick') || '';
-          btn.classList.toggle('active', fn.includes(`'${this.currentIssueFilter}'`));
-        });
         this.loadIssues();
         break;
       case 'tab-transactions':
@@ -504,10 +496,6 @@ const Desk = {
           if (savedFilter) {
             this.currentReceiptFilter = savedFilter;
           }
-          document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(el => {
-            const fn = el.getAttribute('onclick') || '';
-            el.classList.toggle('active', fn.includes(`'${this.currentReceiptFilter}'`));
-          });
           document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(el => {
             el.classList.toggle('active', el.getAttribute('data-workflow-filter') === this.currentReceiptFilter);
           });
@@ -537,14 +525,6 @@ const Desk = {
     try {
       sessionStorage.setItem('fifoerp_active_receipt_filter', status);
     } catch (e) {}
-    document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(el => {
-      if (btn) {
-        el.classList.toggle('active', el === btn);
-      } else {
-        const fn = el.getAttribute('onclick') || '';
-        el.classList.toggle('active', fn.includes(`'${status}'`));
-      }
-    });
     document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(el => {
       el.classList.toggle('active', el.getAttribute('data-workflow-filter') === status);
     });
@@ -564,17 +544,13 @@ const Desk = {
 
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
-      entryCard.style.display = (filter === 'Entry' || filter === 'All') ? 'block' : 'none';
-      if (filter === 'Entry' || filter === 'All') {
+      entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+      if (filter === 'Entry') {
         this.initStockEntryForm('grn');
       }
     }
 
-    // Update active pill button in card and sidebar
-    document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(btn => {
-      const f = btn.getAttribute('data-filter');
-      btn.classList.toggle('active', f === filter);
-    });
+    // Update active tab in sidebar
     document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(el => {
       el.classList.toggle('active', el.getAttribute('data-workflow-filter') === filter);
     });
@@ -685,10 +661,6 @@ const Desk = {
           if (savedFilter) {
             this.currentIssueFilter = savedFilter;
           }
-          document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(el => {
-            const fn = el.getAttribute('onclick') || '';
-            el.classList.toggle('active', fn.includes(`'${this.currentIssueFilter}'`));
-          });
           document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
             el.classList.toggle('active', el.getAttribute('data-workflow-filter') === this.currentIssueFilter);
           });
@@ -702,14 +674,6 @@ const Desk = {
     try {
       sessionStorage.setItem('fifoerp_active_issue_filter', status);
     } catch (e) {}
-    document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(el => {
-      if (btn) {
-        el.classList.toggle('active', el === btn);
-      } else {
-        const fn = el.getAttribute('onclick') || '';
-        el.classList.toggle('active', fn.includes(`'${status}'`));
-      }
-    });
     document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
       el.classList.toggle('active', el.getAttribute('data-workflow-filter') === status);
     });
@@ -729,19 +693,15 @@ const Desk = {
 
     const issueEntryCard = document.getElementById('bodyIssueEntryCard');
     if (issueEntryCard) {
-      issueEntryCard.style.display = (filter === 'Entry' || filter === 'All') ? 'block' : 'none';
-      if (filter === 'Entry' || filter === 'All') {
+      issueEntryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+      if (filter === 'Entry') {
         this.initStockEntryForm('issue');
         this.populateTaskBatches();
         this.initIssueFormLookups();
       }
     }
 
-    // Update active pill button in card and sidebar
-    document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(btn => {
-      const f = btn.getAttribute('data-filter');
-      btn.classList.toggle('active', f === filter);
-    });
+    // Update active tab in sidebar
     document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
       el.classList.toggle('active', el.getAttribute('data-workflow-filter') === filter);
     });
