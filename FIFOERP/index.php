@@ -785,13 +785,33 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Scan Barcode -->
-            <div style="margin-bottom: 24px;">
-              <label class="frappe-label">Scan Barcode</label>
-              <div style="position: relative; max-width: 520px;">
-                <input type="text" id="grnBarcodeScan" class="frappe-control" placeholder="Scan or type barcode and hit Enter..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Desk.onStockEntryBarcode(event, 'grn', this);}" style="padding-right: 40px;">
-                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #8d99a6; font-size: 13px; pointer-events: none; letter-spacing: -1px;">[|||||]</span>
+            <!-- Unique Item Barcode Generator for New Items -->
+            <div style="margin-bottom: 24px; padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label class="frappe-label" style="margin-bottom: 0; font-size: 12.5px; font-weight: 600; color: #1e293b;">
+                  Unique Item Barcode Generator
+                </label>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #64748b;">
+                  <input type="checkbox" id="grnAutoBarcode" checked style="accent-color: #18181b; cursor: pointer;">
+                  <label for="grnAutoBarcode" style="cursor: pointer; user-select: none; margin: 0;">Auto-generate for new items</label>
+                </div>
               </div>
+
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="position: relative; width: 260px;">
+                  <input type="text" id="grnGeneratedBarcode" class="frappe-control" style="font-family: monospace; font-weight: 600; letter-spacing: 0.5px; background: #fff;" readonly>
+                </div>
+                <button type="button" class="frappe-btn" onclick="Desk.generateAndDisplayBarcode('grn')" title="Generate a fresh unique barcode">
+                  <?= Icon::get('refresh', 12) ?> Generate New Barcode
+                </button>
+                <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.addItemWithGeneratedBarcode('grn')" title="Add a new item row with this barcode">
+                  + Add Item with Barcode
+                </button>
+                <div id="grnBarcodePreview" style="display: inline-flex; align-items: center; height: 32px; padding: 2px 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;">
+                  <!-- Dynamic SVG barcode rendering -->
+                </div>
+              </div>
+              <div class="frappe-help-text" style="margin-top: 6px;">Automatically assigns unique inventory barcodes (e.g. KOT-832-YYMMDD-XXXX) to newly received items.</div>
             </div>
 
             <!-- Items Section -->
@@ -806,10 +826,11 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <tr>
                       <th style="width: 38px; text-align: center;"><input type="checkbox" id="grnCheckAll" onchange="Desk.toggleSelectAllRows('grn', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
-                      <th id="grnColWhHeader" style="width: 240px;">Target Warehouse</th>
+                      <th id="grnColWhHeader" style="width: 220px;">Target Warehouse</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
-                      <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
-                      <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
+                      <th style="width: 175px;">Unique Barcode</th>
+                      <th style="width: 110px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
+                      <th style="width: 140px; text-align: right;">Basic Rate (as per ...)</th>
                       <th style="width: 44px; text-align: center; color: #8d99a6;">&#9881;</th>
                     </tr>
                   </thead>
@@ -1152,13 +1173,33 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Scan Barcode -->
-            <div style="margin-bottom: 24px;">
-              <label class="frappe-label">Scan Barcode</label>
-              <div style="position: relative; max-width: 520px;">
-                <input type="text" id="issueBarcodeScan" class="frappe-control" placeholder="Scan or type barcode and hit Enter..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Desk.onStockEntryBarcode(event, 'issue', this);}" style="padding-right: 40px;">
-                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #8d99a6; font-size: 13px; pointer-events: none; letter-spacing: -1px;">[|||||]</span>
+            <!-- Unique Item Barcode Generator for New Items -->
+            <div style="margin-bottom: 24px; padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label class="frappe-label" style="margin-bottom: 0; font-size: 12.5px; font-weight: 600; color: #1e293b;">
+                  Unique Item Barcode Generator
+                </label>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #64748b;">
+                  <input type="checkbox" id="issueAutoBarcode" checked style="accent-color: #18181b; cursor: pointer;">
+                  <label for="issueAutoBarcode" style="cursor: pointer; user-select: none; margin: 0;">Auto-generate for new items</label>
+                </div>
               </div>
+
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="position: relative; width: 260px;">
+                  <input type="text" id="issueGeneratedBarcode" class="frappe-control" style="font-family: monospace; font-weight: 600; letter-spacing: 0.5px; background: #fff;" readonly>
+                </div>
+                <button type="button" class="frappe-btn" onclick="Desk.generateAndDisplayBarcode('issue')" title="Generate a fresh unique barcode">
+                  <?= Icon::get('refresh', 12) ?> Generate New Barcode
+                </button>
+                <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.addItemWithGeneratedBarcode('issue')" title="Add a new item row with this barcode">
+                  + Add Item with Barcode
+                </button>
+                <div id="issueBarcodePreview" style="display: inline-flex; align-items: center; height: 32px; padding: 2px 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;">
+                  <!-- Dynamic SVG barcode rendering -->
+                </div>
+              </div>
+              <div class="frappe-help-text" style="margin-top: 6px;">Automatically assigns unique inventory barcodes (e.g. ISS-832-YYMMDD-XXXX) to newly issued items.</div>
             </div>
 
             <!-- Items Section -->
@@ -1173,10 +1214,11 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <tr>
                       <th style="width: 38px; text-align: center;"><input type="checkbox" id="issueCheckAll" onchange="Desk.toggleSelectAllRows('issue', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
-                      <th id="issueColWhHeader" style="width: 240px;">Source Warehouse</th>
+                      <th id="issueColWhHeader" style="width: 220px;">Source Warehouse</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
-                      <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
-                      <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
+                      <th style="width: 175px;">Unique Barcode</th>
+                      <th style="width: 110px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
+                      <th style="width: 140px; text-align: right;">Basic Rate (as per ...)</th>
                       <th style="width: 44px; text-align: center; color: #8d99a6;">&#9881;</th>
                     </tr>
                   </thead>

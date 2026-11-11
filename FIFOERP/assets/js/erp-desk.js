@@ -4053,10 +4053,73 @@ const Desk = {
       state.docType = defaultDoc;
     }
     this.setSelectedCreateDoc(context, state.docType);
+    this.generateAndDisplayBarcode(context);
     if (state.items.length === 0) {
       this.addStockEntryRow(context, false);
     }
     this.renderStockEntryRows(context);
+  },
+
+  barcodeCounter: 100,
+
+  generateUniqueBarcode(prefix = 'KOT') {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}-832-${yy}${mm}${dd}-${rand}`;
+  },
+
+  renderBarcodeSvg(code) {
+    if (!code) code = 'KOT-832-0000';
+    let barsSvg = '';
+    let x = 4;
+    const str = String(code);
+    for (let i = 0; i < str.length; i++) {
+      const charCode = str.charCodeAt(i);
+      const barWidth = (charCode % 3) + 1;
+      const spaceWidth = ((charCode * 2) % 3) + 1;
+      barsSvg += `<rect x="${x}" y="2" width="${barWidth}" height="20" fill="#0f172a" />`;
+      x += barWidth + spaceWidth;
+    }
+    barsSvg += `<rect x="${x}" y="2" width="2" height="20" fill="#0f172a" />`;
+    const totalWidth = x + 6;
+
+    return `<svg width="${totalWidth}" height="24" viewBox="0 0 ${totalWidth} 24" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+      ${barsSvg}
+    </svg>`;
+  },
+
+  generateAndDisplayBarcode(context) {
+    const code = this.generateUniqueBarcode(context === 'issue' ? 'ISS' : 'KOT');
+    const input = document.getElementById(`${context}GeneratedBarcode`);
+    if (input) input.value = code;
+    const preview = document.getElementById(`${context}BarcodePreview`);
+    if (preview) {
+      preview.innerHTML = this.renderBarcodeSvg(code);
+    }
+    return code;
+  },
+
+  addItemWithGeneratedBarcode(context) {
+    let code = document.getElementById(`${context}GeneratedBarcode`)?.value;
+    if (!code) {
+      code = this.generateAndDisplayBarcode(context);
+    }
+    this.addStockEntryRow(context, false, code);
+    this.renderStockEntryRows(context);
+    this.generateAndDisplayBarcode(context);
+    this.showToast(`Item added with unique barcode ${code}`);
+  },
+
+  regenerateRowBarcode(context, rowId) {
+    const state = this.stockEntryState[context];
+    const row = state.items.find(r => r.id === rowId);
+    if (!row) return;
+    row.barcode = this.generateUniqueBarcode(context === 'issue' ? 'ISS' : 'KOT');
+    this.renderStockEntryRows(context);
+    this.showToast(`New unique barcode: ${row.barcode}`);
   },
 
   renderStockEntryRows(context) {
@@ -4076,7 +4139,7 @@ const Desk = {
     if (state.items.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
+          <td colspan="8" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
             No items in table. Click <strong>Add row</strong> or <strong>Add multiple</strong> to add items.
           </td>
         </tr>
@@ -4098,6 +4161,10 @@ const Desk = {
         matOptions += `<option value="${m.sku}" ${row.item_code === m.sku ? 'selected' : ''}>${m.sku} - ${m.item_name}</option>`;
       });
 
+      if (!row.barcode) {
+        row.barcode = this.generateUniqueBarcode(context === 'issue' ? 'ISS' : 'KOT');
+      }
+
       html += `
         <tr data-row-id="${row.id}" style="${isChecked ? 'background: #f8fafc;' : ''}">
           <td style="text-align: center;">
@@ -4118,6 +4185,14 @@ const Desk = {
               </select>
             </div>
             ${row.item_name ? `<div style="font-size: 11px; color: #6c7680; margin-top: 2px;">${row.item_name} ${row.uom ? `(${row.uom})` : ''}</div>` : ''}
+          </td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input type="text" class="frappe-control" style="height: 30px; font-size: 11px; font-family: monospace; font-weight: 600; color: #0f172a;" value="${row.barcode || ''}" placeholder="Unique Barcode" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'barcode', this.value)">
+              <button type="button" class="frappe-btn" style="height: 30px; padding: 0 6px; font-size: 12px;" title="Regenerate unique barcode for this item" onclick="Desk.regenerateRowBarcode('${context}', ${row.id})">
+                &#9889;
+              </button>
+            </div>
           </td>
           <td>
             <input type="number" step="0.001" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${parseFloat(row.qty || 0).toFixed(3)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)">
@@ -4142,17 +4217,21 @@ const Desk = {
     tbody.innerHTML = html;
   },
 
-  addStockEntryRow(context, shouldRender = true) {
+  addStockEntryRow(context, shouldRender = true, barcode = null) {
     const state = this.stockEntryState[context];
     const defSource = document.getElementById(`${context}DefSourceWh`)?.value || '';
     const defTarget = document.getElementById(`${context}DefTargetWh`)?.value || '';
     const defWh = (context === 'grn' ? defTarget : defSource) || '';
+
+    const autoBc = document.getElementById(`${context}AutoBarcode`)?.checked !== false;
+    const assignedBarcode = barcode || (autoBc ? this.generateUniqueBarcode(context === 'issue' ? 'ISS' : 'KOT') : '');
 
     state.items.push({
       id: state.nextId++,
       warehouse: defWh,
       item_code: '',
       item_name: '',
+      barcode: assignedBarcode,
       qty: 1.0,
       basic_rate: 0.0,
       uom: 'Nos'
@@ -4437,12 +4516,14 @@ const Desk = {
           state.items[0].basic_rate = rate;
           state.items[0].qty = 1.0;
           state.items[0].warehouse = defWh;
+          state.items[0].barcode = this.generateUniqueBarcode(ctx === 'issue' ? 'ISS' : 'KOT');
         } else {
           state.items.push({
             id: state.nextId++,
             warehouse: defWh,
             item_code: sku,
             item_name: name,
+            barcode: this.generateUniqueBarcode(ctx === 'issue' ? 'ISS' : 'KOT'),
             uom: uom,
             qty: 1.0,
             basic_rate: rate
