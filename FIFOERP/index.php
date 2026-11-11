@@ -461,29 +461,7 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Real FIFO Workflow Sub-tabs -->
-      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
-        <div id="receiptWorkflowPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-receipt-filter="Entry" onclick="Desk.filterReceipts('Entry', this)">
-            <?= Icon::get('edit', 12) ?> Entry
-          </button>
-          <button type="button" class="pv-pill-btn" data-receipt-filter="Validation" onclick="Desk.filterReceipts('Validation', this)">
-            <?= Icon::get('check-circle', 12) ?> Validation
-          </button>
-          <button type="button" class="pv-pill-btn" data-receipt-filter="Approval" onclick="Desk.filterReceipts('Approval', this)">
-            <?= Icon::get('award', 12) ?> Approval
-          </button>
-          <button type="button" class="pv-pill-btn" data-receipt-filter="Posting" onclick="Desk.filterReceipts('Posting', this)">
-            <?= Icon::get('send', 12) ?> Posting
-          </button>
-          <button type="button" class="pv-pill-btn" data-receipt-filter="Posted Cancellation" onclick="Desk.filterReceipts('Posted Cancellation', this)">
-            <?= Icon::get('rotate-ccw', 12) ?> Posted Cancellation
-          </button>
-          <button type="button" class="pv-pill-btn" data-receipt-filter="Unposted Cancellation" onclick="Desk.filterReceipts('Unposted Cancellation', this)">
-            <?= Icon::get('x-circle', 12) ?> Unposted Cancellation
-          </button>
-        </div>
-      </div>
+
 
       <!-- In-Body Receipts Entry Form (Modern Frappe/ERPNext Desk Design System) -->
       <style>
@@ -926,29 +904,7 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Real FIFO Workflow Sub-tabs -->
-      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
-        <div id="issueWorkflowPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-issue-filter="Entry" onclick="Desk.filterIssues('Entry', this)">
-            <?= Icon::get('edit', 12) ?> Entry
-          </button>
-          <button type="button" class="pv-pill-btn" data-issue-filter="Validation" onclick="Desk.filterIssues('Validation', this)">
-            <?= Icon::get('check-circle', 12) ?> Validation
-          </button>
-          <button type="button" class="pv-pill-btn" data-issue-filter="Approval" onclick="Desk.filterIssues('Approval', this)">
-            <?= Icon::get('award', 12) ?> Approval
-          </button>
-          <button type="button" class="pv-pill-btn" data-issue-filter="Posting" onclick="Desk.filterIssues('Posting', this)">
-            <?= Icon::get('send', 12) ?> Posting
-          </button>
-          <button type="button" class="pv-pill-btn" data-issue-filter="Posted Cancellation" onclick="Desk.filterIssues('Posted Cancellation', this)">
-            <?= Icon::get('rotate-ccw', 12) ?> Posted Cancellation
-          </button>
-          <button type="button" class="pv-pill-btn" data-issue-filter="Unposted Cancellation" onclick="Desk.filterIssues('Unposted Cancellation', this)">
-            <?= Icon::get('x-circle', 12) ?> Unposted Cancellation
-          </button>
-        </div>
-      </div>
+
 
       <!-- In-Body Material Issue Entry Form (Modern Frappe/ERPNext Desk Design System) -->
             <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
