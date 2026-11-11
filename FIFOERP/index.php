@@ -769,38 +769,9 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
 
               <!-- Buttons Under Table -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; gap: 8px;">
-                  <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('grn')">Add row</button>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('grn')">Add multiple</button>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                  <button type="button" class="frappe-table-btn" onclick="Desk.downloadStockEntryCSV('grn')">Download</button>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.triggerStockEntryUpload('grn')">Upload</button>
-                  <input type="file" id="grnCsvFileInput" accept=".csv" style="display: none;" onchange="Desk.uploadStockEntryCSV('grn', this)">
-                </div>
-              </div>
-
-              <!-- Draft & Request Code Action Row -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                  <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('grn', true)" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    Save Draft
-                  </button>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('grn')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Request &amp; Add Code
-                  </button>
-                  <span style="font-size: 11.5px; color: #64748b; margin-left: 4px;">
-                    Item not in database? Save draft and request/add code to continue.
-                  </span>
-                </div>
-                <div>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('grn')">
-                    Update Rate and Availability
-                  </button>
-                </div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 24px;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('grn')">Add row</button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('grn')">Add multiple</button>
               </div>
             </div>
 
@@ -1226,38 +1197,9 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
 
               <!-- Buttons Under Table -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; gap: 8px;">
-                  <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('issue')">Add row</button>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('issue')">Add multiple</button>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                  <button type="button" class="frappe-table-btn" onclick="Desk.downloadStockEntryCSV('issue')">Download</button>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.triggerStockEntryUpload('issue')">Upload</button>
-                  <input type="file" id="issueCsvFileInput" accept=".csv" style="display: none;" onchange="Desk.uploadStockEntryCSV('issue', this)">
-                </div>
-              </div>
-
-              <!-- Draft & Request Code Action Row -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                  <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('issue', true)" style="background: #ffffff; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                    Save Draft
-                  </button>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('issue')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 6px 14px; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    Request &amp; Add Code
-                  </button>
-                  <span style="font-size: 11.5px; color: #64748b; margin-left: 4px;">
-                    Item not in database? Save draft and request/add code to continue.
-                  </span>
-                </div>
-                <div>
-                  <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('issue')">
-                    Update Rate and Availability
-                  </button>
-                </div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 24px;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('issue')">Add row</button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('issue')">Add multiple</button>
               </div>
             </div>
 
