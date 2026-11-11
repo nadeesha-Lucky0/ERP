@@ -4595,7 +4595,174 @@ const Desk = {
     this.showToast('Duplicated entries ready as New Stock Entry.');
   },
 
+  activePoContext: 'grn',
   activeCostCenterContext: 'issue',
+
+  // Predefined Supplier & Purchase Order Selection Dialog
+  openPoSelectionModal(context) {
+    this.activePoContext = context;
+    const modal = document.getElementById('modalGetItemsFromPO');
+    if (!modal) return;
+
+    const sel = document.getElementById('modalPoSupplierSelect');
+    const lookups = this.cachedStockLookups || { suppliers: [] };
+    const suppliers = lookups.suppliers || [
+      'Lanka Lubricants Ltd',
+      'Colombo Electrical Supplies Ltd',
+      'Industrial Spares (Pvt) Ltd',
+      'Diesel & Motor Engineering (DIMO)',
+      'United Motors Lanka PLC',
+      'Hayleys Power & Energy',
+      'Ceylon Petroleum Corporation (CPC)',
+      'State Engineering Corporation',
+      'Walker Sons & Co Ltd',
+      'Kelani Cables PLC',
+      'Brown & Company PLC',
+      'Tokyo Cement Company',
+      'Avent Technologies (Pvt) Ltd'
+    ];
+
+    if (sel) {
+      sel.innerHTML = '<option value="">-- Select Predefined Supplier --</option>';
+      suppliers.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        sel.appendChild(opt);
+      });
+
+      if (sel.options.length > 1) {
+        sel.selectedIndex = 1;
+        this.onModalSupplierChanged(sel.value);
+      }
+    }
+
+    modal.style.display = 'flex';
+  },
+
+  closePoSelectionModal() {
+    const modal = document.getElementById('modalGetItemsFromPO');
+    if (modal) modal.style.display = 'none';
+  },
+
+  onModalSupplierChanged(supplier) {
+    const poInput = document.getElementById('modalPoRefInput');
+    const supWord = (supplier || 'SUP').split(' ')[0].toUpperCase().substring(0, 5);
+    if (poInput) {
+      poInput.value = `PO-2026-${supWord}-01`;
+    }
+    this.renderPoSupplierItems(supplier);
+  },
+
+  renderPoSupplierItems(supplier) {
+    const tbody = document.getElementById('modalPoItemsBody');
+    if (!tbody) return;
+
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const materials = (lookups.materials || []).slice(0, 20);
+
+    if (materials.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #8d99a6; padding: 20px;">No master items found.</td></tr>';
+      return;
+    }
+
+    let html = '';
+    materials.forEach(m => {
+      html += `
+        <tr class="po-modal-item-row" data-sku="${m.sku}" data-name="${(m.item_name||'').toLowerCase()}">
+          <td style="text-align: center;">
+            <input type="checkbox" class="po-item-chk" value="${m.sku}" data-name="${m.item_name}" data-uom="${m.uom||'Nos'}" data-rate="${m.unit_price||0}" checked style="accent-color: #18181b; cursor: pointer;">
+          </td>
+          <td>
+            <div style="font-weight: 600; font-size: 12.5px;">${m.sku}</div>
+            <div style="font-size: 11.5px; color: #6c7680;">${m.item_name}</div>
+          </td>
+          <td style="text-align: center; font-size: 12px; color: #6c7680;">${m.uom || 'Nos'}</td>
+          <td style="text-align: right; font-size: 12px;">Rs. ${parseFloat(m.unit_price||0).toFixed(2)}</td>
+          <td style="text-align: right;">
+            <input type="number" step="0.001" min="0" class="frappe-control po-recv-qty" style="height: 28px; width: 85px; text-align: right; font-size: 12px; font-weight: 600;" value="10.000">
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  },
+
+  filterPoItems(query) {
+    const q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('.po-modal-item-row').forEach(tr => {
+      const sku = (tr.getAttribute('data-sku') || '').toLowerCase();
+      const name = (tr.getAttribute('data-name') || '').toLowerCase();
+      tr.style.display = (!q || sku.includes(q) || name.includes(q)) ? '' : 'none';
+    });
+  },
+
+  toggleModalPoCheckAll(checked) {
+    document.querySelectorAll('.po-item-chk').forEach(c => c.checked = checked);
+  },
+
+  confirmGetItemsFromPO() {
+    const ctx = this.activePoContext || 'grn';
+    const supplier = document.getElementById('modalPoSupplierSelect')?.value || '';
+    const poRef = document.getElementById('modalPoRefInput')?.value || '';
+    const targetWh = document.getElementById('modalPoWarehouseSelect')?.value || 'Main Store Bay-01';
+    const state = this.stockEntryState[ctx];
+
+    let count = 0;
+    document.querySelectorAll('#modalPoItemsBody tr').forEach(tr => {
+      const chk = tr.querySelector('.po-item-chk');
+      if (chk && chk.checked) {
+        const sku = chk.value;
+        const name = chk.getAttribute('data-name');
+        const uom = chk.getAttribute('data-uom');
+        const rate = parseFloat(chk.getAttribute('data-rate') || 0);
+        const qty = parseFloat(tr.querySelector('.po-recv-qty')?.value || 1);
+
+        if (state.items.length === 1 && !state.items[0].item_code) {
+          state.items[0].item_code = sku;
+          state.items[0].item_name = name;
+          state.items[0].uom = uom;
+          state.items[0].basic_rate = rate;
+          state.items[0].qty = qty;
+          state.items[0].warehouse = targetWh;
+        } else {
+          state.items.push({
+            id: state.nextId++,
+            warehouse: targetWh,
+            item_code: sku,
+            item_name: name,
+            uom: uom,
+            qty: qty,
+            basic_rate: rate
+          });
+        }
+        count++;
+      }
+    });
+
+    if (supplier) {
+      const supSel = document.getElementById(`${ctx}SupplierSelect`);
+      if (supSel) supSel.value = supplier;
+
+      const partyInput = document.getElementById(`${ctx}PartyName`);
+      if (partyInput) partyInput.value = supplier;
+    }
+
+    if (poRef) {
+      const poInput = document.getElementById(`${ctx}PoRefInput`);
+      if (poInput) poInput.value = poRef;
+
+      const poRefHidden = document.getElementById(`${ctx}PoRef`);
+      if (poRefHidden) poRefHidden.value = poRef;
+    }
+
+    const whTarget = document.getElementById(`${ctx}DefTargetWh`);
+    if (whTarget && ctx === 'grn') whTarget.value = targetWh;
+
+    this.closePoSelectionModal();
+    this.renderStockEntryRows(ctx);
+    this.showToast(`Loaded ${count} items from ${supplier} (PO: ${poRef}).`);
+  },
   activeSectionContext: 'issue',
 
     onSupplierSelectChange(context, val) {
