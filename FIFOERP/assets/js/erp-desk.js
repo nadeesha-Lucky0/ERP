@@ -4770,6 +4770,8 @@ const Desk = {
       const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
       if (unitPriceSec) unitPriceSec.style.display = 'block';
       if (invoiceTotalsSec) invoiceTotalsSec.style.display = 'block';
+
+
     }
 
     this.setSelectedCreateDoc(context, defaultDoc);
@@ -4819,16 +4821,44 @@ const Desk = {
       if (seTypeEl) seTypeEl.value = 'Material Receipt';
     }
 
-    // Conditionally show/hide Unit Price Values and Invoice Totals sections for GRN & GRSP vs MRA
+    // Adapt Reference Data labels for GRN/GRSP vs MRA
     if (context === 'grn') {
+      const lbl1 = document.getElementById('grnRefLabel1');
+      const lbl2 = document.getElementById('grnRefLabel2');
+      const lbl3 = document.getElementById('grnRefLabel3');
+      const lbl4 = document.getElementById('grnRefLabel4');
+      const in1 = document.getElementById('grnInvoiceDate');
+      const in2 = document.getElementById('grnPoRef');
+      const in3 = document.getElementById('grnInvoiceNo');
+      const in4 = document.getElementById('grnSupplierRef');
+
+      if (type === 'MRA') {
+        if (lbl1) lbl1.textContent = 'DELIVERED FROM :';
+        if (lbl2) lbl2.textContent = 'DELIVERED BY :';
+        if (lbl3) lbl3.textContent = 'DELIVERY NOTE NO :';
+        if (lbl4) lbl4.textContent = 'CONSIGNMENT / ADVICE REF :';
+        if (in1) in1.placeholder = 'e.g. Electrical Dept / Power House Workshop';
+        if (in2) in2.placeholder = 'e.g. Officer Name / Carrier / Vehicle No';
+        if (in3) in3.placeholder = 'e.g. DN-2026-081';
+        if (in4) in4.placeholder = 'e.g. MRA-REF-992';
+      } else {
+        if (lbl1) lbl1.textContent = 'INVOICE DATE :';
+        if (lbl2) lbl2.textContent = 'PURCHASE ORDER NO :';
+        if (lbl3) lbl3.textContent = 'INVOICE NO / DELIVERY NOTE :';
+        if (lbl4) lbl4.textContent = 'SUPPLIER CONSIGNMENT REF :';
+        if (in1) in1.placeholder = 'YYYY-MM-DD or delivery date';
+        if (in2) in2.placeholder = 'e.g. PO-2026-081';
+        if (in3) in3.placeholder = 'e.g. INV-2026-992';
+        if (in4) in4.placeholder = 'e.g. CON-2026-081';
+      }
+
+      // Both GRN and MRA retain the Unit Price and Invoice Totals sections
       const unitPriceSec = document.getElementById('grnUnitPriceValuesSection');
       const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
-      if (unitPriceSec) {
-        unitPriceSec.style.display = (type === 'MRA') ? 'none' : 'block';
-      }
-      if (invoiceTotalsSec) {
-        invoiceTotalsSec.style.display = (type === 'MRA') ? 'none' : 'block';
-      }
+      if (unitPriceSec) unitPriceSec.style.display = 'block';
+      if (invoiceTotalsSec) invoiceTotalsSec.style.display = 'block';
+
+
     }
 
     // Close any open dropdown menu

@@ -897,19 +897,19 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div id="grnReferenceDataBody" style="padding: 16px 20px;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 780px;">
                   <div>
-                    <label class="frappe-label">INVOICE DATE :</label>
-                    <input type="date" name="invoice_date" id="grnInvoiceDate" class="frappe-control">
+                    <label class="frappe-label" id="grnRefLabel1">INVOICE DATE :</label>
+                    <input type="text" name="invoice_date" id="grnInvoiceDate" class="frappe-control" placeholder="YYYY-MM-DD or delivery date">
                   </div>
                   <div>
-                    <label class="frappe-label">PURCHASE ORDER NO :</label>
+                    <label class="frappe-label" id="grnRefLabel2">PURCHASE ORDER NO :</label>
                     <input type="text" name="po_reference" id="grnPoRef" class="frappe-control" placeholder="e.g. PO-2026-081">
                   </div>
                   <div>
-                    <label class="frappe-label">INVOICE NO / DELIVERY NOTE :</label>
+                    <label class="frappe-label" id="grnRefLabel3">INVOICE NO / DELIVERY NOTE :</label>
                     <input type="text" name="invoice_no" id="grnInvoiceNo" class="frappe-control" placeholder="e.g. INV-2026-992">
                   </div>
                   <div>
-                    <label class="frappe-label">SUPPLIER CONSIGNMENT REF :</label>
+                    <label class="frappe-label" id="grnRefLabel4">SUPPLIER CONSIGNMENT REF :</label>
                     <input type="text" name="supplier_ref" id="grnSupplierRef" class="frappe-control" placeholder="e.g. CON-2026-081">
                   </div>
                 </div>
