@@ -4506,6 +4506,49 @@ const Desk = {
     this.activeFloatingTrigger = null;
   },
 
+  matchesItemCodeOrName(material, rawQuery) {
+    if (!rawQuery) return true;
+    const q = rawQuery.trim().toLowerCase();
+    if (!q) return true;
+
+    const sku = (material.sku || '').toLowerCase();
+    const name = (material.item_name || '').toLowerCase();
+
+    // 1. Direct standard substring match on SKU or Item Name
+    if (sku.includes(q) || name.includes(q)) return true;
+
+    // 2. Alphanumeric match (ignoring hyphens, spaces, dots, slashes)
+    // Handles e.g. "010101000" matching "01-01-01-000", or "01-01-01-000" matching "010101000"
+    const cleanQ = q.replace(/[^a-z0-9]/g, '');
+    const cleanSku = sku.replace(/[^a-z0-9]/g, '');
+    if (cleanQ && cleanSku) {
+      if (cleanSku.includes(cleanQ) || cleanQ.includes(cleanSku)) return true;
+
+      // 3. Leading-zero agnostic match (handles e.g. "10101000" matching "010101000" or "01-01-01-000")
+      const strippedQ = cleanQ.replace(/^0+/, '');
+      const strippedSku = cleanSku.replace(/^0+/, '');
+      if (strippedQ && strippedSku) {
+        if (strippedSku.includes(strippedQ) || strippedQ.includes(strippedSku)) return true;
+      }
+    }
+
+    // 4. Segment-based zero-stripped match (handles e.g. "1-01-01-000" or "1-1-1-0" matching "01-01-01-000")
+    const skuParts = sku.split(/[^a-z0-9]+/).filter(Boolean).map(p => p.replace(/^0+/, '') || '0');
+    const qParts = q.split(/[^a-z0-9]+/).filter(Boolean).map(p => p.replace(/^0+/, '') || '0');
+
+    if (qParts.length > 0 && skuParts.length >= qParts.length) {
+      const normSkuHyphen = skuParts.join('-');
+      const normQHyphen = qParts.join('-');
+      if (normSkuHyphen.includes(normQHyphen)) return true;
+
+      const normSkuConcat = skuParts.join('');
+      const normQConcat = qParts.join('');
+      if (normSkuConcat.includes(normQConcat)) return true;
+    }
+
+    return false;
+  },
+
   renderFloatingItemList(context, rowId, query) {
     const dd = document.getElementById('floatingItemSearchDropdown');
     if (!dd) return;
@@ -4562,10 +4605,7 @@ const Desk = {
     };
 
     let matches = allMaterials.filter(m => {
-      if (!q) return true;
-      const sku = (m.sku || '').toLowerCase();
-      const name = (m.item_name || '').toLowerCase();
-      return sku.includes(q) || name.includes(q);
+      return Desk.matchesItemCodeOrName(m, q);
     }).slice(0, 100);
 
     renderList(matches);
@@ -4576,13 +4616,15 @@ const Desk = {
         fetch(`${this.baseUrl}/api/inventory.php?action=search_materials&q=${encodeURIComponent(q)}`)
           .then(r => r.json())
           .then(res => {
-            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-              res.data.forEach(rm => {
+            const rawList = res.success ? (Array.isArray(res.data) ? res.data : (res.data?.materials || [])) : [];
+            if (rawList.length > 0) {
+              rawList.forEach(rm => {
                 if (!allMaterials.some(lm => lm.sku === rm.sku)) {
                   allMaterials.push(rm);
                 }
               });
-              renderList(res.data.slice(0, 100));
+              const filtered = allMaterials.filter(m => Desk.matchesItemCodeOrName(m, q)).slice(0, 100);
+              renderList(filtered);
             }
           })
           .catch(() => {});
@@ -4751,10 +4793,7 @@ const Desk = {
     };
 
     let matches = allMaterials.filter(m => {
-      if (!q) return true;
-      const sku = (m.sku || '').toLowerCase();
-      const name = (m.item_name || '').toLowerCase();
-      return sku.includes(q) || name.includes(q);
+      return Desk.matchesItemCodeOrName(m, q);
     }).slice(0, 50);
 
     renderTable(matches);
@@ -4763,13 +4802,15 @@ const Desk = {
       fetch(`${this.baseUrl}/api/inventory.php?action=search_materials&q=${encodeURIComponent(q)}`)
         .then(r => r.json())
         .then(res => {
-          if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-            res.data.forEach(rm => {
+          const rawList = res.success ? (Array.isArray(res.data) ? res.data : (res.data?.materials || [])) : [];
+          if (rawList.length > 0) {
+            rawList.forEach(rm => {
               if (!allMaterials.some(lm => lm.sku === rm.sku)) {
                 allMaterials.push(rm);
               }
             });
-            renderTable(res.data.slice(0, 50));
+            const filtered = allMaterials.filter(m => Desk.matchesItemCodeOrName(m, q)).slice(0, 50);
+            renderTable(filtered);
           }
         })
         .catch(() => {});

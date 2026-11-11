@@ -132,9 +132,35 @@ try {
             $central = Database::getConnection();
             $materials = [];
             if (!empty($q)) {
-                $stmt = $central->prepare("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE (formatted_code LIKE :q1 OR item_name LIKE :q2) AND status = 'ACTIVE' LIMIT 100");
-                $param = '%' . $q . '%';
-                $stmt->execute([':q1' => $param, ':q2' => $param]);
+                $cleanQ = preg_replace('/[^a-zA-Z0-9]/', '', $q);
+                $strippedQ = ltrim($cleanQ, '0');
+
+                $whereParts = [
+                    'formatted_code LIKE :rawQ',
+                    'item_name LIKE :nameQ'
+                ];
+                $params = [
+                    ':rawQ' => '%' . $q . '%',
+                    ':nameQ' => '%' . $q . '%'
+                ];
+
+                if (!empty($cleanQ)) {
+                    $whereParts[] = "REPLACE(REPLACE(REPLACE(formatted_code, '-', ''), ' ', ''), '.', '') LIKE :cleanQ";
+                    $params[':cleanQ'] = '%' . $cleanQ . '%';
+                }
+
+                if (!empty($strippedQ)) {
+                    $whereParts[] = "TRIM(LEADING '0' FROM REPLACE(REPLACE(REPLACE(formatted_code, '-', ''), ' ', ''), '.', '')) LIKE :strippedQ";
+                    $params[':strippedQ'] = '%' . $strippedQ . '%';
+                }
+
+                $sql = "SELECT formatted_code as sku, item_name, uom, unit_price 
+                        FROM fifo_master_items 
+                        WHERE status = 'ACTIVE' AND (" . implode(' OR ', $whereParts) . ") 
+                        LIMIT 100";
+
+                $stmt = $central->prepare($sql);
+                $stmt->execute($params);
                 $materials = $stmt->fetchAll();
             } else {
                 $materials = $central->query("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 100")->fetchAll();
