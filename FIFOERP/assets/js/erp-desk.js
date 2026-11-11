@@ -4062,6 +4062,21 @@ const Desk = {
 
   barcodeCounter: 100,
 
+  getItemBarcode(matOrSku) {
+    if (!matOrSku) return '';
+    const sku = (typeof matOrSku === 'string' ? matOrSku : (matOrSku.sku || matOrSku.item_code || '')).trim();
+    if (!sku) return '';
+    if (typeof matOrSku === 'object' && matOrSku.barcode) {
+      return matOrSku.barcode;
+    }
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const found = (lookups.materials || []).find(m => m.sku === sku);
+    if (found && found.barcode) {
+      return found.barcode;
+    }
+    return `KOT-832-${sku}`;
+  },
+
   generateUniqueBarcode(prefix = 'KOT') {
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
@@ -4161,8 +4176,8 @@ const Desk = {
         matOptions += `<option value="${m.sku}" ${row.item_code === m.sku ? 'selected' : ''}>${m.sku} - ${m.item_name}</option>`;
       });
 
-      if (!row.barcode) {
-        row.barcode = this.generateUniqueBarcode(context === 'issue' ? 'ISS' : 'KOT');
+      if (!row.barcode && row.item_code) {
+        row.barcode = this.getItemBarcode(row.item_code);
       }
 
       html += `
@@ -4223,8 +4238,7 @@ const Desk = {
     const defTarget = document.getElementById(`${context}DefTargetWh`)?.value || '';
     const defWh = (context === 'grn' ? defTarget : defSource) || '';
 
-    const autoBc = document.getElementById(`${context}AutoBarcode`)?.checked !== false;
-    const assignedBarcode = barcode || (autoBc ? this.generateUniqueBarcode(context === 'issue' ? 'ISS' : 'KOT') : '');
+    const assignedBarcode = barcode || '';
 
     state.items.push({
       id: state.nextId++,
@@ -4285,6 +4299,16 @@ const Desk = {
       row.uom = mat.uom || 'Nos';
       if (mat.unit_price) {
         row.basic_rate = parseFloat(mat.unit_price) || 0;
+      }
+      // Existing item: Automatically retain/load its permanent barcode!
+      row.barcode = this.getItemBarcode(mat);
+    } else if (!sku) {
+      row.item_name = '';
+      row.barcode = '';
+    } else {
+      // New / custom item not in master: generate a fresh unique barcode
+      if (!row.barcode && row.item_code) {
+        row.barcode = this.getItemBarcode(row.item_code);
       }
     }
     this.renderStockEntryRows(context);

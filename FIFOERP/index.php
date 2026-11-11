@@ -801,17 +801,17 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div style="position: relative; width: 260px;">
                   <input type="text" id="grnGeneratedBarcode" class="frappe-control" style="font-family: monospace; font-weight: 600; letter-spacing: 0.5px; background: #fff;" readonly>
                 </div>
-                <button type="button" class="frappe-btn" onclick="Desk.generateAndDisplayBarcode('grn')" title="Generate a fresh unique barcode">
+                <button type="button" class="frappe-btn" onclick="Desk.generateAndDisplayBarcode('grn')" title="Generate a fresh unique barcode for a new item">
                   <?= Icon::get('refresh', 12) ?> Generate New Barcode
                 </button>
-                <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.addItemWithGeneratedBarcode('grn')" title="Add a new item row with this barcode">
-                  + Add Item with Barcode
+                <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.addItemWithGeneratedBarcode('grn')" title="Add a brand new item row with this generated barcode">
+                  + Add New Item with Barcode
                 </button>
                 <div id="grnBarcodePreview" style="display: inline-flex; align-items: center; height: 32px; padding: 2px 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;">
                   <!-- Dynamic SVG barcode rendering -->
                 </div>
               </div>
-              <div class="frappe-help-text" style="margin-top: 6px;">Automatically assigns unique inventory barcodes (e.g. KOT-832-YYMMDD-XXXX) to newly received items.</div>
+              <div class="frappe-help-text" style="margin-top: 6px;">Existing items automatically retain their permanent stock barcode when selected. Use the generator above only when introducing brand new items.</div>
             </div>
 
             <!-- Items Section -->
@@ -1189,17 +1189,17 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div style="position: relative; width: 260px;">
                   <input type="text" id="issueGeneratedBarcode" class="frappe-control" style="font-family: monospace; font-weight: 600; letter-spacing: 0.5px; background: #fff;" readonly>
                 </div>
-                <button type="button" class="frappe-btn" onclick="Desk.generateAndDisplayBarcode('issue')" title="Generate a fresh unique barcode">
+                <button type="button" class="frappe-btn" onclick="Desk.generateAndDisplayBarcode('issue')" title="Generate a fresh unique barcode for a new item">
                   <?= Icon::get('refresh', 12) ?> Generate New Barcode
                 </button>
-                <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.addItemWithGeneratedBarcode('issue')" title="Add a new item row with this barcode">
-                  + Add Item with Barcode
+                <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.addItemWithGeneratedBarcode('issue')" title="Add a brand new item row with this generated barcode">
+                  + Add New Item with Barcode
                 </button>
                 <div id="issueBarcodePreview" style="display: inline-flex; align-items: center; height: 32px; padding: 2px 8px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;">
                   <!-- Dynamic SVG barcode rendering -->
                 </div>
               </div>
-              <div class="frappe-help-text" style="margin-top: 6px;">Automatically assigns unique inventory barcodes (e.g. ISS-832-YYMMDD-XXXX) to newly issued items.</div>
+              <div class="frappe-help-text" style="margin-top: 6px;">Existing items automatically retain their permanent stock barcode when selected. Use the generator above only when introducing brand new items.</div>
             </div>
 
             <!-- Items Section -->
