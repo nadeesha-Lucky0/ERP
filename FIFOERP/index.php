@@ -616,8 +616,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')">
                   Get Items From <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
-                <div id="grnGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 210px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('grn')">Purchase Order</a>
+                <div id="grnGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('grn')">Cost Center</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('grn')">Section</a>
                 </div>
@@ -679,27 +678,15 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Purchase Order & Supplier Selection (When Material Receipt) -->
+            <!-- Purchase Order & Supplier Information (When Material Receipt) -->
             <div id="grnPurchaseSection" style="display: block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
-              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-                <span>Purchase &amp; Supplier Selection</span>
-                <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('grn')">
-                  Browse Purchase Orders &rarr;
-                </button>
+              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px;">
+                <span>Purchase &amp; Supplier Information</span>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <select name="po_selection" id="grnPoSelect" class="frappe-control" onchange="Desk.onPoSelectChange('grn', this.value)">
-                    <option value="">-- Select or Link Purchase Order --</option>
-                    <option value="PO-2026-081">PO-2026-081 - Lanka Lubricants Ltd</option>
-                    <option value="PO-2026-082">PO-2026-082 - Colombo Electrical Supplies Ltd</option>
-                    <option value="PO-2026-083">PO-2026-083 - Industrial Spares (Pvt) Ltd</option>
-                    <option value="PO-2026-084">PO-2026-084 - Diesel &amp; Motor Engineering (DIMO)</option>
-                    <option value="PO-2026-085">PO-2026-085 - Kelani Cables PLC</option>
-                    <option value="CUSTOM">+ Enter Custom PO Reference...</option>
-                  </select>
-                  <input type="text" id="grnCustomPoInput" class="frappe-control" placeholder="Type custom PO (e.g. PO-832-2026)" style="display: none; margin-top: 6px;" oninput="document.getElementById('grnPoRef').value = this.value;">
+                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="document.getElementById('grnPoRef').value = this.value;">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
@@ -992,8 +979,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
                   Get Items From <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
-                <div id="issueGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 210px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('issue')">Purchase Order</a>
+                <div id="issueGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('issue')">Cost Center</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('issue')">Section</a>
                 </div>
@@ -1085,27 +1071,15 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Purchase Order & Supplier Selection (When Material Receipt) -->
+            <!-- Purchase Order & Supplier Information (When Material Receipt) -->
             <div id="issuePurchaseSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
-              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-                <span>Purchase &amp; Supplier Selection</span>
-                <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('issue')">
-                  Browse Purchase Orders &rarr;
-                </button>
+              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px;">
+                <span>Purchase &amp; Supplier Information</span>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <select name="po_selection" id="issuePoSelect" class="frappe-control" onchange="Desk.onPoSelectChange('issue', this.value)">
-                    <option value="">-- Select or Link Purchase Order --</option>
-                    <option value="PO-2026-081">PO-2026-081 - Lanka Lubricants Ltd</option>
-                    <option value="PO-2026-082">PO-2026-082 - Colombo Electrical Supplies Ltd</option>
-                    <option value="PO-2026-083">PO-2026-083 - Industrial Spares (Pvt) Ltd</option>
-                    <option value="PO-2026-084">PO-2026-084 - Diesel &amp; Motor Engineering (DIMO)</option>
-                    <option value="PO-2026-085">PO-2026-085 - Kelani Cables PLC</option>
-                    <option value="CUSTOM">+ Enter Custom PO Reference...</option>
-                  </select>
-                  <input type="text" id="issueCustomPoInput" class="frappe-control" placeholder="Type custom PO (e.g. PO-832-2026)" style="display: none; margin-top: 6px;" oninput="document.getElementById('issuePoRef').value = this.value;">
+                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="document.getElementById('issuePoRef').value = this.value;">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
@@ -3512,65 +3486,7 @@ require_once __DIR__ . '/views/layouts/header.php';
   </div>
 </div>
 
-<!-- Modal 2: Get Items From Purchase Order -->
-<div id="modalGetItemsFromPO" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 760px; width: 92%; border-radius: 8px; background: #fff;">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Get Items From Purchase Order</h3>
-      <button type="button" class="desk-modal-close" onclick="Desk.closePoSelectionModal()">&times;</button>
-    </div>
-    <div class="desk-modal-body" style="padding: 18px 20px;">
-      <div style="margin-bottom: 16px;">
-        <label class="frappe-label">Select Purchase Order <span style="color: #e02424;">*</span></label>
-        <select id="modalPoSelector" class="frappe-control" style="font-weight: 500;" onchange="Desk.onModalPoSelected(this.value)">
-          <option value="">-- Select Purchase Order --</option>
-          <option value="PO-2026-081">PO-2026-081 - Lanka Lubricants Ltd (Turbine &amp; Transformer Consignment)</option>
-          <option value="PO-2026-082">PO-2026-082 - Colombo Electrical Supplies Ltd (Circuit Breakers &amp; Relays)</option>
-          <option value="PO-2026-083">PO-2026-083 - Industrial Spares (Pvt) Ltd (Bearings, O-Rings &amp; Gaskets)</option>
-          <option value="PO-2026-084">PO-2026-084 - Diesel &amp; Motor Engineering (DIMO) (Filters &amp; Spares)</option>
-          <option value="PO-2026-085">PO-2026-085 - Kelani Cables PLC (Substation XLPE Cables)</option>
-        </select>
-      </div>
-
-      <div id="modalPoDetailsBox" style="display: none; margin-bottom: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; font-size: 12px; line-height: 1.6;">
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-          <div><strong>Supplier:</strong> <span id="modalPoSupplierName">-</span></div>
-          <div><strong>PO Date:</strong> <span id="modalPoDate">-</span></div>
-          <div><strong>Warehouse:</strong> <span id="modalPoWarehouse">-</span></div>
-        </div>
-      </div>
-
-      <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 8px;">Purchase Order Line Items</div>
-      <div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-        <table class="frappe-table" id="modalPoItemsTable">
-          <thead>
-            <tr>
-              <th style="width: 36px; text-align: center;"><input type="checkbox" id="modalPoCheckAll" onchange="Desk.toggleModalPoCheckAll(this.checked)" checked></th>
-              <th>Item Code / Description</th>
-              <th style="width: 70px; text-align: center;">UOM</th>
-              <th style="width: 90px; text-align: right;">PO Qty</th>
-              <th style="width: 110px; text-align: right;">Unit Rate</th>
-              <th style="width: 100px; text-align: right;">Receive Qty</th>
-            </tr>
-          </thead>
-          <tbody id="modalPoItemsBody">
-            <tr>
-              <td colspan="6" style="text-align: center; color: #8d99a6; padding: 20px;">
-                Please select a Purchase Order above to view items.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
-      <button type="button" class="frappe-btn" onclick="Desk.closePoSelectionModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromPO()">Get Items</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal 3: Get Items From Cost Center -->
+<!-- Modal 2: Get Items From Cost Center -->
 <div id="modalGetItemsFromCostCenter" class="desk-modal-backdrop" style="display: none;">
   <div class="desk-modal" style="max-width: 760px; width: 92%; border-radius: 8px; background: #fff;">
     <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
