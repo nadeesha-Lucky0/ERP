@@ -629,7 +629,6 @@ require_once __DIR__ . '/views/layouts/header.php';
           <!-- TABS -->
           <div class="frappe-tabs">
             <button type="button" class="frappe-tab-btn active" id="tabBtn-grn-details" onclick="Desk.switchStockEntryTab('grn', 'details')">Details</button>
-            <button type="button" class="frappe-tab-btn" id="tabBtn-grn-other" onclick="Desk.switchStockEntryTab('grn', 'other')">Other Info</button>
           </div>
 
           <!-- TAB CONTENT: DETAILS -->
@@ -823,18 +822,13 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </div>
               </div>
 
-              <div>
+              <div style="margin-bottom: 24px;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('grn')">
                   Update Rate and Availability
                 </button>
               </div>
             </div>
 
-          </div><!-- /tabContent-grn-details -->
-
-          <!-- TAB CONTENT: OTHER INFO -->
-          <div id="tabContent-grn-other" class="frappe-tab-content" style="display: none;">
-            
             <!-- SECTION 1: Values To Consider for Material Unit Price -->
             <div class="frappe-card-section" id="grnUnitPriceValuesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
               <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnUnitPriceValuesBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
@@ -974,7 +968,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-          </div><!-- /tabContent-grn-other -->
+          </div><!-- /tabContent-grn-details -->
 
         </form>
       </div>
@@ -1094,7 +1088,6 @@ require_once __DIR__ . '/views/layouts/header.php';
           <!-- TABS -->
           <div class="frappe-tabs">
             <button type="button" class="frappe-tab-btn active" id="tabBtn-issue-details" onclick="Desk.switchStockEntryTab('issue', 'details')">Details</button>
-            <button type="button" class="frappe-tab-btn" id="tabBtn-issue-other" onclick="Desk.switchStockEntryTab('issue', 'other')">Other Info</button>
           </div>
 
           <!-- TAB CONTENT: DETAILS -->
@@ -1288,51 +1281,44 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </div>
               </div>
 
-              <div>
+              <div style="margin-bottom: 24px;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('issue')">
                   Update Rate and Availability
                 </button>
               </div>
             </div>
 
-          </div><!-- /tabContent-issue-details -->
-
-          <!-- TAB CONTENT: OTHER INFO -->
-          <div id="tabContent-issue-other" class="frappe-tab-content" style="display: none;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 20px;">
-              <div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Destination / Cost Center</label>
-                  <input type="text" name="party_name" id="issuePartyName" class="frappe-control" placeholder="Select or type Destination / Cost Center...">
+            <!-- Reference and Remarks -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px; margin-bottom: 18px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <div>
+                  <div style="margin-bottom: 16px;">
+                    <label class="frappe-label">Destination / Cost Center</label>
+                    <input type="text" name="party_name" id="issuePartyName" class="frappe-control" placeholder="Select or type Destination / Cost Center...">
+                  </div>
+                  <div style="margin-bottom: 16px;">
+                    <label class="frappe-label">Requisition / Work Order Ref</label>
+                    <input type="text" name="po_reference" id="issuePoRef" class="frappe-control" placeholder="REQ-XXXXX">
+                  </div>
+                  <div style="margin-bottom: 16px;">
+                    <label class="frappe-label">Department / Section</label>
+                    <input type="text" name="invoice_no" id="issueInvoiceNo" class="frappe-control" placeholder="Department Code">
+                  </div>
                 </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Requisition / Work Order Ref</label>
-                  <input type="text" name="po_reference" id="issuePoRef" class="frappe-control" placeholder="REQ-XXXXX">
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Department / Section</label>
-                  <input type="text" name="invoice_no" id="issueInvoiceNo" class="frappe-control" placeholder="Department Code">
-                </div>
-              </div>
-              <div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Letter Head</label>
-                  <select name="letter_head" class="frappe-control">
-                    <option value="EGL Power Generation" selected>EGL Power Generation</option>
-                    <option value="Standard Header">Standard Header</option>
-                  </select>
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Issued To / Employee</label>
-                  <input type="text" name="transporter_info" id="issueTransporterInfo" class="frappe-control" placeholder="Receiver Name / Staff ID">
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Remarks / Note</label>
-                  <textarea name="remarks" id="issueRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
+                <div>
+                  <div style="margin-bottom: 16px;">
+                    <label class="frappe-label">Issued To / Employee</label>
+                    <input type="text" name="transporter_info" id="issueTransporterInfo" class="frappe-control" placeholder="Receiver Name / Staff ID">
+                  </div>
+                  <div style="margin-bottom: 16px;">
+                    <label class="frappe-label">Remarks / Note</label>
+                    <textarea name="remarks" id="issueRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
+                  </div>
                 </div>
               </div>
             </div>
-          </div><!-- /tabContent-issue-other -->
+
+          </div><!-- /tabContent-issue-details -->
 
         </form>
       </div>

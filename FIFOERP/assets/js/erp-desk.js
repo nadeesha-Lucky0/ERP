@@ -4262,19 +4262,11 @@ const Desk = {
     if (card) {
       card.querySelectorAll('.frappe-tab-btn').forEach(b => b.classList.remove('active'));
     }
-    const btn = document.getElementById(`tabBtn-${context}-${tabName}`);
+    const btn = document.getElementById(`tabBtn-${context}-${tabName}`) || document.getElementById(`tabBtn-${context}-details`);
     if (btn) btn.classList.add('active');
 
     const detailsTab = document.getElementById(`tabContent-${context}-details`);
-    const otherTab = document.getElementById(`tabContent-${context}-other`);
-
-    if (tabName === 'details') {
-      if (detailsTab) detailsTab.style.display = 'block';
-      if (otherTab) otherTab.style.display = 'none';
-    } else {
-      if (detailsTab) detailsTab.style.display = 'none';
-      if (otherTab) otherTab.style.display = 'block';
-    }
+    if (detailsTab) detailsTab.style.display = 'block';
   },
 
   toggleEditPostingDate(context, checked) {
