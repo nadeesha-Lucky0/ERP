@@ -4236,6 +4236,17 @@ const Desk = {
         whOptions += `<option value="${w}" ${row.warehouse === w ? 'selected' : ''}>${w}</option>`;
       });
 
+      let matOptions = '<option value="">-- Select Item Code --</option>';
+      let foundInList = false;
+      materials.forEach(m => {
+        const isSel = (row.item_code === m.sku);
+        if (isSel) foundInList = true;
+        matOptions += `<option value="${m.sku}" ${isSel ? 'selected' : ''}>${m.sku} - ${m.item_name}</option>`;
+      });
+      if (row.item_code && !foundInList) {
+        matOptions += `<option value="${Desk.escapeHtml(row.item_code)}" selected>${Desk.escapeHtml(row.item_code)} - ${Desk.escapeHtml(row.item_name || 'Selected Item')}</option>`;
+      }
+
       html += `
         <tr data-row-id="${row.id}" style="${isChecked ? 'background: #f8fafc;' : ''}">
           <td style="text-align: center;">
@@ -4250,31 +4261,45 @@ const Desk = {
             </select>
           </td>
           <td style="position: relative;">
-            <div style="display: flex; gap: 4px; align-items: center;">
-              <div style="position: relative; flex: 1;">
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <!-- Dropdown Select -->
+              <div style="flex: 1; min-width: 0;">
+                <select class="frappe-control frappe-select" 
+                        id="itemSelect_${context}_${row.id}"
+                        style="height: 30px; font-size: 12px; font-weight: 500; width: 100%;" 
+                        onchange="Desk.onStockEntryItemSelect('${context}', ${row.id}, this.value)">
+                  ${matOptions}
+                </select>
+              </div>
+
+              <!-- Search Input Box -->
+              <div style="position: relative; width: 155px; flex-shrink: 0;">
                 <input type="text"
                        class="frappe-control item-code-search-input"
                        id="itemCodeInput_${context}_${row.id}"
-                       style="height: 30px; font-size: 12px; font-weight: 600; font-family: monospace; width: 100%; padding-right: ${row.item_code ? '24px' : '8px'};"
-                       placeholder="Search Code or Name..."
+                       style="height: 30px; font-size: 11.5px; font-weight: 600; font-family: monospace; width: 100%; padding-left: 22px; padding-right: ${row.item_code ? '20px' : '6px'};"
+                       placeholder="Search code..."
                        value="${Desk.escapeHtml(row.item_code || '')}"
                        autocomplete="off"
                        onfocus="Desk.searchStockEntryItem('${context}', ${row.id}, this.value)"
                        oninput="Desk.searchStockEntryItem('${context}', ${row.id}, this.value)"
                        onkeydown="Desk.handleItemSearchKeydown(event, '${context}', ${row.id})"
                        onblur="setTimeout(() => Desk.closeItemSearchDropdown('${context}', ${row.id}), 250)">
+                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none;">🔍</span>
                 ${row.item_code ? `
                   <button type="button" 
                           onclick="Desk.clearStockEntryItem('${context}', ${row.id})"
-                          style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 14px; line-height: 1; padding: 2px;"
+                          style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 13px; line-height: 1; padding: 2px;"
                           title="Clear Item">&times;</button>
                 ` : ''}
                 <div id="itemSearchDropdown_${context}_${row.id}" 
                      class="desk-item-search-dropdown" 
-                     style="display: none; position: absolute; left: 0; top: 34px; width: 380px; max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 1050; text-align: left;">
+                     style="display: none; position: absolute; right: 0; top: 34px; width: 380px; max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 1050; text-align: left;">
                 </div>
               </div>
-              <button type="button" class="frappe-table-btn" style="height: 30px; width: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; color: #475569;" title="Search All Master Items" onclick="Desk.openItemCodeSearchModal('${context}', ${row.id})">
+
+              <!-- Full Master Catalog Search Modal Button -->
+              <button type="button" class="frappe-table-btn" style="height: 30px; width: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; color: #475569; flex-shrink: 0;" title="Search All Master Items Catalog" onclick="Desk.openItemCodeSearchModal('${context}', ${row.id})">
                 🔍
               </button>
             </div>
