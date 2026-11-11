@@ -559,44 +559,61 @@ const Desk = {
     const subEl = document.getElementById('receiptsCardSubtitle');
     const headerAction = document.getElementById('receiptsHeaderAction');
 
-    let docs = this.cachedReceipts;
-    const filter = this.currentReceiptFilter;
+    let allDocs = this.cachedReceipts || [];
+    const filter = this.currentReceiptFilter || 'Entry';
 
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
-      entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
-      if (filter === 'Entry') {
+      entryCard.style.display = (filter === 'Entry' || filter === 'All') ? 'block' : 'none';
+      if (filter === 'Entry' || filter === 'All') {
         this.initStockEntryForm('grn');
       }
     }
 
-    if (filter === 'Entry') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+    // Update active pill button in card and sidebar
+    document.querySelectorAll('#receiptWorkflowPills .pv-pill-btn').forEach(btn => {
+      const f = btn.getAttribute('data-filter');
+      btn.classList.toggle('active', f === filter);
+    });
+    document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-workflow-filter') === filter);
+    });
+
+    let docs = allDocs;
+    if (filter === 'All') {
+      if (titleEl) titleEl.textContent = 'Goods Received Documents (GRN) - Workflow Pipeline';
+      if (subEl) subEl.textContent = 'All consignments across lifecycle: Validation → Approval → Posting → Posted';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Total Documents: ${allDocs.length}</span>`;
+    } else if (filter === 'Entry') {
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Receipts Entry (Draft Goods Received Notes)';
       if (subEl) subEl.textContent = 'Newly recorded consignments awaiting technical verification and store audit';
-      if (headerAction) headerAction.innerHTML = '';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
     } else if (filter === 'Validation') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
       if (subEl) subEl.textContent = 'Technical store audit validation — certify received delivery against PO specs and warehouse bin storage';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
     } else if (filter === 'Approval') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'validated');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'validated');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your approval';
       if (subEl) subEl.textContent = 'Station Chief Engineer / Authorized Officer electronic sign-off prior to FIFO ledger posting';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Pending Approval: ${docs.length}</span>`;
     } else if (filter === 'Posting') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'approved');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'approved');
       if (titleEl) titleEl.textContent = 'Following Documents are approved and ready for posting to FIFO Ledger';
       if (subEl) subEl.textContent = 'Commit stock into active FIFO inventory queue and record journal vouchers';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-success" style="font-size: 11px;">Ready to Post: ${docs.length}</span>`;
     } else if (filter === 'Posted Cancellation') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'posted');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'posted');
       if (titleEl) titleEl.textContent = 'Posted Documents - Cancellation & Stock Reversal';
       if (subEl) subEl.textContent = 'Reverse posted consignments and restore ledger balances with audit verification log';
       if (headerAction) headerAction.innerHTML = '';
     } else if (filter === 'Unposted Cancellation') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'draft' || d.status.toLowerCase() === 'validated' || d.status.toLowerCase() === 'cancelled');
+      docs = allDocs.filter(d => {
+        const s = (d.status || '').toLowerCase();
+        return s === 'draft' || s === 'validated' || s === 'cancelled';
+      });
       if (titleEl) titleEl.textContent = 'Unposted Documents Cancellation';
       if (subEl) subEl.textContent = 'Cancel or discard draft and validated documents prior to posting';
       if (headerAction) headerAction.innerHTML = '';
@@ -608,22 +625,42 @@ const Desk = {
 
     let html = '';
     docs.forEach(d => {
-      const badgeClass = `badge-${d.status.toLowerCase()}`;
+      let statusLabel = d.status || 'Draft';
+      let badgeStyle = 'background: #f1f5f9; color: #475569; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      if (d.status === 'Draft') {
+        statusLabel = 'Pending Validation';
+        badgeStyle = 'background: #fef3c7; color: #92400e; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      } else if (d.status === 'Validated') {
+        statusLabel = 'Pending Approval';
+        badgeStyle = 'background: #e0e7ff; color: #3730a3; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      } else if (d.status === 'Approved') {
+        statusLabel = 'Ready to Post';
+        badgeStyle = 'background: #d1fae5; color: #065f46; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      } else if (d.status === 'Posted') {
+        statusLabel = 'Posted to FIFO';
+        badgeStyle = 'background: #ecfdf5; color: #047857; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      } else if (d.status === 'Cancelled') {
+        statusLabel = 'Cancelled';
+        badgeStyle = 'background: #fee2e2; color: #991b1b; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      }
+
       html += `
         <tr>
           <td><strong>${d.doc_no}</strong></td>
           <td>${d.doc_date}</td>
           <td><strong>${d.receipt_from || '-'}</strong></td>
           <td>${d.warehouse || 'WH 831.00 --VICTORIA WAREHOUSE'}</td>
-          <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-          <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
+          <td>Rs. ${parseFloat(d.invoice_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+          <td><span class="desk-badge" style="${badgeStyle}">${statusLabel}</span></td>
           <td>
-            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
-            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">✓ Validate</button>` : ''}
-            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">⭐ Approve</button>` : ''}
-            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
-            ${d.status === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
-            ${d.status === 'Draft' || d.status === 'Validated' ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
+              ${d.status === 'Draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Certify delivery & send to Approval stage">✓ Validate</button>` : ''}
+              ${d.status === 'Validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
+              ${d.status === 'Approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
+              ${d.status === 'Posted' ? `<span style="color: #059669; font-weight: 600; font-size: 11.5px;">✓ Live In FIFO</span>` : ''}
+              ${d.status === 'Draft' || d.status === 'Validated' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+            </div>
           </td>
         </tr>
       `;
@@ -687,46 +724,60 @@ const Desk = {
     const subEl = document.getElementById('issuesCardSubtitle');
     const headerAction = document.getElementById('issuesHeaderAction');
 
-    let docs = this.cachedIssues;
-    const filter = this.currentIssueFilter;
+    let allDocs = this.cachedIssues || [];
+    const filter = this.currentIssueFilter || 'Entry';
 
     const issueEntryCard = document.getElementById('bodyIssueEntryCard');
     if (issueEntryCard) {
-      issueEntryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
-      if (filter === 'Entry') {
+      issueEntryCard.style.display = (filter === 'Entry' || filter === 'All') ? 'block' : 'none';
+      if (filter === 'Entry' || filter === 'All') {
         this.initStockEntryForm('issue');
         this.populateTaskBatches();
         this.initIssueFormLookups();
       }
     }
 
-    if (filter === 'Entry') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+    // Update active pill button in card and sidebar
+    document.querySelectorAll('#issueWorkflowPills .pv-pill-btn').forEach(btn => {
+      const f = btn.getAttribute('data-filter');
+      btn.classList.toggle('active', f === filter);
+    });
+    document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-workflow-filter') === filter);
+    });
+
+    let docs = allDocs;
+    if (filter === 'All') {
+      if (titleEl) titleEl.textContent = 'Material Issues (FIFO Queue) - Workflow Pipeline';
+      if (subEl) subEl.textContent = 'All requisitions across lifecycle: Validation → Approval → Posting → Posted';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Total Documents: ${allDocs.length}</span>`;
+    } else if (filter === 'Entry') {
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Material Issues Entry (Draft Requisitions)';
       if (subEl) subEl.textContent = 'Draft material requisition notes waiting for technical audit validation';
-      if (headerAction) headerAction.innerHTML = '';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
     } else if (filter === 'Validation') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'draft');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'draft');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
       if (subEl) subEl.textContent = 'Storekeeper stock validation — verify quantity requirements against active FIFO batch balances';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
     } else if (filter === 'Approval') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'validated');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'validated');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your approval';
       if (subEl) subEl.textContent = 'Chief Engineer / Plant Manager authorization required before issuing spares';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Pending Approval: ${docs.length}</span>`;
     } else if (filter === 'Posting') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'approved');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'approved');
       if (titleEl) titleEl.textContent = 'Following Documents are approved and ready for posting to FIFO Ledger';
       if (subEl) subEl.textContent = 'Dispatches physical materials and deducts stock from oldest active FIFO batches';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-success" style="font-size: 11px;">Ready to Post: ${docs.length}</span>`;
     } else if (filter === 'Posted Cancellation') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'posted');
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'posted');
       if (titleEl) titleEl.textContent = 'Posted Material Issues - Cancellation & Stock Reversal';
       if (subEl) subEl.textContent = 'Reverse posted issues back into FIFO stock queue with reversal journal entry';
       if (headerAction) headerAction.innerHTML = '';
     } else if (filter === 'Unposted Cancellation') {
-      docs = docs.filter(d => d.status.toLowerCase() === 'draft' || d.status.toLowerCase() === 'validated' || d.status.toLowerCase() === 'cancelled');
+      docs = allDocs.filter(d => ['draft', 'validated', 'cancelled'].includes((d.status || '').toLowerCase()));
       if (titleEl) titleEl.textContent = 'Unposted Material Requisitions Cancellation';
       if (subEl) subEl.textContent = 'Cancel draft or validated requisitions before stock is allocated';
       if (headerAction) headerAction.innerHTML = '';
@@ -738,8 +789,27 @@ const Desk = {
 
     let html = '';
     docs.forEach(d => {
-      const badgeClass = `badge-${d.status.toLowerCase()}`;
-      const canEdit = (d.status === 'Draft' || d.status === 'Validated');
+      const rawStatus = (d.status || 'Draft').trim();
+      let badgeClass = 'badge-draft';
+      let statusLabel = rawStatus;
+      if (rawStatus.toLowerCase() === 'draft') {
+        badgeClass = 'badge-draft';
+        statusLabel = 'Pending Validation';
+      } else if (rawStatus.toLowerCase() === 'validated') {
+        badgeClass = 'badge-info';
+        statusLabel = 'Pending Approval';
+      } else if (rawStatus.toLowerCase() === 'approved') {
+        badgeClass = 'badge-success';
+        statusLabel = 'Ready to Post';
+      } else if (rawStatus.toLowerCase() === 'posted') {
+        badgeClass = 'badge-posted';
+        statusLabel = 'Posted to FIFO';
+      } else if (rawStatus.toLowerCase() === 'cancelled') {
+        badgeClass = 'badge-cancelled';
+        statusLabel = 'Cancelled';
+      }
+
+      const canEdit = (rawStatus === 'Draft' || rawStatus === 'Validated');
 
       html += `
         <tr>
@@ -748,16 +818,23 @@ const Desk = {
           <td><span class="desk-badge badge-draft">${d.destination_code || '-'}</span></td>
           <td><strong>${d.department_code || '-'}</strong></td>
           <td>${d.item_count || 1} item(s)</td>
-          <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-          <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
+          <td>Rs. ${parseFloat(d.invoice_total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
           <td>
-            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
-            ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">✏️ Edit</button>` : ''}
-            ${d.status === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">✓ Validate</button>` : ''}
-            ${d.status === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">⭐ Approve</button>` : ''}
-            ${d.status === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
-            ${d.status === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
-            ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+            <span class="desk-badge ${badgeClass}" style="display: inline-flex; align-items: center; gap: 4px;">
+              <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+              ${statusLabel}
+            </span>
+          </td>
+          <td>
+            <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
+              ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">✏️ Edit</button>` : ''}
+              ${rawStatus === 'Draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')">✓ Validate</button>` : ''}
+              ${rawStatus === 'Validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')">⭐ Approve</button>` : ''}
+              ${rawStatus === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
+              ${rawStatus === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
+              ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+            </div>
           </td>
         </tr>
       `;
@@ -4605,10 +4682,21 @@ const Desk = {
     const entryType = document.getElementById(`${context}StockEntryType`)?.value || (context === 'grn' ? 'Material Receipt' : 'Material Issue');
     const deliveryDate = document.getElementById(`${context}DeliveryDate`)?.value || todayStr;
     const accDate = document.getElementById(`${context}AccDate`)?.value || todayStr;
-    const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 831.00 --VICTORIA WAREHOUSE';
+    const defWh = (context === 'grn'
+      ? (document.getElementById('modalPoWarehouseSelect')?.value || document.getElementById('modalCostCenterWarehouseSelect')?.value || document.getElementById('modalSectionWarehouseSelect')?.value || document.getElementById('grnDefTargetWh')?.value)
+      : document.getElementById('issueDefSourceWh')?.value
+    ) || 'WH 831.00 --VICTORIA WAREHOUSE';
 
-    const partyName = document.getElementById(`${context}PartyName`)?.value || '';
-    const poRef = document.getElementById(`${context}PoRef`)?.value || '';
+    let partyName = document.getElementById(`${context}PartyName`)?.value || '';
+    if (context === 'grn' && !partyName) {
+      partyName = document.getElementById('grnSupplierSelect')?.value || 'Predefined Supplier';
+    }
+
+    let poRef = document.getElementById(`${context}PoRef`)?.value || '';
+    if (context === 'grn' && !poRef) {
+      poRef = document.getElementById('grnPoRefInput')?.value || '';
+    }
+
     const invoiceNo = document.getElementById(`${context}InvoiceNo`)?.value || '';
     const supplierRef = document.getElementById(`${context}SupplierRef`)?.value || '';
     const invoiceDate = document.getElementById(`${context}InvoiceDate`)?.value || '';
@@ -4626,6 +4714,13 @@ const Desk = {
         warehouse: r.warehouse || defWh
       };
     });
+
+    if (context === 'grn') {
+      const manualTot = parseFloat(document.getElementById('grnInvoiceTotalWithoutTax')?.value || 0);
+      if (manualTot > 0) {
+        invTotal = manualTot;
+      }
+    }
 
     let fullRemarks = `[Type: ${entryType}] [Acc: ${accDate}] [Deliv: ${deliveryDate}]`;
     if (isDraft) fullRemarks += ` [Saved as Draft]`;
@@ -4647,6 +4742,21 @@ const Desk = {
     fd.append('remarks', fullRemarks);
     fd.append('invoice_total', invTotal);
     fd.append('items', JSON.stringify(formattedItems));
+
+    if (context === 'grn') {
+      fd.append('nbt', document.getElementById('grnValNbt')?.value || 0);
+      fd.append('nbt_excluded', document.getElementById('grnNbtExclude')?.checked ? 1 : 0);
+      fd.append('vat', document.getElementById('grnValVat')?.value || 0);
+      fd.append('vat_excluded', document.getElementById('grnVatExclude')?.checked ? 1 : 0);
+      fd.append('transport', document.getElementById('grnValTransport')?.value || 0);
+      fd.append('transport_excluded', document.getElementById('grnTransportExclude')?.checked ? 1 : 0);
+      fd.append('other_cost', document.getElementById('grnValOther')?.value || 0);
+      fd.append('other_excluded', document.getElementById('grnOtherExclude')?.checked ? 1 : 0);
+      fd.append('single_material', document.getElementById('grnSingleMaterial')?.checked ? 1 : 0);
+      fd.append('discount_for_all', document.getElementById('grnDiscountForAll')?.value || 0);
+      fd.append('is_percentage', document.getElementById('grnDiscountPercentage')?.checked ? 1 : 0);
+      fd.append('discount_type', document.getElementById('grnDiscountType')?.value || '');
+    }
 
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     if (token) fd.append('_csrf_token', token);
@@ -4675,13 +4785,20 @@ const Desk = {
         if (isDraft) {
           this.showToast(`Draft ${docNo} saved successfully! You can request unlisted codes or continue anytime.`);
         } else {
-          this.showToast(`Stock Entry ${docNo} saved successfully as Draft!`);
+          this.showToast(`Stock Entry ${docNo} submitted to Validation stage!`);
+          this.cancelStockEntryForm(context);
         }
 
         if (context === 'grn') {
           this.loadReceipts();
+          setTimeout(() => {
+            document.getElementById('receiptsCardTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
         } else {
           this.loadIssues();
+          setTimeout(() => {
+            document.getElementById('issuesCardTitle')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
         }
       } else {
         this.showToast(data.message || 'Failed to save Stock Entry.', true);

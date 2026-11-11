@@ -1090,6 +1090,15 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
           <div id="receiptsHeaderAction"></div>
         </div>
+        <!-- Workflow Stage Pipeline Pills -->
+        <div id="receiptWorkflowPills" style="padding: 10px 20px; background: #f8fafc; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 12px; font-weight: 600; color: #64748b; margin-right: 4px;">Workflow:</span>
+          <button type="button" class="pv-pill-btn active" data-filter="Entry" onclick="Desk.filterReceipts('Entry', this)">Entry / Draft</button>
+          <button type="button" class="pv-pill-btn" data-filter="Validation" onclick="Desk.filterReceipts('Validation', this)">Validation</button>
+          <button type="button" class="pv-pill-btn" data-filter="Approval" onclick="Desk.filterReceipts('Approval', this)">Approval</button>
+          <button type="button" class="pv-pill-btn" data-filter="Posting" onclick="Desk.filterReceipts('Posting', this)">Posting</button>
+          <button type="button" class="pv-pill-btn" data-filter="All" onclick="Desk.filterReceipts('All', this)">All Documents</button>
+        </div>
         <div class="desk-table-wrapper">
           <table class="desk-table">
             <thead>
@@ -1464,6 +1473,15 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
           </div>
           <div id="issuesHeaderAction"></div>
+        </div>
+        <!-- Workflow Stage Pipeline Pills -->
+        <div id="issueWorkflowPills" style="padding: 10px 20px; background: #f8fafc; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <span style="font-size: 12px; font-weight: 600; color: #64748b; margin-right: 4px;">Workflow:</span>
+          <button type="button" class="pv-pill-btn active" data-filter="Entry" onclick="Desk.filterIssues('Entry', this)">Entry / Draft</button>
+          <button type="button" class="pv-pill-btn" data-filter="Validation" onclick="Desk.filterIssues('Validation', this)">Validation</button>
+          <button type="button" class="pv-pill-btn" data-filter="Approval" onclick="Desk.filterIssues('Approval', this)">Approval</button>
+          <button type="button" class="pv-pill-btn" data-filter="Posting" onclick="Desk.filterIssues('Posting', this)">Posting</button>
+          <button type="button" class="pv-pill-btn" data-filter="All" onclick="Desk.filterIssues('All', this)">All Documents</button>
         </div>
         <div class="desk-table-wrapper">
           <table class="desk-table">
