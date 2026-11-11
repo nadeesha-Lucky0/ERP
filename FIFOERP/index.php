@@ -834,39 +834,146 @@ require_once __DIR__ . '/views/layouts/header.php';
 
           <!-- TAB CONTENT: OTHER INFO -->
           <div id="tabContent-grn-other" class="frappe-tab-content" style="display: none;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 20px;">
-              <div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Supplier / Source Name</label>
-                  <input type="text" name="party_name" id="grnPartyName" class="frappe-control" placeholder="Select or type Supplier...">
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference" id="grnPoRef" class="frappe-control" placeholder="PO-XXXXX">
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Delivery Note / Invoice No</label>
-                  <input type="text" name="invoice_no" id="grnInvoiceNo" class="frappe-control" placeholder="Invoice or Delivery Note #">
-                </div>
+            
+            <!-- SECTION 1: Values To Consider for Material Unit Price -->
+            <div class="frappe-card-section" id="grnUnitPriceValuesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
+              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnUnitPriceValuesBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Values To Consider for Material Unit Price</span>
+                <span class="frappe-sec-toggle-icon" style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
               </div>
-              <div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Letter Head</label>
-                  <select name="letter_head" class="frappe-control">
-                    <option value="EGL Power Generation" selected>EGL Power Generation</option>
-                    <option value="Standard Header">Standard Header</option>
-                  </select>
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Transporter Details / Vehicle No</label>
-                  <input type="text" name="transporter_info" id="grnTransporterInfo" class="frappe-control" placeholder="Vehicle / Driver / Carrier">
-                </div>
-                <div style="margin-bottom: 16px;">
-                  <label class="frappe-label">Remarks / Note</label>
-                  <textarea name="remarks" id="grnRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
+              <div id="grnUnitPriceValuesBody" style="padding: 16px 20px;">
+                <div style="display: flex; flex-direction: column; gap: 10px; max-width: 660px;">
+                  
+                  <!-- NBT -->
+                  <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
+                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">NBT</label>
+                    <input type="number" step="0.01" min="0" name="val_nbt" id="grnValNbt" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="nbt_exclude" id="grnNbtExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                      Exclude from Unit Price
+                    </label>
+                  </div>
+
+                  <!-- VAT -->
+                  <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
+                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">VAT</label>
+                    <input type="number" step="0.01" min="0" name="val_vat" id="grnValVat" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="vat_exclude" id="grnVatExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                      Exclude from Unit Price
+                    </label>
+                  </div>
+
+                  <!-- Transport -->
+                  <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
+                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">Transport</label>
+                    <input type="number" step="0.01" min="0" name="val_transport" id="grnValTransport" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="transport_exclude" id="grnTransportExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                      Exclude from Unit Price
+                    </label>
+                  </div>
+
+                  <!-- Other -->
+                  <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
+                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">Other</label>
+                    <input type="number" step="0.01" min="0" name="val_other" id="grnValOther" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="other_exclude" id="grnOtherExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                      Exclude from Unit Price
+                    </label>
+                  </div>
+
                 </div>
               </div>
             </div>
+
+            <!-- SECTION 2: Reference Data -->
+            <div class="frappe-card-section" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
+              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnReferenceDataBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Expand to Add,Edit Or view Reference Data</span>
+                <span class="frappe-sec-toggle-icon" style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
+              </div>
+              <div id="grnReferenceDataBody" style="padding: 16px 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 780px;">
+                  <div>
+                    <label class="frappe-label">INVOICE DATE :</label>
+                    <input type="date" name="invoice_date" id="grnInvoiceDate" class="frappe-control">
+                  </div>
+                  <div>
+                    <label class="frappe-label">PURCHASE ORDER NO :</label>
+                    <input type="text" name="po_reference" id="grnPoRef" class="frappe-control" placeholder="e.g. PO-2026-081">
+                  </div>
+                  <div>
+                    <label class="frappe-label">INVOICE NO / DELIVERY NOTE :</label>
+                    <input type="text" name="invoice_no" id="grnInvoiceNo" class="frappe-control" placeholder="e.g. INV-2026-992">
+                  </div>
+                  <div>
+                    <label class="frappe-label">SUPPLIER CONSIGNMENT REF :</label>
+                    <input type="text" name="supplier_ref" id="grnSupplierRef" class="frappe-control" placeholder="e.g. CON-2026-081">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: Remarks -->
+            <div class="frappe-card-section" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
+              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnRemarksBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Expand to Add,Edit Or view Remarks</span>
+                <span class="frappe-sec-toggle-icon" style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
+              </div>
+              <div id="grnRemarksBody" style="padding: 16px 20px;">
+                <div style="max-width: 780px;">
+                  <label class="frappe-label">Remarks</label>
+                  <textarea name="remarks" id="grnRemarks" class="frappe-control" style="height: 75px; padding: 8px 12px; resize: vertical;" placeholder="Add internal remarks or consignment notes..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 4: Invoice Total (Without Tax) & Discount Controls -->
+            <div class="frappe-card-section" id="grnInvoiceTotalsSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; padding: 18px 20px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 820px; align-items: flex-end;">
+                
+                <!-- Invoice Total (Without Tax) -->
+                <div>
+                  <label class="frappe-label">Invoice Total (Without Tax) <span style="color: #e02424;">*</span></label>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="position: relative; flex: 1;">
+                      <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 11.5px; color: #64748b; font-weight: 600;">Rs</span>
+                      <input type="number" step="0.01" min="0" name="invoice_total_without_tax" id="grnInvoiceTotalWithoutTax" class="frappe-control" placeholder="0.00" style="padding-left: 30px; font-weight: 600;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    </div>
+                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: #475569; white-space: nowrap; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="single_material" id="grnSingleMaterial" style="accent-color: #18181b; cursor: pointer;">
+                      Single Material
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Discount For All -->
+                <div>
+                  <label class="frappe-label">Discount For All</label>
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" step="0.01" min="0" name="discount_for_all" id="grnDiscountForAll" class="frappe-control" placeholder="0.00" style="flex: 1;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: #475569; white-space: nowrap; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="is_discount_percentage" id="grnDiscountPercentage" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                      Precentage
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Select Discount Type -->
+                <div>
+                  <label class="frappe-label">Discount Type</label>
+                  <select name="discount_type" id="grnDiscountType" class="frappe-control frappe-select" onchange="Desk.recalcGrnUnitPriceFactors()">
+                    <option value="">-Select Discount Type-</option>
+                    <option value="For Quantity">For Quantity</option>
+                    <option value="For Cost">For Cost</option>
+                  </select>
+                </div>
+
+              </div>
+            </div>
+
           </div><!-- /tabContent-grn-other -->
 
         </form>

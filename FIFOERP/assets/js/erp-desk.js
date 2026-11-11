@@ -4293,13 +4293,64 @@ const Desk = {
   toggleStockEntrySection(sectionId, headerEl) {
     const sec = document.getElementById(sectionId);
     if (!sec) return;
-    const arrow = headerEl.querySelector('.frappe-sec-arrow');
-    if (sec.style.display === 'none') {
+    const arrow = headerEl.querySelector('.frappe-sec-arrow, .frappe-sec-toggle-icon');
+    const isHidden = (sec.style.display === 'none' || getComputedStyle(sec).display === 'none');
+    if (isHidden) {
       sec.style.display = 'block';
-      if (arrow) arrow.innerHTML = '&#8744;';
+      if (arrow) {
+        if (arrow.classList.contains('frappe-sec-toggle-icon')) {
+          arrow.innerHTML = '&minus;';
+        } else {
+          arrow.innerHTML = '&#8744;';
+        }
+      }
     } else {
       sec.style.display = 'none';
-      if (arrow) arrow.innerHTML = '&#8250;';
+      if (arrow) {
+        if (arrow.classList.contains('frappe-sec-toggle-icon')) {
+          arrow.innerHTML = '&#43;';
+        } else {
+          arrow.innerHTML = '&#8250;';
+        }
+      }
+    }
+  },
+
+  recalcGrnUnitPriceFactors() {
+    const nbt = parseFloat(document.getElementById('grnValNbt')?.value) || 0;
+    const nbtEx = document.getElementById('grnNbtExclude')?.checked;
+    const vat = parseFloat(document.getElementById('grnValVat')?.value) || 0;
+    const vatEx = document.getElementById('grnVatExclude')?.checked;
+    const transport = parseFloat(document.getElementById('grnValTransport')?.value) || 0;
+    const transportEx = document.getElementById('grnTransportExclude')?.checked;
+    const other = parseFloat(document.getElementById('grnValOther')?.value) || 0;
+    const otherEx = document.getElementById('grnOtherExclude')?.checked;
+
+    const invTotalEl = document.getElementById('grnInvoiceTotalWithoutTax');
+    const invTotalWithoutTax = parseFloat(invTotalEl?.value) || 0;
+    const discountForAll = parseFloat(document.getElementById('grnDiscountForAll')?.value) || 0;
+    const isDiscountPercentage = document.getElementById('grnDiscountPercentage')?.checked;
+    const singleMaterial = document.getElementById('grnSingleMaterial')?.checked;
+
+    const state = this.stockEntryState ? this.stockEntryState['grn'] : null;
+    if (!state) return;
+
+    // Additional cost to consider in unit price
+    const additionalCost = (nbtEx ? 0 : nbt) + (vatEx ? 0 : vat) + (transportEx ? 0 : transport) + (otherEx ? 0 : other);
+
+    // If single material is checked and there is at least one row with quantity
+    if (singleMaterial && state.items && state.items.length > 0 && invTotalWithoutTax > 0) {
+      const primaryItem = state.items[0];
+      const qty = parseFloat(primaryItem.qty) || 1;
+      
+      let baseInv = invTotalWithoutTax;
+      if (discountForAll > 0) {
+        const discountAmt = isDiscountPercentage ? (baseInv * discountForAll / 100) : discountForAll;
+        baseInv = Math.max(0, baseInv - discountAmt);
+      }
+      const finalUnitCost = (baseInv + additionalCost) / (qty > 0 ? qty : 1);
+      primaryItem.basic_rate = parseFloat(finalUnitCost.toFixed(2));
+      this.renderStockEntryRows('grn');
     }
   },
 
@@ -4564,6 +4615,8 @@ const Desk = {
     const partyName = document.getElementById(`${context}PartyName`)?.value || '';
     const poRef = document.getElementById(`${context}PoRef`)?.value || '';
     const invoiceNo = document.getElementById(`${context}InvoiceNo`)?.value || '';
+    const supplierRef = document.getElementById(`${context}SupplierRef`)?.value || '';
+    const invoiceDate = document.getElementById(`${context}InvoiceDate`)?.value || '';
     const remarks = document.getElementById(`${context}Remarks`)?.value || '';
 
     let invTotal = 0;
@@ -4579,6 +4632,11 @@ const Desk = {
       };
     });
 
+    let fullRemarks = `[Type: ${entryType}] [Posting: ${postingDate} ${postingTime}]`;
+    if (supplierRef) fullRemarks += ` [Supplier Ref: ${supplierRef}]`;
+    if (invoiceDate) fullRemarks += ` [Inv Date: ${invoiceDate}]`;
+    if (remarks) fullRemarks += ` ${remarks}`;
+
     const fd = new FormData();
     fd.append('action', 'create_document');
     fd.append('doc_type', docType);
@@ -4590,7 +4648,7 @@ const Desk = {
     fd.append('receipt_from', partyName);
     fd.append('order_reference', poRef);
     fd.append('invoice_number', invoiceNo);
-    fd.append('remarks', `[Type: ${entryType}] [Posting: ${postingDate} ${postingTime}] ${remarks}`);
+    fd.append('remarks', fullRemarks);
     fd.append('invoice_total', invTotal);
     fd.append('items', JSON.stringify(formattedItems));
 
@@ -4696,6 +4754,24 @@ const Desk = {
       titleEl.textContent = state.docTitle;
     }
 
+    if (context === 'grn') {
+      ['grnValNbt', 'grnValVat', 'grnValTransport', 'grnValOther', 'grnInvoiceTotalWithoutTax', 'grnDiscountForAll', 'grnPoRef', 'grnInvoiceNo', 'grnSupplierRef', 'grnRemarks'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      ['grnNbtExclude', 'grnVatExclude', 'grnTransportExclude', 'grnOtherExclude', 'grnSingleMaterial', 'grnDiscountPercentage'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+      });
+      const dt = document.getElementById('grnDiscountType');
+      if (dt) dt.value = '';
+
+      const unitPriceSec = document.getElementById('grnUnitPriceValuesSection');
+      const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
+      if (unitPriceSec) unitPriceSec.style.display = 'block';
+      if (invoiceTotalsSec) invoiceTotalsSec.style.display = 'block';
+    }
+
     this.setSelectedCreateDoc(context, defaultDoc);
     this.setSelectedGetItemsFrom(context, '');
     this.initStockEntryForm(context);
@@ -4741,6 +4817,18 @@ const Desk = {
       }
     } else {
       if (seTypeEl) seTypeEl.value = 'Material Receipt';
+    }
+
+    // Conditionally show/hide Unit Price Values and Invoice Totals sections for GRN & GRSP vs MRA
+    if (context === 'grn') {
+      const unitPriceSec = document.getElementById('grnUnitPriceValuesSection');
+      const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
+      if (unitPriceSec) {
+        unitPriceSec.style.display = (type === 'MRA') ? 'none' : 'block';
+      }
+      if (invoiceTotalsSec) {
+        invoiceTotalsSec.style.display = (type === 'MRA') ? 'none' : 'block';
+      }
     }
 
     // Close any open dropdown menu
