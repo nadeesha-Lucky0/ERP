@@ -1266,6 +1266,47 @@ textarea.desk-form-control {
   color: #8d99a6;
   cursor: not-allowed;
 }
+
+/* Modern Styled Select Dropdown (Clean White, Slate Border, Custom SVG Chevron) */
+select.frappe-control, select.frappe-select {
+  width: 100%;
+  height: 34px;
+  padding: 0 32px 0 12px !important;
+  background-color: #ffffff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #1e293b !important;
+  outline: none !important;
+  cursor: pointer !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+}
+
+select.frappe-control:hover, select.frappe-select:hover {
+  border-color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+}
+
+select.frappe-control:focus, select.frappe-select:focus {
+  border-color: #0f172a !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12) !important;
+}
+
+select.frappe-control option, select.frappe-select option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #ffffff;
+}
 .frappe-help-text {
   font-size: 11px;
   color: #8d99a6;

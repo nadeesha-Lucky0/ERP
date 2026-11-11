@@ -3925,18 +3925,18 @@ const Desk = {
 
       const populateWh = (sel, defaultVal) => {
         if (!sel || sel.children.length > 1) return;
-        sel.innerHTML = '<option value="">Select Warehouse...</option>';
+        sel.innerHTML = '<option value="" selected>-- Select Warehouse --</option>';
         warehouses.forEach(wh => {
           const opt = document.createElement('option');
           opt.value = wh;
           opt.textContent = wh;
-          if (wh === defaultVal) opt.selected = true;
+          if (defaultVal && wh === defaultVal) opt.selected = true;
           sel.appendChild(opt);
         });
       };
 
-      populateWh(defSource, 'WH 832.00 --KOTMALE WAREHOUSE');
-      populateWh(defTarget, 'WH 832.00 --KOTMALE WAREHOUSE');
+      populateWh(defSource, '');
+      populateWh(defTarget, '');
 
       // Populate Suppliers
       const supSel = document.getElementById(`${context}SupplierSelect`);
@@ -4020,7 +4020,7 @@ const Desk = {
     state.items.forEach((row, idx) => {
       const isChecked = state.selectedIds.has(row.id);
       
-      let whOptions = '<option value="">Select Warehouse...</option>';
+      let whOptions = '<option value="" ' + (!row.warehouse ? 'selected' : '') + '>-- Select Warehouse --</option>';
       warehouses.forEach(w => {
         whOptions += `<option value="${w}" ${row.warehouse === w ? 'selected' : ''}>${w}</option>`;
       });
@@ -4039,13 +4039,13 @@ const Desk = {
             ${idx + 1}
           </td>
           <td>
-            <select class="frappe-control" style="height: 30px; font-size: 12px;" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'warehouse', this.value)">
+            <select class="frappe-control frappe-select" style="height: 30px; font-size: 12px;" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'warehouse', this.value)">
               ${whOptions}
             </select>
           </td>
           <td>
             <div style="display: flex; gap: 6px; align-items: center;">
-              <select class="frappe-control" style="height: 30px; font-size: 12px; font-weight: 500;" onchange="Desk.onStockEntryItemSelect('${context}', ${row.id}, this.value)">
+              <select class="frappe-control frappe-select" style="height: 30px; font-size: 12px; font-weight: 500;" onchange="Desk.onStockEntryItemSelect('${context}', ${row.id}, this.value)">
                 ${matOptions}
               </select>
             </div>
@@ -4078,7 +4078,7 @@ const Desk = {
     const state = this.stockEntryState[context];
     const defSource = document.getElementById(`${context}DefSourceWh`)?.value || '';
     const defTarget = document.getElementById(`${context}DefTargetWh`)?.value || '';
-    const defWh = (context === 'grn' ? defTarget : defSource) || 'WH 832.00 --KOTMALE WAREHOUSE';
+    const defWh = (context === 'grn' ? defTarget : defSource) || '';
 
     state.items.push({
       id: state.nextId++,
@@ -4150,11 +4150,13 @@ const Desk = {
       ? document.getElementById(`${context}DefTargetWh`)?.value
       : document.getElementById(`${context}DefSourceWh`)?.value) || '';
 
-    if (!defWh) return;
     state.items.forEach(r => {
-      if (!r.warehouse) r.warehouse = defWh;
+      r.warehouse = defWh;
     });
     this.renderStockEntryRows(context);
+    if (defWh) {
+      this.showToast(`Applied warehouse: ${defWh}`);
+    }
   },
 
   onStockEntryTypeChange(context, type) {

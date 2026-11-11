@@ -769,15 +769,15 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
                   <div id="grnSourceWhGroup" style="display: none;">
                     <label class="frappe-label">Default Source Warehouse</label>
-                    <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('grn')">
-                      <option value="">Select Warehouse...</option>
+                    <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('grn')">
+                      <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
                   </div>
                   <div id="grnTargetWhGroup" style="display: block;">
                     <label class="frappe-label">Default Target Warehouse</label>
-                    <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('grn')">
-                      <option value="">Select Warehouse...</option>
+                    <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('grn')">
+                      <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
                   </div>
@@ -1136,15 +1136,15 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
                   <div id="issueSourceWhGroup" style="display: block;">
                     <label class="frappe-label">Default Source Warehouse</label>
-                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('issue')">
-                      <option value="">Select Warehouse...</option>
+                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('issue')">
+                      <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
                   </div>
                   <div id="issueTargetWhGroup" style="display: none;">
                     <label class="frappe-label">Default Target Warehouse</label>
-                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('issue')">
-                      <option value="">Select Warehouse...</option>
+                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('issue')">
+                      <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
                   </div>
@@ -3519,8 +3519,9 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
         <div>
           <label class="frappe-label">Target Warehouse</label>
-          <select id="modalPoWarehouseSelect" class="frappe-control">
-            <option value="WH 832.00 --KOTMALE WAREHOUSE" selected>WH 832.00 --KOTMALE WAREHOUSE</option>
+          <select id="modalPoWarehouseSelect" class="frappe-control frappe-select">
+            <option value="" selected>-- Select Warehouse --</option>
+            <option value="WH 832.00 --KOTMALE WAREHOUSE">WH 832.00 --KOTMALE WAREHOUSE</option>
             <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
             <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
             <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
