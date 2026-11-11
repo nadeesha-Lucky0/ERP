@@ -4260,68 +4260,25 @@ const Desk = {
             </select>
           </td>
           <td style="position: relative;">
-            <div class="frappe-searchable-select" style="position: relative; width: 100%;">
-              <!-- Dropdown Trigger Box (Click opens dropdown with details) -->
-              <div class="frappe-control desk-combo-trigger"
-                   id="itemComboTrigger_${context}_${row.id}"
-                   onclick="Desk.toggleItemComboDropdown('${context}', ${row.id})"
+            <div style="position: relative; width: 100%;">
+              <!-- Dropdown Trigger Box Styled 1:1 EXACTLY like Image 2 (-- Select Warehouse --) -->
+              <div class="frappe-control frappe-select desk-item-select-trigger"
+                   id="itemTrigger_${context}_${row.id}"
+                   onclick="Desk.toggleFloatingItemDropdown('${context}', ${row.id}, this)"
                    tabindex="0"
-                   onkeydown="if(event.key==='Enter'||event.key===' '||event.key==='ArrowDown'){event.preventDefault(); Desk.toggleItemComboDropdown('${context}', ${row.id}, true);}"
-                   style="height: 30px; font-size: 12px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; cursor: pointer; background: #fff; border: 1px solid ${row.item_code ? '#cbd5e1' : '#d1d5db'}; border-radius: 4px; box-sizing: border-box; user-select: none;">
-                <div style="flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px;">
-                  <span style="font-size: 11px; color: ${row.item_code ? '#0284c7' : '#94a3b8'};">📦</span>
-                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: ${row.item_code ? '600' : '400'}; color: ${row.item_code ? '#0f172a' : '#94a3b8'}; font-size: 12px;">
-                    ${row.item_code ? `${Desk.escapeHtml(row.item_code)} - ${Desk.escapeHtml(row.item_name || '')}` : 'Click to select Item Code...'}
-                  </span>
-                </div>
-                <div style="display: flex; align-items: center; gap: 4px; margin-left: 6px; flex-shrink: 0;">
-                  ${row.item_code ? `
-                    <button type="button" 
-                            onclick="event.stopPropagation(); Desk.clearStockEntryItem('${context}', ${row.id})"
-                            style="border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 14px; line-height: 1; padding: 1px 4px; border-radius: 3px;"
-                            onmouseenter="this.style.color='#ef4444'"
-                            onmouseleave="this.style.color='#94a3b8'"
-                            title="Clear Item">&times;</button>
-                  ` : ''}
-                  <span style="font-size: 9px; color: #64748b;">▼</span>
-                </div>
+                   onkeydown="if(event.key==='Enter'||event.key===' '||event.key==='ArrowDown'){event.preventDefault(); Desk.toggleFloatingItemDropdown('${context}', ${row.id}, this);}"
+                   style="height: 30px; line-height: 28px; font-size: 12px; font-weight: ${row.item_code ? '600' : '400'}; color: ${row.item_code ? '#0f172a' : '#64748b'}; cursor: pointer; padding: 0 32px 0 10px; user-select: none; width: 100%;">
+                ${row.item_code ? `${Desk.escapeHtml(row.item_code)} - ${Desk.escapeHtml(row.item_name || '')}` : '-- Select Item Code --'}
               </div>
 
-              <!-- Dropdown Menu (Opened upon click, shows all details + filter keyword search box) -->
-              <div id="itemComboMenu_${context}_${row.id}" 
-                   class="desk-combo-menu" 
-                   style="display: none; position: absolute; left: 0; top: 34px; width: 100%; min-width: 440px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 9999; text-align: left; overflow: hidden;">
-                
-                <!-- Search & Filter Keywords Input Box at the Top -->
-                <div style="padding: 8px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
-                  <div style="position: relative;">
-                    <span style="position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none;">🔍</span>
-                    <input type="text"
-                           id="itemComboSearch_${context}_${row.id}"
-                           class="frappe-control"
-                           style="height: 30px; font-size: 12px; padding-left: 28px; padding-right: 24px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;"
-                           placeholder="Type keywords to filter (code or name)..."
-                           autocomplete="off"
-                           onclick="event.stopPropagation()"
-                           oninput="Desk.onItemComboSearchInput('${context}', ${row.id}, this.value)"
-                           onkeydown="Desk.handleItemComboKeydown(event, '${context}', ${row.id})">
-                  </div>
-                </div>
-
-                <!-- Sub-bar showing count & request button -->
-                <div style="padding: 4px 10px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #64748b;">
-                  <span id="itemComboCount_${context}_${row.id}">All Available Materials</span>
-                  <button type="button" 
-                          onclick="Desk.openRequestItemCodeModal('${context}')"
-                          style="background: transparent; border: none; color: #2563eb; cursor: pointer; font-size: 11px; font-weight: 500; padding: 0;">
-                    + Request Code
-                  </button>
-                </div>
-
-                <!-- Scrollable List of Items -->
-                <div id="itemComboList_${context}_${row.id}" style="max-height: 240px; overflow-y: auto;">
-                </div>
-              </div>
+              ${row.item_code ? `
+                <button type="button" 
+                        onclick="event.stopPropagation(); Desk.clearStockEntryItem('${context}', ${row.id})"
+                        style="position: absolute; right: 28px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 14px; line-height: 1; padding: 2px;"
+                        title="Clear Item"
+                        onmouseenter="this.style.color='#ef4444'"
+                        onmouseleave="this.style.color='#94a3b8'">&times;</button>
+              ` : ''}
             </div>
             ${row.item_name && row.item_code ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px; line-height: 1.3;">${Desk.escapeHtml(row.item_name)} ${row.uom ? `<span style="color: #94a3b8;">(${Desk.escapeHtml(row.uom)})</span>` : ''}</div>` : ''}
           </td>
@@ -4419,55 +4376,142 @@ const Desk = {
     this.renderStockEntryRows(context);
   },
 
+  activeFloatingContext: null,
+  activeFloatingRowId: null,
+  activeFloatingTrigger: null,
   itemSearchDebounce: null,
   searchItemTargetContext: 'grn',
   searchItemTargetRowId: null,
 
-  toggleItemComboDropdown(context, rowId, forceOpen) {
-    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
-    if (!menu) return;
+  getOrCreateFloatingDropdown() {
+    let dd = document.getElementById('floatingItemSearchDropdown');
+    if (!dd) {
+      dd = document.createElement('div');
+      dd.id = 'floatingItemSearchDropdown';
+      dd.className = 'floating-item-dropdown';
+      dd.innerHTML = `
+        <!-- Top Search Box -->
+        <div style="padding: 8px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; gap: 6px; align-items: center;">
+          <div style="position: relative; flex: 1;">
+            <span style="position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none;">🔍</span>
+            <input type="text"
+                   id="floatingItemSearchInput"
+                   class="frappe-control"
+                   style="height: 30px; font-size: 12px; padding-left: 28px; padding-right: 8px; width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;"
+                   placeholder="Type keywords to filter (code or name)..."
+                   autocomplete="off">
+          </div>
+          <button type="button" 
+                  id="floatingItemReqBtn"
+                  class="desk-btn desk-btn-default desk-btn-sm" 
+                  style="font-size: 11px; height: 30px; white-space: nowrap; padding: 0 8px;">
+            + Request Code
+          </button>
+        </div>
 
-    const isOpen = (menu.style.display === 'block');
-    const shouldOpen = (forceOpen !== undefined) ? forceOpen : !isOpen;
+        <!-- Subheader -->
+        <div style="padding: 4px 10px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #64748b;">
+          <span id="floatingItemCountLabel">All Available Materials</span>
+          <span style="font-size: 10.5px; color: #94a3b8;">Esc to close</span>
+        </div>
 
-    // Close any other open dropdowns first
-    document.querySelectorAll('.desk-combo-menu').forEach(el => {
-      el.style.display = 'none';
-    });
+        <!-- Scrollable items list -->
+        <div id="floatingItemListContainer" style="max-height: 250px; overflow-y: auto;">
+        </div>
+      `;
+      document.body.appendChild(dd);
 
-    if (!shouldOpen) {
-      menu.style.display = 'none';
+      const searchInput = dd.querySelector('#floatingItemSearchInput');
+      searchInput.addEventListener('input', (e) => {
+        Desk.renderFloatingItemList(Desk.activeFloatingContext, Desk.activeFloatingRowId, e.target.value);
+      });
+      searchInput.addEventListener('keydown', (e) => {
+        Desk.handleFloatingDropdownKeydown(e);
+      });
+
+      dd.querySelector('#floatingItemReqBtn').addEventListener('click', () => {
+        const query = searchInput.value.trim();
+        Desk.closeFloatingItemDropdown();
+        Desk.openRequestItemCodeModal(Desk.activeFloatingContext, query);
+      });
+
+      document.addEventListener('click', (e) => {
+        const openDd = document.getElementById('floatingItemSearchDropdown');
+        if (openDd && openDd.style.display === 'block') {
+          if (!openDd.contains(e.target) && !e.target.closest('.desk-item-select-trigger')) {
+            Desk.closeFloatingItemDropdown();
+          }
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        Desk.closeFloatingItemDropdown();
+      });
+    }
+    return dd;
+  },
+
+  toggleFloatingItemDropdown(context, rowId, triggerEl) {
+    const dd = this.getOrCreateFloatingDropdown();
+    if (dd.style.display === 'block' && this.activeFloatingRowId === rowId && this.activeFloatingContext === context) {
+      this.closeFloatingItemDropdown();
       return;
     }
 
-    menu.style.display = 'block';
+    this.activeFloatingContext = context;
+    this.activeFloatingRowId = rowId;
+    this.activeFloatingTrigger = triggerEl;
 
-    // Render list immediately with all items ("after click box dropdown details show")
-    this.renderItemComboList(context, rowId, '');
+    // Highlight active trigger box
+    document.querySelectorAll('.desk-item-select-trigger').forEach(el => el.classList.remove('active'));
+    triggerEl.classList.add('active');
 
-    // Focus search box so user can enter keywords to filter if they want
-    const searchInput = document.getElementById(`itemComboSearch_${context}_${rowId}`);
+    const rect = triggerEl.getBoundingClientRect();
+    const width = Math.max(rect.width, 440);
+    let top = rect.bottom + 4;
+    let left = rect.left;
+
+    if (left + width > window.innerWidth - 10) {
+      left = window.innerWidth - width - 10;
+    }
+    if (left < 10) left = 10;
+
+    const approxHeight = 310;
+    if (top + approxHeight > window.innerHeight && rect.top > approxHeight) {
+      top = rect.top - approxHeight - 4;
+    }
+
+    dd.style.top = `${top}px`;
+    dd.style.left = `${left}px`;
+    dd.style.width = `${width}px`;
+    dd.style.display = 'block';
+
+    const searchInput = dd.querySelector('#floatingItemSearchInput');
     if (searchInput) {
       searchInput.value = '';
       setTimeout(() => searchInput.focus(), 50);
     }
+
+    this.renderFloatingItemList(context, rowId, '');
   },
 
-  onItemComboSearchInput(context, rowId, value) {
-    this.renderItemComboList(context, rowId, value);
+  closeFloatingItemDropdown() {
+    const dd = document.getElementById('floatingItemSearchDropdown');
+    if (dd) dd.style.display = 'none';
+    if (this.activeFloatingTrigger) {
+      this.activeFloatingTrigger.classList.remove('active');
+    }
+    this.activeFloatingContext = null;
+    this.activeFloatingRowId = null;
+    this.activeFloatingTrigger = null;
   },
 
-  onItemComboInput(context, rowId, value) {
-    this.renderItemComboList(context, rowId, value);
-  },
+  renderFloatingItemList(context, rowId, query) {
+    const dd = document.getElementById('floatingItemSearchDropdown');
+    if (!dd) return;
 
-  renderItemComboMenu(context, rowId, query) {
-    this.renderItemComboList(context, rowId, query);
-  },
-
-  renderItemComboList(context, rowId, query) {
-    const listContainer = document.getElementById(`itemComboList_${context}_${rowId}`);
-    const countLabel = document.getElementById(`itemComboCount_${context}_${rowId}`);
+    const listContainer = dd.querySelector('#floatingItemListContainer');
+    const countLabel = dd.querySelector('#floatingItemCountLabel');
     if (!listContainer) return;
 
     const q = (query || '').trim().toLowerCase();
@@ -4484,9 +4528,9 @@ const Desk = {
 
       if (items.length === 0) {
         listContainer.innerHTML = `
-          <div style="padding: 16px; font-size: 12px; color: #64748b; text-align: center;">
+          <div style="padding: 18px; font-size: 12px; color: #64748b; text-align: center;">
             No material item matches "<strong>${Desk.escapeHtml(q)}</strong>"<br>
-            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 8px; font-size: 11px;" onmousedown="Desk.openRequestItemCodeModal('${context}', '${Desk.escapeHtml(q)}')">
+            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 10px; font-size: 11px;" onclick="Desk.closeFloatingItemDropdown(); Desk.openRequestItemCodeModal('${context}', '${Desk.escapeHtml(q)}')">
               + Request & Add Unlisted Code
             </button>
           </div>
@@ -4503,7 +4547,7 @@ const Desk = {
                  style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; background: ${isSelected ? '#f0fdf4' : 'transparent'};"
                  onmouseenter="this.style.background='#f1f5f9'"
                  onmouseleave="this.style.background='${isSelected ? '#f0fdf4' : 'transparent'}'"
-                 onmousedown="Desk.selectItemCombo('${context}', ${rowId}, '${Desk.escapeHtml(m.sku)}')">
+                 onclick="Desk.selectFloatingItem('${Desk.escapeHtml(m.sku)}')">
               <div style="min-width: 0; flex: 1;">
                 <div style="font-weight: 700; color: #1e293b; font-size: 12px; font-family: monospace;">${Desk.escapeHtml(m.sku)} ${uomBadge}</div>
                 <div style="font-size: 11.5px; color: #475569; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${Desk.escapeHtml(m.item_name || '')}</div>
@@ -4517,17 +4561,15 @@ const Desk = {
       }
     };
 
-    // Filter materials
     let matches = allMaterials.filter(m => {
       if (!q) return true;
       const sku = (m.sku || '').toLowerCase();
       const name = (m.item_name || '').toLowerCase();
       return sku.includes(q) || name.includes(q);
-    }).slice(0, 80);
+    }).slice(0, 100);
 
     renderList(matches);
 
-    // If query has 2+ characters, search server master items
     if (q.length >= 2) {
       clearTimeout(this.itemSearchDebounce);
       this.itemSearchDebounce = setTimeout(() => {
@@ -4540,11 +4582,66 @@ const Desk = {
                   allMaterials.push(rm);
                 }
               });
-              renderList(res.data.slice(0, 80));
+              renderList(res.data.slice(0, 100));
             }
           })
           .catch(() => {});
       }, 250);
+    }
+  },
+
+  selectFloatingItem(sku) {
+    const context = this.activeFloatingContext;
+    const rowId = this.activeFloatingRowId;
+    if (!context || !rowId) return;
+
+    this.selectItemCombo(context, rowId, sku);
+    this.closeFloatingItemDropdown();
+  },
+
+  handleFloatingDropdownKeydown(event) {
+    const dd = document.getElementById('floatingItemSearchDropdown');
+    if (!dd || dd.style.display === 'none') return;
+
+    const listContainer = dd.querySelector('#floatingItemListContainer');
+    const items = listContainer ? listContainer.querySelectorAll('.combo-menu-item') : [];
+    if (items.length === 0) return;
+
+    let activeIdx = -1;
+    items.forEach((item, idx) => {
+      if (item.classList.contains('active-search-item')) activeIdx = idx;
+    });
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if (activeIdx >= 0) {
+        items[activeIdx].classList.remove('active-search-item');
+        items[activeIdx].style.background = 'transparent';
+      }
+      const nextIdx = (activeIdx + 1) % items.length;
+      items[nextIdx].classList.add('active-search-item');
+      items[nextIdx].style.background = '#e0f2fe';
+      items[nextIdx].scrollIntoView({ block: 'nearest' });
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (activeIdx >= 0) {
+        items[activeIdx].classList.remove('active-search-item');
+        items[activeIdx].style.background = 'transparent';
+      }
+      const prevIdx = (activeIdx - 1 + items.length) % items.length;
+      items[prevIdx].classList.add('active-search-item');
+      items[prevIdx].style.background = '#e0f2fe';
+      items[prevIdx].scrollIntoView({ block: 'nearest' });
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      if (activeIdx >= 0 && items[activeIdx]) {
+        items[activeIdx].click();
+      } else if (items.length > 0) {
+        items[0].click();
+      }
+    } else if (event.key === 'Escape') {
+      this.closeFloatingItemDropdown();
+      if (this.activeFloatingTrigger) this.activeFloatingTrigger.focus();
     }
   },
 
@@ -4564,9 +4661,6 @@ const Desk = {
       }
     }
 
-    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
-    if (menu) menu.style.display = 'none';
-
     this.renderStockEntryRows(context);
     this.calculateStockEntryTotals(context);
   },
@@ -4580,79 +4674,27 @@ const Desk = {
     row.item_name = '';
     row.uom = '';
     row.basic_rate = 0;
+    this.closeFloatingItemDropdown();
     this.renderStockEntryRows(context);
     this.calculateStockEntryTotals(context);
   },
 
-  handleItemComboKeydown(event, context, rowId) {
-    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
-    if (!menu || menu.style.display === 'none') {
-      if (event.key === 'ArrowDown') {
-        this.toggleItemComboDropdown(context, rowId, true);
-        event.preventDefault();
-      }
-      return;
-    }
-
-    const listContainer = document.getElementById(`itemComboList_${context}_${rowId}`);
-    const items = listContainer ? listContainer.querySelectorAll('.combo-menu-item') : [];
-    if (items.length === 0) return;
-
-    let activeIdx = -1;
-    items.forEach((item, idx) => {
-      if (item.classList.contains('active-search-item')) activeIdx = idx;
-    });
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      if (activeIdx >= 0) {
-        items[activeIdx].classList.remove('active-search-item');
-        items[activeIdx].style.background = 'transparent';
-      }
-      const nextIdx = (activeIdx + 1) % items.length;
-      items[nextIdx].classList.add('active-search-item');
-      items[nextIdx].style.background = '#e2e8f0';
-      items[nextIdx].scrollIntoView({ block: 'nearest' });
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      if (activeIdx >= 0) {
-        items[activeIdx].classList.remove('active-search-item');
-        items[activeIdx].style.background = 'transparent';
-      }
-      const prevIdx = (activeIdx - 1 + items.length) % items.length;
-      items[prevIdx].classList.add('active-search-item');
-      items[prevIdx].style.background = '#e2e8f0';
-      items[prevIdx].scrollIntoView({ block: 'nearest' });
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      if (activeIdx >= 0 && items[activeIdx]) {
-        items[activeIdx].dispatchEvent(new MouseEvent('mousedown'));
-      } else if (items.length > 0) {
-        items[0].dispatchEvent(new MouseEvent('mousedown'));
-      }
-    } else if (event.key === 'Escape') {
-      menu.style.display = 'none';
-      const trigger = document.getElementById(`itemComboTrigger_${context}_${rowId}`);
-      if (trigger) trigger.focus();
-    }
+  // Compatibility aliases
+  toggleItemComboDropdown(context, rowId, trigger) {
+    const el = trigger || document.getElementById(`itemTrigger_${context}_${rowId}`);
+    if (el) this.toggleFloatingItemDropdown(context, rowId, el);
   },
-
-  // Aliases for compatibility
   searchStockEntryItem(context, rowId, query) {
-    this.renderItemComboList(context, rowId, query);
+    this.renderFloatingItemList(context, rowId, query);
   },
-
   selectStockEntryItem(context, rowId, sku) {
     this.selectItemCombo(context, rowId, sku);
   },
-
-  closeItemSearchDropdown(context, rowId) {
-    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
-    if (menu) menu.style.display = 'none';
+  closeItemSearchDropdown() {
+    this.closeFloatingItemDropdown();
   },
-
-  handleItemSearchKeydown(event, context, rowId) {
-    this.handleItemComboKeydown(event, context, rowId);
+  handleItemSearchKeydown(event) {
+    this.handleFloatingDropdownKeydown(event);
   },
 
   openItemCodeSearchModal(context, rowId) {

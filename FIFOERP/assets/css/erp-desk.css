@@ -1383,7 +1383,7 @@ textarea.desk-form-control {
 }
 
 /* Modern Styled Select Dropdown (Clean White, Slate Border, Custom SVG Chevron) */
-select.frappe-control, select.frappe-select {
+select.frappe-control, select.frappe-select, .frappe-select-trigger, .desk-item-select-trigger {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -1410,12 +1410,12 @@ select.frappe-control, select.frappe-select {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
 }
 
-select.frappe-control:hover, select.frappe-select:hover {
+select.frappe-control:hover, select.frappe-select:hover, .desk-item-select-trigger:hover {
   border-color: #94a3b8 !important;
   background-color: #f8fafc !important;
 }
 
-select.frappe-control:focus, select.frappe-select:focus {
+select.frappe-control:focus, select.frappe-select:focus, .desk-item-select-trigger:focus, .desk-item-select-trigger.active {
   border-color: #0f172a !important;
   background-color: #ffffff !important;
   box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12) !important;
@@ -1449,7 +1449,35 @@ select.frappe-control option, select.frappe-select option {
   font-size: 12.5px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
+  overflow: visible;
+}
+
+/* Floating Portal Item Dropdown Menu with Search */
+.floating-item-dropdown {
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 14px 35px -4px rgba(15, 23, 42, 0.22), 0 8px 16px -6px rgba(15, 23, 42, 0.12);
+  z-index: 999999;
+  text-align: left;
   overflow: hidden;
+  box-sizing: border-box;
+}
+
+.floating-item-dropdown .combo-menu-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.12s;
+}
+
+.floating-item-dropdown .combo-menu-item:hover,
+.floating-item-dropdown .combo-menu-item.active-search-item {
+  background-color: #f1f5f9;
 }
 .frappe-table th {
   background: #f8fafc;
