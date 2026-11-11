@@ -485,108 +485,176 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- In-Body Receipts Entry Form (Matching Legacy FIFO ERP System) -->
+      <!-- In-Body Receipts Entry Form (Modern Frappe/ERPNext Desk Design System) -->
       <style>
+        .grn-card {
+          margin-bottom: 24px;
+          padding: 24px 28px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          background: #ffffff;
+          box-shadow: var(--shadow-sm);
+        }
+        .grn-field-label {
+          display: block;
+          font-size: 12.5px;
+          font-weight: 600;
+          color: #475569;
+          margin-bottom: 6px;
+        }
         .grn-input {
-          height: 28px;
-          padding: 2px 8px;
+          height: 36px;
+          padding: 0 12px;
           font-size: 13px;
-          color: #000000;
-          border: 1px solid #71717a;
-          border-radius: 2px;
+          color: var(--text-main);
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
           background: #ffffff;
           outline: none;
           box-sizing: border-box;
+          transition: border-color 0.15s, box-shadow 0.15s;
+          width: 100%;
         }
         .grn-input:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 1px #2563eb;
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px var(--primary-focus);
         }
-        .grn-classic-btn {
-          height: 28px;
-          padding: 0 16px;
-          background: linear-gradient(180deg, #9bb8db 0%, #7598c0 100%);
-          color: #ffffff;
-          border: 1px solid #5a7d9f;
-          border-radius: 3px;
+        .grn-input[readonly] {
+          background: #f8fafc;
+          color: #64748b;
+          border-color: #e2e8f0;
+          cursor: not-allowed;
+        }
+        .grn-checkbox-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
           font-size: 12.5px;
           font-weight: 600;
+          color: #475569;
           cursor: pointer;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
+          user-select: none;
         }
-        .grn-classic-btn:hover {
-          background: linear-gradient(180deg, #8ba8cf 0%, #668ab5 100%);
+        .grn-checkbox-label input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          accent-color: var(--primary);
+          cursor: pointer;
         }
-        .grn-action-btn {
-          min-width: 90px;
-          height: 32px;
-          padding: 0 22px;
-          border: 1px solid #4a6682;
-          border-radius: 3px;
+        .grn-accordion-card {
+          margin-bottom: 14px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          overflow: hidden;
+          background: #ffffff;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .grn-accordion-header {
+          background: #f8fafc;
+          color: var(--text-main);
+          padding: 11px 16px;
+          font-weight: 600;
           font-size: 13px;
-          font-weight: 700;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           cursor: pointer;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+          user-select: none;
+          transition: background 0.15s;
+        }
+        .grn-accordion-header:hover {
+          background: #f1f5f9;
+        }
+        .grn-toggle-icon {
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          width: 22px;
+          height: 22px;
+          border-radius: 4px;
+          background: #e2e8f0;
+          color: #475569;
+          font-size: 12px;
+          font-weight: 700;
         }
-        .grn-action-btn:hover {
-          opacity: 0.92;
+        .grn-accordion-body {
+          padding: 16px 20px;
+          background: #ffffff;
+          border-top: 1px solid var(--border);
         }
       </style>
 
-      <div id="bodyGrnEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 20px 24px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
+      <div id="bodyGrnEntryCard" class="desk-card grn-card">
         <form id="formBodyNewGrn" onsubmit="event.preventDefault(); Desk.submitDetailedGrn();">
           
+          <!-- FORM HEADER -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('package', 18) ?> Enter Goods Received Note (GRN)
+              </h3>
+              <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">
+                Record new stock arrival consignment with vendor details, taxes, discounts, and line items.
+              </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="grnDocPfNotice" style="color: var(--primary); font-weight: 600; font-size: 12px; background: var(--primary-light); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(13, 148, 136, 0.2);">Goods Received Note</span>
+              <span class="desk-badge badge-draft" style="font-size: 11px; padding: 4px 10px;">Status: New Draft</span>
+            </div>
+          </div>
+
           <!-- TOP FORM GRID -->
-          <div style="display: grid; grid-template-columns: 1fr 280px; gap: 24px; margin-bottom: 20px; align-items: start;">
+          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-bottom: 20px; align-items: start;">
             
             <!-- Left Column: Profiles, Types, Dynamic Selection -->
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
               
-              <!-- Row 1: Document Profile & Status -->
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Document Profile</label>
-                <select id="grnDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onDocProfileChange(this.value)" style="min-width: 190px;">
-                  <option value="">-Select DOC PF-</option>
-                  <option value="Goods Received Note" selected>Goods Received Note</option>
-                  <option value="Direct Material Purchase">Direct Material Purchase</option>
-                  <option value="Store Transfer Receipt">Store Transfer Receipt</option>
-                </select>
-                <span id="grnDocPfNotice" style="color: #2563eb; font-weight: 500; font-size: 13px;">Goods Received Note</span>
-                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
-                  <span style="font-weight: 700; font-size: 13px; color: #000000;">Status</span>
-                  <input type="text" value="New" readonly style="width: 65px; height: 26px; background: #f8fafc; border: 1px solid #cbd5e1; font-size: 12px; text-align: center; color: #64748b; border-radius: 2px;">
+              <!-- Row 1: Document Profile & Base on -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                  <label class="grn-field-label">Document Profile</label>
+                  <select id="grnDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onDocProfileChange(this.value)">
+                    <option value="">-Select DOC PF-</option>
+                    <option value="Goods Received Note" selected>Goods Received Note</option>
+                    <option value="Direct Material Purchase">Direct Material Purchase</option>
+                    <option value="Store Transfer Receipt">Store Transfer Receipt</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="grn-field-label">Base on</label>
+                  <select name="base_on" id="grnBaseOn" class="grn-input">
+                    <option value="">-Select Type-</option>
+                    <option value="PO" selected>PO (Purchase Order)</option>
+                    <option value="Direct Purchase">Direct Purchase</option>
+                    <option value="Transfer Order">Transfer Order</option>
+                    <option value="Contract">Contract</option>
+                  </select>
                 </div>
               </div>
 
-              <!-- Row 2: Receipt From -->
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Receipt From</label>
-                <select id="grnReceiptFrom" name="receipt_from" class="grn-input" onchange="Desk.onReceiptFromChange(this.value)" style="min-width: 200px;">
-                  <option value="">-Select Receipt From-</option>
-                  <option value="Purchase Order">Purchase Order</option>
-                  <option value="Cost Center">Cost Center</option>
-                  <option value="Section">Section</option>
-                </select>
+              <!-- Row 2: Receipt From & Source Dept -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                  <label class="grn-field-label">Receipt From</label>
+                  <select id="grnReceiptFrom" name="receipt_from" class="grn-input" onchange="Desk.onReceiptFromChange(this.value)">
+                    <option value="">-Select Receipt From-</option>
+                    <option value="Purchase Order">Purchase Order</option>
+                    <option value="Cost Center">Cost Center</option>
+                    <option value="Section">Section</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="grn-field-label">Source Dept</label>
+                  <input type="text" name="source_dept" id="grnSourceDept" value="832.00" readonly class="grn-input">
+                </div>
               </div>
 
-              <!-- Row 3: Source Dept -->
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Source Dept</label>
-                <input type="text" name="source_dept" id="grnSourceDept" value="832.00" readonly style="width: 160px; height: 28px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 2px 8px; font-size: 13px; color: #475569; border-radius: 2px;">
-              </div>
-
-              <!-- Row 4: Dynamic Row (Shows Receipt Supplier, Receipt Dept, or Section based on Receipt From) -->
-              <div id="grnDynamicReceiptRow" style="display: none; align-items: center; gap: 12px;">
-                <label id="grnDynamicReceiptLabel" style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Receipt Supplier</label>
+              <!-- Row 3: Dynamic Selection (Shows Supplier, Dept, or Section based on Receipt From) -->
+              <div id="grnDynamicReceiptRow" style="display: none; flex-direction: column;">
+                <label id="grnDynamicReceiptLabel" class="grn-field-label">Receipt Supplier</label>
                 
                 <!-- Supplier Dropdown (for Purchase Order) -->
-                <select id="grnSelectSupplier" name="receipt_supplier" class="grn-input" style="display: none; min-width: 320px; max-width: 440px;">
+                <select id="grnSelectSupplier" name="receipt_supplier" class="grn-input" style="display: none;">
                   <option value="">---- Select Supplier----</option>
                   <option value="Lanka Lubricants Ltd">Lanka Lubricants Ltd</option>
                   <option value="Colombo Electrical Supplies Ltd">Colombo Electrical Supplies Ltd</option>
@@ -604,7 +672,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </select>
 
                 <!-- Cost Center Dropdown (for Cost Center) -->
-                <select id="grnSelectDept" name="receipt_dept" class="grn-input" style="display: none; min-width: 320px; max-width: 440px;">
+                <select id="grnSelectDept" name="receipt_dept" class="grn-input" style="display: none;">
                   <option value="">---- Select Cost Center----</option>
                   <option value="832.00 - Capital Expenditure">832.00 - Capital Expenditure</option>
                   <option value="831.00 - Operations & Generation">831.00 - Operations & Generation</option>
@@ -617,15 +685,15 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </select>
 
                 <!-- Section Dropdown (for Section) -->
-                <select id="grnSelectSection" name="receipt_section" class="grn-input" style="display: none; min-width: 320px; max-width: 440px;">
+                <select id="grnSelectSection" name="receipt_section" class="grn-input" style="display: none;">
                   <option value="">---- Select Section----</option>
                 </select>
               </div>
 
-              <!-- Row 5: Warehouse & Base on -->
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <label style="width: 130px; font-weight: 700; font-size: 13px; color: #000000;">Warehouse</label>
-                <select name="warehouse" id="grnWarehouse" class="grn-input" style="min-width: 240px;">
+              <!-- Row 4: Destination Warehouse -->
+              <div>
+                <label class="grn-field-label">Receiving Warehouse Bay</label>
+                <select name="warehouse" id="grnWarehouse" class="grn-input">
                   <option value="">---- Select Warehouse----</option>
                   <option value="Main Store Bay-01" selected>Main Store Bay-01</option>
                   <option value="Mechanical Stores">Mechanical Stores</option>
@@ -634,210 +702,231 @@ require_once __DIR__ . '/views/layouts/header.php';
                   <option value="Chemical & Oil Depot Bay-03">Chemical & Oil Depot Bay-03</option>
                   <option value="Heavy Yard Bay-04">Heavy Yard Bay-04</option>
                 </select>
-
-                <div style="display: inline-flex; align-items: center; gap: 8px; margin-left: 14px;">
-                  <span style="font-weight: 700; font-size: 13px; color: #000000;">Base on</span>
-                  <select name="base_on" id="grnBaseOn" class="grn-input" style="min-width: 130px;">
-                    <option value="">-Select Type-</option>
-                    <option value="PO" selected>PO</option>
-                    <option value="Direct Purchase">Direct Purchase</option>
-                    <option value="Transfer Order">Transfer Order</option>
-                    <option value="Contract">Contract</option>
-                  </select>
-                </div>
               </div>
 
             </div>
 
             <!-- Right Column: Delivery Date, Acc Date, Due Date -->
-            <div style="display: flex; flex-direction: column; gap: 10px; background: #f8fafc; padding: 14px; border: 1px solid #e2e8f0; border-radius: 4px;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Delivery Date</label>
-                <input type="date" name="delivery_date" id="grnDeliveryDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-md);">
+              <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+                <?= Icon::get('calendar', 14) ?> Posting &amp; Delivery Dates
               </div>
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Acc Date</label>
-                <input type="date" name="acc_date" id="grnAccDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+              <div>
+                <label class="grn-field-label">Delivery Date</label>
+                <input type="date" name="delivery_date" id="grnDeliveryDate" value="<?= date('Y-m-d') ?>" class="grn-input">
               </div>
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Due Date</label>
-                <input type="date" name="due_date" id="grnDueDate" class="grn-input" style="width: 140px;">
+              <div>
+                <label class="grn-field-label">Acc Date</label>
+                <input type="date" name="acc_date" id="grnAccDate" value="<?= date('Y-m-d') ?>" class="grn-input">
+              </div>
+              <div>
+                <label class="grn-field-label">Due Date</label>
+                <input type="date" name="due_date" id="grnDueDate" class="grn-input">
               </div>
             </div>
 
           </div>
 
           <!-- COLLAPSIBLE SECTION 1: Values To Consider for Material Unit Price -->
-          <div style="margin-bottom: 12px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
-            <div class="grn-blue-header" onclick="Desk.toggleGrnSection('grnValuesBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-              <span>Values  To Consider for Material Unit Price</span>
-              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">-</span>
+          <div class="grn-accordion-card">
+            <div class="grn-accordion-header" onclick="Desk.toggleGrnSection('grnValuesBox', this)">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('percent', 14) ?> Values To Consider for Material Unit Price (Taxes &amp; Landed Costs)
+              </span>
+              <span class="grn-toggle-icon">-</span>
             </div>
-            <div id="grnValuesBox" style="background: #bfdbfe; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
-              
-              <!-- NBT Row -->
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">NBT</label>
-                <input type="number" step="0.01" name="nbt" id="grnNbt" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
-                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
-                  Exclude from Unit Price
-                  <input type="checkbox" name="nbt_excluded" id="grnNbtExcluded" value="1" style="width: 16px; height: 16px;">
-                </label>
-              </div>
-
-              <!-- VAT Row -->
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">VAT</label>
-                <input type="number" step="0.01" name="vat" id="grnVat" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
-                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
-                  Exclude from Unit Price
-                  <input type="checkbox" name="vat_excluded" id="grnVatExcluded" value="1" style="width: 16px; height: 16px;">
-                </label>
-              </div>
-
-              <!-- Transport Row -->
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">Transport</label>
-                <input type="number" step="0.01" name="transport" id="grnTransport" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
-                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
-                  Exclude from Unit Price
-                  <input type="checkbox" name="transport_excluded" id="grnTransportExcluded" value="1" style="width: 16px; height: 16px;">
-                </label>
-              </div>
-
-              <!-- Other Row -->
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 80px; font-weight: 700; font-size: 13px; color: #000000;">Other</label>
-                <input type="number" step="0.01" name="other_cost" id="grnOther" value="0.00" class="grn-input" style="width: 180px; background: #ffffff;">
-                <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
-                  Exclude from Unit Price
-                  <input type="checkbox" name="other_excluded" id="grnOtherExcluded" value="1" style="width: 16px; height: 16px;">
-                </label>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 2: Exapand to Add,Edit Or view Reference Data -->
-          <div style="margin-bottom: 12px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
-            <div class="grn-blue-header" onclick="Desk.toggleGrnSection('grnRefBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-              <span>Exapand to Add,Edit Or view Reference Data</span>
-              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">-</span>
-            </div>
-            <div id="grnRefBox" style="background: #bfdbfe; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Invoice No*</label>
-                <input type="text" name="invoice_number" id="grnInvoiceNo" class="grn-input" style="width: 260px; background: #ffffff;" placeholder="e.g. INV-2026-001">
-              </div>
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Order No*</label>
-                <input type="text" name="order_reference" id="grnOrderNo" class="grn-input" style="width: 260px; background: #ffffff;" placeholder="e.g. PO-832-2026-01">
-              </div>
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Other Reference 1</label>
-                <input type="text" name="other_ref_1" id="grnOtherRef1" class="grn-input" style="width: 260px; background: #ffffff;">
-              </div>
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Other Reference 2</label>
-                <input type="text" name="other_ref_2" id="grnOtherRef2" class="grn-input" style="width: 260px; background: #ffffff;">
+            <div id="grnValuesBox" class="grn-accordion-body" style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+                <!-- NBT -->
+                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
+                  <label class="grn-field-label">NBT (Rs.)</label>
+                  <input type="number" step="0.01" name="nbt" id="grnNbt" value="0.00" class="grn-input" style="margin-bottom: 8px;">
+                  <label class="grn-checkbox-label">
+                    <input type="checkbox" name="nbt_excluded" id="grnNbtExcluded" value="1">
+                    Exclude from Unit Price
+                  </label>
+                </div>
+                <!-- VAT -->
+                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
+                  <label class="grn-field-label">VAT (Rs.)</label>
+                  <input type="number" step="0.01" name="vat" id="grnVat" value="0.00" class="grn-input" style="margin-bottom: 8px;">
+                  <label class="grn-checkbox-label">
+                    <input type="checkbox" name="vat_excluded" id="grnVatExcluded" value="1">
+                    Exclude from Unit Price
+                  </label>
+                </div>
+                <!-- Transport -->
+                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
+                  <label class="grn-field-label">Transport (Rs.)</label>
+                  <input type="number" step="0.01" name="transport" id="grnTransport" value="0.00" class="grn-input" style="margin-bottom: 8px;">
+                  <label class="grn-checkbox-label">
+                    <input type="checkbox" name="transport_excluded" id="grnTransportExcluded" value="1">
+                    Exclude from Unit Price
+                  </label>
+                </div>
+                <!-- Other -->
+                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
+                  <label class="grn-field-label">Other Cost (Rs.)</label>
+                  <input type="number" step="0.01" name="other_cost" id="grnOther" value="0.00" class="grn-input" style="margin-bottom: 8px;">
+                  <label class="grn-checkbox-label">
+                    <input type="checkbox" name="other_excluded" id="grnOtherExcluded" value="1">
+                    Exclude from Unit Price
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- COLLAPSIBLE SECTION 3: Exapand to Add,Edit Or view Remarks (Collapsed by default) -->
-          <div style="margin-bottom: 16px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
-            <div class="grn-blue-header" onclick="Desk.toggleGrnSection('grnRemarksBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-              <span>Exapand to Add,Edit Or view Remarks</span>
-              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">+</span>
+          <!-- COLLAPSIBLE SECTION 2: Reference Data -->
+          <div class="grn-accordion-card">
+            <div class="grn-accordion-header" onclick="Desk.toggleGrnSection('grnRefBox', this)">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('file-text', 14) ?> Expand to Add, Edit Or view Reference Data
+              </span>
+              <span class="grn-toggle-icon">-</span>
             </div>
-            <div id="grnRemarksBox" style="display: none; background: #bfdbfe; padding: 12px 16px;">
-              <textarea name="remarks" id="grnRemarks" rows="2" style="width: 100%; border: 1px solid #71717a; border-radius: 2px; padding: 6px; font-size: 13px; background: #ffffff;" placeholder="Inspection remarks, delivery comments, or quality clearance notes..."></textarea>
+            <div id="grnRefBox" class="grn-accordion-body" style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                  <label class="grn-field-label">Invoice No *</label>
+                  <input type="text" name="invoice_number" id="grnInvoiceNo" class="grn-input" placeholder="e.g. INV-2026-001">
+                </div>
+                <div>
+                  <label class="grn-field-label">Order No *</label>
+                  <input type="text" name="order_reference" id="grnOrderNo" class="grn-input" placeholder="e.g. PO-832-2026-01">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                  <label class="grn-field-label">Other Reference 1</label>
+                  <input type="text" name="other_ref_1" id="grnOtherRef1" class="grn-input" placeholder="e.g. Dispatch Note Ref">
+                </div>
+                <div>
+                  <label class="grn-field-label">Other Reference 2</label>
+                  <input type="text" name="other_ref_2" id="grnOtherRef2" class="grn-input" placeholder="e.g. Delivery Challan Ref">
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- INVOICE TOTAL & MATERIAL SELECTION AREA -->
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+          <!-- COLLAPSIBLE SECTION 3: Remarks -->
+          <div class="grn-accordion-card">
+            <div class="grn-accordion-header" onclick="Desk.toggleGrnSection('grnRemarksBox', this)">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('message-square', 14) ?> Expand to Add, Edit Or view Remarks
+              </span>
+              <span class="grn-toggle-icon">+</span>
+            </div>
+            <div id="grnRemarksBox" class="grn-accordion-body" style="display: none;">
+              <textarea name="remarks" id="grnRemarks" rows="2" class="grn-input" style="height: auto; min-height: 70px; padding: 8px 12px; resize: vertical;" placeholder="Inspection remarks, delivery comments, or quality clearance notes..."></textarea>
+            </div>
+          </div>
+
+          <!-- INVOICE TOTAL, DISCOUNTS & MATERIAL SELECTION AREA -->
+          <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px;">
             
             <!-- Row 1: Invoice Total, Single Material, Retrieve Materials -->
-            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <label style="width: 200px; font-weight: 700; font-size: 13px; color: #000000;">Invoice Total (Without Tax) *</label>
-              <input type="number" step="0.01" name="invoice_total" id="grnInvoiceTotal" class="grn-input" style="width: 180px;" placeholder="0.00">
+            <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 220px;">
+                <label class="grn-field-label">Invoice Total (Without Tax) *</label>
+                <input type="number" step="0.01" name="invoice_total" id="grnInvoiceTotal" class="grn-input" placeholder="0.00">
+              </div>
               
-              <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
-                <input type="checkbox" name="is_single_material" id="grnSingleMaterial" value="1" style="width: 16px; height: 16px;">
-                Single Material
-              </label>
+              <div style="padding-top: 22px;">
+                <label class="grn-checkbox-label">
+                  <input type="checkbox" name="is_single_material" id="grnSingleMaterial" value="1">
+                  Single Material
+                </label>
+              </div>
 
-              <button type="button" class="grn-classic-btn" onclick="Desk.retrieveGrnMaterials()">
-                Retrieve Materials
-              </button>
+              <div style="padding-top: 22px;">
+                <button type="button" class="desk-btn desk-btn-default" onclick="Desk.retrieveGrnMaterials()" style="height: 36px;">
+                  <?= Icon::get('download', 14) ?> Retrieve Materials
+                </button>
+              </div>
             </div>
 
             <!-- Row 2: Discount For All, Precentage, Discount Type -->
-            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <label style="width: 200px; font-weight: 700; font-size: 13px; color: #000000;">Discount For All</label>
-              <input type="number" step="0.01" name="discount_for_all" id="grnDiscountForAll" value="0.00" class="grn-input" style="width: 180px;">
+            <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 180px;">
+                <label class="grn-field-label">Discount For All</label>
+                <input type="number" step="0.01" name="discount_for_all" id="grnDiscountForAll" value="0.00" class="grn-input">
+              </div>
               
-              <label style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 13px; color: #000000; cursor: pointer;">
-                <input type="checkbox" name="is_percentage" id="grnIsPercentage" value="1" style="width: 16px; height: 16px;">
-                Precentage
-              </label>
+              <div style="padding-top: 22px;">
+                <label class="grn-checkbox-label">
+                  <input type="checkbox" name="is_percentage" id="grnIsPercentage" value="1">
+                  Percentage
+                </label>
+              </div>
 
-              <select name="discount_type" id="grnDiscountType" class="grn-input" style="min-width: 190px;">
-                <option value="">-Select Discount Type-</option>
-                <option value="Item-wise">Item-wise Discount</option>
-                <option value="Invoice-level">Invoice-level Discount</option>
-                <option value="Cash Discount">Cash Discount</option>
-              </select>
+              <div style="flex: 1; min-width: 200px;">
+                <label class="grn-field-label">Discount Type</label>
+                <select name="discount_type" id="grnDiscountType" class="grn-input">
+                  <option value="">-Select Discount Type-</option>
+                  <option value="Item-wise">Item-wise Discount</option>
+                  <option value="Invoice-level">Invoice-level Discount</option>
+                  <option value="Cash Discount">Cash Discount</option>
+                </select>
+              </div>
             </div>
 
             <!-- Row 3: Material Dropdown & Add Material Button -->
-            <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
-              <select id="grnSelectMaterial" class="grn-input" style="flex: 1; min-width: 320px; font-size: 13px;">
-                <option value="">-- Select Material For Receipt--</option>
-              </select>
-              <button type="button" class="grn-classic-btn" onclick="Desk.addGrnMaterialItem()">
-                Add Material
-              </button>
+            <div>
+              <label class="grn-field-label">Select Material From Inventory Master</label>
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <select id="grnSelectMaterial" class="grn-input" style="flex: 1; min-width: 300px;">
+                  <option value="">-- Select Material For Receipt--</option>
+                </select>
+                <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.addGrnMaterialItem()" style="height: 36px; padding: 0 18px;">
+                  <?= Icon::get('plus', 14) ?> Add Material
+                </button>
+              </div>
             </div>
 
             <!-- Row 4: Search input -->
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <label style="width: 60px; font-weight: 700; font-size: 13px; color: #000000;">Search</label>
-              <input type="text" id="grnSearchMaterial" class="grn-input" style="flex: 1; max-width: 580px;" placeholder="Type SKU or description to search materials..." oninput="Desk.filterGrnMaterialDropdown(this.value)">
+            <div>
+              <div style="position: relative;">
+                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                  <?= Icon::get('search', 14) ?>
+                </span>
+                <input type="text" id="grnSearchMaterial" class="grn-input" style="padding-left: 36px;" placeholder="Search material by SKU or name..." oninput="Desk.filterGrnMaterialDropdown(this.value)">
+              </div>
             </div>
 
           </div>
 
           <!-- ADDED MATERIALS LIST TABLE -->
-          <div id="grnItemsTableWrap" style="margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 3px; overflow: hidden; background: #ffffff;">
-            <table class="desk-table" style="margin: 0; font-size: 12.5px;">
-              <thead style="background: #f1f5f9;">
+          <div id="grnItemsTableWrap" class="desk-table-wrapper" style="margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: #ffffff;">
+            <table class="desk-table">
+              <thead>
                 <tr>
-                  <th style="padding: 6px 10px; width: 140px;">SKU</th>
-                  <th style="padding: 6px 10px;">Material Description</th>
-                  <th style="padding: 6px 10px; width: 90px; text-align: right;">Quantity</th>
-                  <th style="padding: 6px 10px; width: 120px; text-align: right;">Unit Price (Rs.)</th>
-                  <th style="padding: 6px 10px; width: 130px; text-align: right;">Line Total (Rs.)</th>
-                  <th style="padding: 6px 10px; width: 120px;">Storage Bin</th>
-                  <th style="padding: 6px 10px; width: 60px; text-align: center;">Action</th>
+                  <th style="width: 140px;">SKU</th>
+                  <th>Material Description</th>
+                  <th style="width: 100px; text-align: right;">Quantity</th>
+                  <th style="width: 130px; text-align: right;">Unit Price (Rs.)</th>
+                  <th style="width: 140px; text-align: right;">Line Total (Rs.)</th>
+                  <th style="width: 120px;">Storage Bin</th>
+                  <th style="width: 80px; text-align: center;">Action</th>
                 </tr>
               </thead>
               <tbody id="grnItemsTableBody">
                 <tr id="grnEmptyRow">
-                  <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material&quot;.</td>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 22px;">
+                    No materials added yet. Select a material above and click &quot;Add Material&quot;.
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- BOTTOM ACTION BUTTONS: SAVE & CLEAR -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-            <button type="button" class="grn-action-btn" onclick="Desk.submitDetailedGrn()" style="background: #5b7c99; color: #ffffff;">
-              Save
+          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border);">
+            <button type="button" class="desk-btn desk-btn-default" onclick="Desk.clearDetailedGrn()" style="height: 38px; padding: 0 20px;">
+              <?= Icon::get('rotate-ccw', 13) ?> Clear Form
             </button>
-            <button type="button" class="grn-action-btn" onclick="Desk.clearDetailedGrn()" style="background: #7a8fa6; color: #ffffff;">
-              Clear
+            <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.submitDetailedGrn()" style="height: 38px; padding: 0 24px; font-weight: 600;">
+              <?= Icon::get('check', 14) ?> Save GRN
             </button>
           </div>
 
@@ -913,272 +1002,297 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- In-Body Material Issue Entry Form (Legacy FIFO Requisition Form) -->
-      <div id="bodyIssueEntryCard" class="desk-card" style="margin-bottom: 20px; padding: 20px 24px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
+      <!-- In-Body Material Issue Entry Form (Modern Frappe/ERPNext Desk Design System) -->
+      <div id="bodyIssueEntryCard" class="desk-card grn-card">
         <form id="formBodyNewIssue" onsubmit="event.preventDefault(); Desk.submitDetailedIssue();">
           
+          <!-- FORM HEADER -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('send', 18) ?> Enter Material Issue Requisition (Issue Entry)
+              </h3>
+              <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">
+                Submit material requisition from active FIFO inventory batches to department, project, section or maintenance.
+              </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span id="issueDocPfNotice" style="color: var(--primary); font-weight: 600; font-size: 12px; background: var(--primary-light); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(13, 148, 136, 0.2);">Material Issue Requisition</span>
+              <span class="desk-badge badge-draft" style="font-size: 11px; padding: 4px 10px;">Status: New Draft</span>
+            </div>
+          </div>
+
           <!-- TOP FORM GRID -->
-          <div style="display: grid; grid-template-columns: 1fr 280px; gap: 24px; margin-bottom: 16px; align-items: start;">
+          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-bottom: 20px; align-items: start;">
             
             <!-- Left Column: Profiles, Issue To, Dynamic Fields, Warehouse -->
-            <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
               
-              <!-- Row 1: Document Profile & Status -->
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Document Profile</label>
-                <select id="issueDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onIssueDocProfileChange(this.value)" style="min-width: 190px;">
-                  <option value="">-Select DOC PF-</option>
-                  <option value="Material Issue Requisition" selected>Material Issue Requisition</option>
-                  <option value="Plant Maintenance Issue">Plant Maintenance Issue</option>
-                  <option value="Overhaul Capital Issue">Overhaul Capital Issue</option>
-                  <option value="Inter-Store Issue">Inter-Store Issue</option>
-                </select>
-                <span id="issueDocPfNotice" style="color: #2563eb; font-weight: 500; font-size: 13px;">Doc PF Not Selected</span>
-                <div style="display: inline-flex; align-items: center; gap: 6px; margin-left: auto;">
-                  <span style="font-weight: 700; font-size: 13px; color: #000000;">Status</span>
-                  <select id="issueStatusSelect" name="doc_status" class="grn-input" style="width: 80px; height: 26px; padding: 0 4px; font-size: 12px; color: #64748b; background: #f8fafc;" disabled>
-                    <option value="New" selected>New</option>
+              <!-- Row 1: Document Profile & Issue To -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                  <label class="grn-field-label">Document Profile</label>
+                  <select id="issueDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onIssueDocProfileChange(this.value)">
+                    <option value="">-Select DOC PF-</option>
+                    <option value="Material Issue Requisition" selected>Material Issue Requisition</option>
+                    <option value="Plant Maintenance Issue">Plant Maintenance Issue</option>
+                    <option value="Overhaul Capital Issue">Overhaul Capital Issue</option>
+                    <option value="Inter-Store Issue">Inter-Store Issue</option>
                   </select>
                 </div>
-              </div>
-
-              <!-- Row 2: Issue To -->
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Issue To</label>
-                <select id="issueToSelect" name="issue_to" class="grn-input" onchange="Desk.onIssueToChange(this.value)" style="min-width: 220px;">
-                  <option value="">-- Select Issue To --</option>
-                  <option value="Project">Project</option>
-                  <option value="Cost Center">Cost Center</option>
-                  <option value="Warehouse">Warehouse</option>
-                  <option value="My Project">My Project</option>
-                  <option value="Section">Section</option>
-                  <option value="Genaration as Expenditure">Genaration as Expenditure</option>
-                </select>
+                <div>
+                  <label class="grn-field-label">Issue To (Destination Type)</label>
+                  <select id="issueToSelect" name="issue_to" class="grn-input" onchange="Desk.onIssueToChange(this.value)">
+                    <option value="">-- Select Issue To --</option>
+                    <option value="Project">Project</option>
+                    <option value="Cost Center">Cost Center</option>
+                    <option value="Warehouse">Warehouse</option>
+                    <option value="My Project">My Project</option>
+                    <option value="Section">Section</option>
+                    <option value="Genaration as Expenditure">Genaration as Expenditure</option>
+                  </select>
+                </div>
               </div>
 
               <!-- DYNAMIC CONTAINER FOR THE 6 CHOICES -->
 
               <!-- 1. Project Block -->
-              <div id="issueBlockProject" style="display: none; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Project Dest Dept</label>
-                  <select id="issueProjectDestDept" name="project_dest_dept" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Cost Center----</option>
-                  </select>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Project</label>
-                  <select id="issueProjectSelect" name="project_code" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Project----</option>
-                  </select>
+              <div id="issueBlockProject" style="display: none; flex-direction: column; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div>
+                    <label class="grn-field-label">Project Dest Dept</label>
+                    <select id="issueProjectDestDept" name="project_dest_dept" class="grn-input">
+                      <option value="">---- Select Cost Center----</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="grn-field-label">Project</label>
+                    <select id="issueProjectSelect" name="project_code" class="grn-input">
+                      <option value="">---- Select Project----</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <!-- 2. Cost Center Block -->
-              <div id="issueBlockCostCenter" style="display: none; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Dept Id</label>
-                  <select id="issueDeptId" name="dept_id" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Cost Center----</option>
-                  </select>
-                </div>
+              <div id="issueBlockCostCenter" style="display: none; flex-direction: column;">
+                <label class="grn-field-label">Dept Id / Cost Center</label>
+                <select id="issueDeptId" name="dept_id" class="grn-input">
+                  <option value="">---- Select Cost Center----</option>
+                </select>
               </div>
 
               <!-- 3. Warehouse Block -->
-              <div id="issueBlockWarehouse" style="display: none; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Warehouse to Issue</label>
-                  <select id="issueWarehouseToIssue" name="warehouse_to_issue" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Issue To Warehouse----</option>
-                  </select>
-                </div>
+              <div id="issueBlockWarehouse" style="display: none; flex-direction: column;">
+                <label class="grn-field-label">Warehouse to Issue (Receiving Store)</label>
+                <select id="issueWarehouseToIssue" name="warehouse_to_issue" class="grn-input">
+                  <option value="">---- Select Issue To Warehouse----</option>
+                </select>
               </div>
 
               <!-- 4. My Project Block -->
-              <div id="issueBlockMyProject" style="display: none; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">My Prj Dest Dept</label>
-                  <select id="issueMyPrjDestDept" name="my_prj_dest_dept" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Your Project----</option>
-                  </select>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">My Project</label>
-                  <select id="issueMyProjectSelect" name="my_project" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select My Project----</option>
-                  </select>
+              <div id="issueBlockMyProject" style="display: none; flex-direction: column; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div>
+                    <label class="grn-field-label">My Prj Dest Dept</label>
+                    <select id="issueMyPrjDestDept" name="my_prj_dest_dept" class="grn-input">
+                      <option value="">---- Select Your Project----</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="grn-field-label">My Project</label>
+                    <select id="issueMyProjectSelect" name="my_project" class="grn-input">
+                      <option value="">---- Select My Project----</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <!-- 5. Section Block -->
-              <div id="issueBlockSection" style="display: none; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Section</label>
-                  <select id="issueSectionSelect" name="section" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Section----</option>
-                  </select>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Cost Code</label>
-                  <select id="issueCostCode" name="cost_code" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Cost Cd----</option>
-                  </select>
+              <div id="issueBlockSection" style="display: none; flex-direction: column; gap: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div>
+                    <label class="grn-field-label">Section</label>
+                    <select id="issueSectionSelect" name="section" class="grn-input">
+                      <option value="">---- Select Section----</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="grn-field-label">Cost Code</label>
+                    <select id="issueCostCode" name="cost_code" class="grn-input">
+                      <option value="">---- Select Cost Cd----</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <!-- 6. Genaration as Expenditure Block -->
-              <div id="issueBlockExpenditure" style="display: none; flex-direction: column; gap: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Issuing Type</label>
-                  <select id="issueIssuingType" name="issuing_type" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                    <option value="">---- Select Issuing Type----</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Row: Warehouse (Source Warehouse) -->
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <label style="width: 140px; font-weight: 700; font-size: 13px; color: #000000;">Warehouse</label>
-                <select name="warehouse" id="issueSourceWarehouse" class="grn-input" style="min-width: 320px; max-width: 440px;">
-                  <option value="">---- Select Source Warehouse----</option>
+              <div id="issueBlockExpenditure" style="display: none; flex-direction: column;">
+                <label class="grn-field-label">Issuing Type</label>
+                <select id="issueIssuingType" name="issuing_type" class="grn-input">
+                  <option value="">---- Select Issuing Type----</option>
                 </select>
               </div>
 
-              <!-- Retrieve Materials Button -->
-              <div style="margin-top: 4px;">
-                <button type="button" class="grn-classic-btn" onclick="Desk.retrieveIssueMaterials()" style="min-width: 140px;">
-                  Retrieve Materials
-                </button>
+              <!-- Row: Warehouse (Source Warehouse) & Retrieve Materials -->
+              <div>
+                <label class="grn-field-label">Source Issuing Warehouse</label>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <select name="warehouse" id="issueSourceWarehouse" class="grn-input" style="flex: 1;">
+                    <option value="">---- Select Source Warehouse----</option>
+                  </select>
+                  <button type="button" class="desk-btn desk-btn-default" onclick="Desk.retrieveIssueMaterials()" style="height: 36px; white-space: nowrap;">
+                    <?= Icon::get('download', 14) ?> Retrieve Materials
+                  </button>
+                </div>
               </div>
 
             </div>
 
             <!-- Right Column: Trx Date & Acc Date -->
-            <div style="display: flex; flex-direction: column; gap: 10px; background: #f8fafc; padding: 14px; border: 1px solid #e2e8f0; border-radius: 4px;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Trx Date</label>
-                <input type="date" name="trx_date" id="issueTrxDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-md);">
+              <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
+                <?= Icon::get('calendar', 14) ?> Transaction Dates
               </div>
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Acc Date</label>
-                <input type="date" name="acc_date" id="issueAccDate" value="<?= date('Y-m-d') ?>" class="grn-input" style="width: 140px;">
+              <div>
+                <label class="grn-field-label">Trx Date</label>
+                <input type="date" name="trx_date" id="issueTrxDate" value="<?= date('Y-m-d') ?>" class="grn-input">
+              </div>
+              <div>
+                <label class="grn-field-label">Acc Date</label>
+                <input type="date" name="acc_date" id="issueAccDate" value="<?= date('Y-m-d') ?>" class="grn-input">
               </div>
             </div>
 
           </div>
 
-          <!-- COLLAPSIBLE SECTION 1: Exapand to Add,Edit Or view Reference Data -->
-          <div style="margin-bottom: 12px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
-            <div class="grn-blue-header" onclick="Desk.toggleIssueSection('issueRefBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-              <span>Exapand to Add,Edit Or view Reference Data</span>
-              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">+</span>
+          <!-- COLLAPSIBLE SECTION 1: Reference Data -->
+          <div class="grn-accordion-card">
+            <div class="grn-accordion-header" onclick="Desk.toggleIssueSection('issueRefBox', this)">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('file-text', 14) ?> Expand to Add, Edit Or view Reference Data
+              </span>
+              <span class="grn-toggle-icon">+</span>
             </div>
-            <div id="issueRefBox" style="display: none; background: #bfdbfe; padding: 12px 16px; flex-direction: column; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 1</label>
-                <input type="text" name="other_ref_1" id="issueRef1" class="grn-input" style="width: 280px; background: #ffffff;">
+            <div id="issueRefBox" class="grn-accordion-body" style="display: none; flex-direction: column; gap: 14px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                  <label class="grn-field-label">Reference 1</label>
+                  <input type="text" name="other_ref_1" id="issueRef1" class="grn-input" placeholder="e.g. Work Order / Requisition No">
+                </div>
+                <div>
+                  <label class="grn-field-label">Reference 2</label>
+                  <input type="text" name="other_ref_2" id="issueRef2" class="grn-input" placeholder="e.g. Plant Equipment ID">
+                </div>
               </div>
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 2</label>
-                <input type="text" name="other_ref_2" id="issueRef2" class="grn-input" style="width: 280px; background: #ffffff;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                  <label class="grn-field-label">Reference 3</label>
+                  <input type="text" name="other_ref_3" id="issueRef3" class="grn-input" placeholder="e.g. Gate Pass / Permit Ref">
+                </div>
+                <div>
+                  <label class="grn-field-label">Reference 4</label>
+                  <input type="text" name="other_ref_4" id="issueRef4" class="grn-input" placeholder="e.g. Technical Approval Ref">
+                </div>
               </div>
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 3</label>
-                <input type="text" name="other_ref_3" id="issueRef3" class="grn-input" style="width: 280px; background: #ffffff;">
-              </div>
-              <div style="display: flex; align-items: center; gap: 14px;">
-                <label style="width: 120px; font-weight: 700; font-size: 13px; color: #000000;">Reference 4</label>
-                <input type="text" name="other_ref_4" id="issueRef4" class="grn-input" style="width: 280px; background: #ffffff;">
-              </div>
-            </div>
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 2: Exapand to Add,Edit Or view Remarks -->
-          <div style="margin-bottom: 16px; border: 1px solid #93c5fd; border-radius: 3px; overflow: hidden;">
-            <div class="grn-blue-header" onclick="Desk.toggleIssueSection('issueRemarksBox', this)" style="background: #93c5fd; color: #0f172a; padding: 6px 12px; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-              <span>Exapand to Add,Edit Or view Remarks</span>
-              <span class="grn-toggle-icon" style="font-family: monospace; font-size: 14px; font-weight: 800; background: #1e3a8a; color: #ffffff; padding: 0 4px; border-radius: 2px;">+</span>
-            </div>
-            <div id="issueRemarksBox" style="display: none; background: #bfdbfe; padding: 12px 16px;">
-              <textarea name="remarks" id="issueRemarks" rows="2" style="width: 100%; border: 1px solid #71717a; border-radius: 2px; padding: 6px; font-size: 13px; background: #ffffff;" placeholder="Issue remarks, work order description, or destination details..."></textarea>
             </div>
           </div>
 
-          <!-- MATERIAL SELECTION & QUANTITIES ROW -->
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-            <div style="display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap;">
+          <!-- COLLAPSIBLE SECTION 2: Remarks -->
+          <div class="grn-accordion-card">
+            <div class="grn-accordion-header" onclick="Desk.toggleIssueSection('issueRemarksBox', this)">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <?= Icon::get('message-square', 14) ?> Expand to Add, Edit Or view Remarks
+              </span>
+              <span class="grn-toggle-icon">+</span>
+            </div>
+            <div id="issueRemarksBox" class="grn-accordion-body" style="display: none;">
+              <textarea name="remarks" id="issueRemarks" rows="2" class="grn-input" style="height: auto; min-height: 70px; padding: 8px 12px; resize: vertical;" placeholder="Issue remarks, work order description, or destination details..."></textarea>
+            </div>
+          </div>
+
+          <!-- MATERIAL SELECTION & QUANTITIES AREA -->
+          <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: grid; grid-template-columns: 2fr 110px 130px 130px; gap: 14px; align-items: end;">
               
               <!-- Material Selection -->
-              <div style="display: flex; flex-direction: column; gap: 4px; flex: 2; min-width: 260px;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Material Selection</label>
-                <select id="issueSelectMaterial" class="grn-input" onchange="Desk.onIssueMaterialChange(this.value)" style="width: 100%; font-size: 13px;">
+              <div>
+                <label class="grn-field-label">Material Selection</label>
+                <select id="issueSelectMaterial" class="grn-input" onchange="Desk.onIssueMaterialChange(this.value)">
                   <option value="">-- Select Material For Issues--</option>
                 </select>
               </div>
 
               <!-- Avail Quantity -->
-              <div style="display: flex; flex-direction: column; gap: 4px; width: 110px;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Avail Quantity</label>
-                <input type="text" id="issueAvailQty" readonly class="grn-input" style="width: 100%; background: #f8fafc; text-align: right;" value="0">
+              <div>
+                <label class="grn-field-label">Avail Qty</label>
+                <input type="text" id="issueAvailQty" readonly class="grn-input" style="text-align: right;" value="0">
               </div>
 
               <!-- Re Order Qty Level -->
-              <div style="display: flex; flex-direction: column; gap: 4px; width: 130px;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Re Order Qty Level</label>
-                <input type="text" id="issueReorderQty" readonly class="grn-input" style="width: 100%; background: #f8fafc; text-align: right;" value="0">
+              <div>
+                <label class="grn-field-label">Reorder Level</label>
+                <input type="text" id="issueReorderQty" readonly class="grn-input" style="text-align: right;" value="0">
               </div>
 
               <!-- Required Quantity -->
-              <div style="display: flex; flex-direction: column; gap: 4px; width: 130px;">
-                <label style="font-weight: 700; font-size: 13px; color: #000000;">Required Quantity</label>
-                <input type="number" id="issueReqQty" min="1" value="1" class="grn-input" style="width: 100%; text-align: right;">
+              <div>
+                <label class="grn-field-label">Req Qty *</label>
+                <input type="number" id="issueReqQty" min="1" value="1" class="grn-input" style="text-align: right;">
               </div>
 
             </div>
 
-            <!-- Add Material To Issue Button -->
-            <div>
-              <button type="button" class="grn-classic-btn" onclick="Desk.addIssueMaterialItem()" style="min-width: 160px; height: 30px;">
-                Add Material To Issue
+            <!-- Add Material Button & Search row -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+              <div style="position: relative; flex: 1; min-width: 260px;">
+                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
+                  <?= Icon::get('search', 14) ?>
+                </span>
+                <input type="text" id="issueSearchMaterial" class="grn-input" style="padding-left: 36px;" placeholder="Search material by code or description..." oninput="Desk.filterIssueMaterialDropdown(this.value)">
+              </div>
+              <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.addIssueMaterialItem()" style="height: 36px; padding: 0 20px;">
+                <?= Icon::get('plus', 14) ?> Add Material To Issue
               </button>
-            </div>
-
-            <!-- Search row -->
-            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-              <label style="width: 50px; font-weight: 700; font-size: 13px; color: #000000;">Search</label>
-              <input type="text" id="issueSearchMaterial" class="grn-input" style="flex: 1; max-width: 700px;" placeholder="Search material by code or description..." oninput="Desk.filterIssueMaterialDropdown(this.value)">
             </div>
           </div>
 
           <!-- ADDED MATERIALS LIST TABLE -->
-          <div id="issueItemsTableWrap" style="margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 3px; overflow: hidden; background: #ffffff;">
-            <table class="desk-table" style="margin: 0; font-size: 12.5px;">
-              <thead style="background: #f1f5f9;">
+          <div id="issueItemsTableWrap" class="desk-table-wrapper" style="margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: #ffffff;">
+            <table class="desk-table">
+              <thead>
                 <tr>
-                  <th style="padding: 6px 10px; width: 140px;">SKU / Code</th>
-                  <th style="padding: 6px 10px;">Material Description</th>
-                  <th style="padding: 6px 10px; width: 100px; text-align: right;">Avail Qty</th>
-                  <th style="padding: 6px 10px; width: 100px; text-align: right;">Req Qty</th>
-                  <th style="padding: 6px 10px; width: 110px; text-align: right;">Est. Unit Cost</th>
-                  <th style="padding: 6px 10px; width: 120px; text-align: right;">Line Total</th>
-                  <th style="padding: 6px 10px; width: 60px; text-align: center;">Action</th>
+                  <th style="width: 140px;">SKU / Code</th>
+                  <th>Material Description</th>
+                  <th style="width: 100px; text-align: right;">Avail Qty</th>
+                  <th style="width: 100px; text-align: right;">Req Qty</th>
+                  <th style="width: 120px; text-align: right;">Est. Unit Cost</th>
+                  <th style="width: 130px; text-align: right;">Line Total</th>
+                  <th style="width: 80px; text-align: center;">Action</th>
                 </tr>
               </thead>
               <tbody id="issueItemsTableBody">
                 <tr id="issueEmptyRow">
-                  <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.</td>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 22px;">
+                    No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- BOTTOM ACTION BUTTONS: SAVE & CLEAR ALL -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
-            <button type="button" class="grn-action-btn" onclick="Desk.submitDetailedIssue()" style="background: #5b7c99; color: #ffffff;">
-              Save
+          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border);">
+            <button type="button" class="desk-btn desk-btn-default" onclick="Desk.clearDetailedIssue()" style="height: 38px; padding: 0 20px;">
+              <?= Icon::get('rotate-ccw', 13) ?> Clear All
             </button>
-            <button type="button" class="grn-action-btn" onclick="Desk.clearDetailedIssue()" style="background: #7a8fa6; color: #ffffff;">
-              Clear All
+            <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.submitDetailedIssue()" style="height: 38px; padding: 0 24px; font-weight: 600;">
+              <?= Icon::get('check', 14) ?> Save Requisition
+            </button>
+          </div>
+
+        </form>
+      </div>
             </button>
           </div>
 

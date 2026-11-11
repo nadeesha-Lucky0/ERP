@@ -2564,7 +2564,7 @@ const Desk = {
     if (this.grnAddedItems.length === 0) {
       tbody.innerHTML = `
         <tr id="grnEmptyRow">
-          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material&quot;.</td>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 22px;">No materials added yet. Select a material above and click &quot;Add Material&quot;.</td>
         </tr>
       `;
       return;
@@ -2573,15 +2573,15 @@ const Desk = {
     let html = '';
     this.grnAddedItems.forEach((item, i) => {
       html += `
-        <tr style="border-bottom: 1px solid #f1f5f9;">
-          <td style="padding: 6px 10px; font-weight: 600; font-family: monospace;">${item.sku}</td>
-          <td style="padding: 6px 10px;">${item.item_name}</td>
-          <td style="padding: 6px 10px; text-align: right; font-weight: 700;">${item.quantity.toLocaleString()}</td>
-          <td style="padding: 6px 10px; text-align: right;">Rs. ${item.unit_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-          <td style="padding: 6px 10px; text-align: right; font-weight: 700; color: #0d9488;">Rs. ${item.total_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-          <td style="padding: 6px 10px;"><span style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 11px;">${item.location_bin}</span></td>
-          <td style="padding: 6px 10px; text-align: center;">
-            <button type="button" onclick="Desk.removeGrnMaterialItem(${i})" style="background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 2px; padding: 2px 6px; font-size: 11px; cursor: pointer;">Remove</button>
+        <tr style="border-bottom: 1px solid var(--border-light);">
+          <td style="padding: 10px 14px; font-weight: 600; font-family: monospace; color: var(--text-main);">${item.sku}</td>
+          <td style="padding: 10px 14px; color: var(--text-main);">${item.item_name}</td>
+          <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: var(--text-main);">${item.quantity.toLocaleString()}</td>
+          <td style="padding: 10px 14px; text-align: right; color: var(--text-muted);">Rs. ${item.unit_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: var(--primary);">Rs. ${item.total_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          <td style="padding: 10px 14px;"><span style="background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">${item.location_bin}</span></td>
+          <td style="padding: 10px 14px; text-align: center;">
+            <button type="button" onclick="Desk.removeGrnMaterialItem(${i})" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.15s;">Remove</button>
           </td>
         </tr>
       `;
@@ -3071,7 +3071,7 @@ const Desk = {
     if (this.issueAddedItems.length === 0) {
       tbody.innerHTML = `
         <tr id="issueEmptyRow">
-          <td colspan="7" style="text-align: center; color: #94a3b8; padding: 14px;">No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.</td>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 22px;">No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.</td>
         </tr>
       `;
       return;
@@ -3080,15 +3080,15 @@ const Desk = {
     let html = '';
     this.issueAddedItems.forEach((item, i) => {
       html += `
-        <tr style="border-bottom: 1px solid #f1f5f9;">
-          <td style="padding: 6px 10px; font-weight: 600; font-family: monospace;">${item.sku}</td>
-          <td style="padding: 6px 10px;">${item.item_name}</td>
-          <td style="padding: 6px 10px; text-align: right; color: ${item.avail_qty > 0 ? '#15803d' : '#b91c1c'}; font-weight: 600;">${item.avail_qty.toLocaleString()}</td>
-          <td style="padding: 6px 10px; text-align: right; font-weight: 700;">${item.quantity.toLocaleString()}</td>
-          <td style="padding: 6px 10px; text-align: right;">${item.unit_cost > 0 ? 'Rs. ' + item.unit_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
-          <td style="padding: 6px 10px; text-align: right; font-weight: 700; color: #0d9488;">${item.total_cost > 0 ? 'Rs. ' + item.total_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
-          <td style="padding: 6px 10px; text-align: center;">
-            <button type="button" onclick="Desk.removeIssueMaterialItem(${i})" style="background: #fee2e2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 2px; padding: 2px 6px; font-size: 11px; cursor: pointer;">Remove</button>
+        <tr style="border-bottom: 1px solid var(--border-light);">
+          <td style="padding: 10px 14px; font-weight: 600; font-family: monospace; color: var(--text-main);">${item.sku}</td>
+          <td style="padding: 10px 14px; color: var(--text-main);">${item.item_name}</td>
+          <td style="padding: 10px 14px; text-align: right; color: ${item.avail_qty > 0 ? '#15803d' : '#b91c1c'}; font-weight: 600;">${item.avail_qty.toLocaleString()}</td>
+          <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: var(--text-main);">${item.quantity.toLocaleString()}</td>
+          <td style="padding: 10px 14px; text-align: right; color: var(--text-muted);">${item.unit_cost > 0 ? 'Rs. ' + item.unit_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+          <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: var(--primary);">${item.total_cost > 0 ? 'Rs. ' + item.total_cost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
+          <td style="padding: 10px 14px; text-align: center;">
+            <button type="button" onclick="Desk.removeIssueMaterialItem(${i})" style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; transition: background 0.15s;">Remove</button>
           </td>
         </tr>
       `;

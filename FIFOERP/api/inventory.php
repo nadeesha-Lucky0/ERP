@@ -315,7 +315,7 @@ try {
 
                     $available = max(0, $phys - $alloc);
 
-                    if ($phys > 0 && $reqQty > $available) {
+                    if ($reqQty > $available) {
                         Response::error(
                             "Stock Reservation Conflict: Cannot request {$reqQty} units for SKU '{$itemSku}'. Only {$available} units are free for issue ({$phys} physical on-hand, {$alloc} units reserved under pending approvals)."
                         );
