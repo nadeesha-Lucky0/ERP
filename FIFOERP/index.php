@@ -584,351 +584,247 @@ require_once __DIR__ . '/views/layouts/header.php';
         }
       </style>
 
-      <div id="bodyGrnEntryCard" class="desk-card grn-card">
-        <form id="formBodyNewGrn" onsubmit="event.preventDefault(); Desk.submitDetailedGrn();">
+            <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
+      <div id="bodyGrnEntryCard" class="frappe-form-page" style="display: none; margin-bottom: 24px;">
+        <form id="formStockEntry_grn" onsubmit="event.preventDefault(); Desk.submitStockEntryForm('grn');">
           
-          <!-- FORM HEADER -->
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('package', 18) ?> Enter Goods Received Note (GRN)
-              </h3>
-              <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">
-                Record new stock arrival consignment with vendor details, taxes, discounts, and line items.
-              </p>
+          <!-- TOP BREADCRUMB & HEADER BAR -->
+          <div class="frappe-top-bar">
+            <div class="frappe-breadcrumbs">
+              <span style="font-size: 15px; color: #6c7680; margin-right: 4px;">&#8962;</span>
+              <span>/</span>
+              <a href="javascript:void(0)" onclick="Desk.setTab('stock')">Stock</a>
+              <span>/</span>
+              <a href="javascript:void(0)" onclick="Desk.setTab('receipts')">Stock Entry</a>
+              <span>/</span>
+              <span class="current-doc" id="grnDocTitle">New Stock Entry</span>
+              <span class="frappe-badge-not-saved" id="grnStatusBadge">Not Saved</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span id="grnDocPfNotice" style="color: var(--primary); font-weight: 600; font-size: 12px; background: var(--primary-light); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(13, 148, 136, 0.2);">Goods Received Note</span>
-              <span class="desk-badge badge-draft" style="font-size: 11px; padding: 4px 10px;">Status: New Draft</span>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="dropdown-wrapper" style="position: relative;">
+                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
+                  Create <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                </button>
+                <div id="grnCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createSeDuplicate('grn')">Duplicate</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.resetStockEntryForm('grn')">New Stock Entry</a>
+                </div>
+              </div>
+
+              <div class="dropdown-wrapper" style="position: relative;">
+                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')">
+                  Get Items From <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                </button>
+                <div id="grnGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 200px; padding: 4px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromPO('grn')">Purchase Order</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromMaterialRequest('grn')">Material Request</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromBOM('grn')">Bill of Materials (BOM)</a>
+                </div>
+              </div>
+
+              <button type="submit" class="frappe-btn frappe-btn-primary" id="grnSaveBtn">
+                Save
+              </button>
             </div>
           </div>
 
-          <!-- TOP FORM GRID -->
-          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-bottom: 20px; align-items: start;">
+          <!-- TABS -->
+          <div class="frappe-tabs">
+            <button type="button" class="frappe-tab-btn active" id="tabBtn-grn-details" onclick="Desk.switchStockEntryTab('grn', 'details')">Details</button>
+            <button type="button" class="frappe-tab-btn" id="tabBtn-grn-other" onclick="Desk.switchStockEntryTab('grn', 'other')">Other Info</button>
+          </div>
+
+          <!-- TAB CONTENT: DETAILS -->
+          <div id="tabContent-grn-details" class="frappe-tab-content">
             
-            <!-- Left Column: Profiles, Types, Dynamic Selection -->
-            <div style="display: flex; flex-direction: column; gap: 14px;">
-              
-              <!-- Row 1: Document Profile & Base on -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div>
-                  <label class="grn-field-label">Document Profile</label>
-                  <select id="grnDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onDocProfileChange(this.value)">
-                    <option value="">-Select DOC PF-</option>
-                    <option value="Goods Received Note" selected>Goods Received Note</option>
-                    <option value="Direct Material Purchase">Direct Material Purchase</option>
-                    <option value="Store Transfer Receipt">Store Transfer Receipt</option>
+            <!-- 2-COLUMN GRID: Series, Stock Entry Type, Posting Date & Time -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 18px;">
+              <div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Series <span style="color: #e02424;">*</span></label>
+                  <select name="series" id="grnSeries" class="frappe-control" style="font-weight: 500;">
+                    <option value="MAT-STE-.YYYY.-" selected>MAT-STE-.YYYY.-</option>
+                    <option value="MAT-STE-RET-.YYYY.-">MAT-STE-RET-.YYYY.-</option>
                   </select>
                 </div>
-                <div>
-                  <label class="grn-field-label">Base on</label>
-                  <select name="base_on" id="grnBaseOn" class="grn-input">
-                    <option value="">-Select Type-</option>
-                    <option value="PO" selected>PO (Purchase Order)</option>
-                    <option value="Direct Purchase">Direct Purchase</option>
-                    <option value="Transfer Order">Transfer Order</option>
-                    <option value="Contract">Contract</option>
+
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Stock Entry Type <span style="color: #e02424;">*</span></label>
+                  <select name="stock_entry_type" id="grnStockEntryType" class="frappe-control" onchange="Desk.onStockEntryTypeChange('grn', this.value)">
+                    <option value="Material Issue" >Material Issue</option>
+                    <option value="Material Receipt" selected>Material Receipt</option>
+                    <option value="Material Transfer" >Material Transfer</option>
+                    <option value="Manufacture">Manufacture</option>
+                    <option value="Repack">Repack</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Row 2: Receipt From & Source Dept -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div>
-                  <label class="grn-field-label">Receipt From</label>
-                  <select id="grnReceiptFrom" name="receipt_from" class="grn-input" onchange="Desk.onReceiptFromChange(this.value)">
-                    <option value="">-Select Receipt From-</option>
-                    <option value="Purchase Order">Purchase Order</option>
-                    <option value="Cost Center">Cost Center</option>
-                    <option value="Section">Section</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="grn-field-label">Source Dept</label>
-                  <input type="text" name="source_dept" id="grnSourceDept" value="832.00" readonly class="grn-input">
-                </div>
-              </div>
-
-              <!-- Row 3: Dynamic Selection (Shows Supplier, Dept, or Section based on Receipt From) -->
-              <div id="grnDynamicReceiptRow" style="display: none; flex-direction: column;">
-                <label id="grnDynamicReceiptLabel" class="grn-field-label">Receipt Supplier</label>
-                
-                <!-- Supplier Dropdown (for Purchase Order) -->
-                <select id="grnSelectSupplier" name="receipt_supplier" class="grn-input" style="display: none;">
-                  <option value="">---- Select Supplier----</option>
-                  <option value="Lanka Lubricants Ltd">Lanka Lubricants Ltd</option>
-                  <option value="Colombo Electrical Supplies Ltd">Colombo Electrical Supplies Ltd</option>
-                  <option value="Industrial Spares (Pvt) Ltd">Industrial Spares (Pvt) Ltd</option>
-                  <option value="Diesel & Motor Engineering (DIMO)">Diesel & Motor Engineering (DIMO)</option>
-                  <option value="United Motors Lanka PLC">United Motors Lanka PLC</option>
-                  <option value="Hayleys Power & Energy">Hayleys Power & Energy</option>
-                  <option value="Ceylon Petroleum Corporation (CPC)">Ceylon Petroleum Corporation (CPC)</option>
-                  <option value="State Engineering Corporation">State Engineering Corporation</option>
-                  <option value="Walker Sons & Co Ltd">Walker Sons & Co Ltd</option>
-                  <option value="Kelani Cables PLC">Kelani Cables PLC</option>
-                  <option value="Brown & Company PLC">Brown & Company PLC</option>
-                  <option value="Tokyo Cement Company">Tokyo Cement Company</option>
-                  <option value="Avent Technologies (Pvt) Ltd">Avent Technologies (Pvt) Ltd</option>
-                </select>
-
-                <!-- Cost Center Dropdown (for Cost Center) -->
-                <select id="grnSelectDept" name="receipt_dept" class="grn-input" style="display: none;">
-                  <option value="">---- Select Cost Center----</option>
-                  <option value="832.00 - Capital Expenditure">832.00 - Capital Expenditure</option>
-                  <option value="831.00 - Operations & Generation">831.00 - Operations & Generation</option>
-                  <option value="832.10 - Mechanical Maintenance">832.10 - Mechanical Maintenance</option>
-                  <option value="832.20 - Electrical Maintenance">832.20 - Electrical Maintenance</option>
-                  <option value="832.30 - Civil Engineering & Dam Safety">832.30 - Civil Engineering & Dam Safety</option>
-                  <option value="832.40 - Instrumentation & Control System">832.40 - Instrumentation & Control System</option>
-                  <option value="832.50 - Power House Auxiliary Stores">832.50 - Power House Auxiliary Stores</option>
-                  <option value="832.60 - Chemical & Lubricants Division">832.60 - Chemical & Lubricants Division</option>
-                </select>
-
-                <!-- Section Dropdown (for Section) -->
-                <select id="grnSelectSection" name="receipt_section" class="grn-input" style="display: none;">
-                  <option value="">---- Select Section----</option>
-                </select>
-              </div>
-
-              <!-- Row 4: Destination Warehouse -->
               <div>
-                <label class="grn-field-label">Receiving Warehouse Bay</label>
-                <select name="warehouse" id="grnWarehouse" class="grn-input">
-                  <option value="">---- Select Warehouse----</option>
-                  <option value="Main Store Bay-01" selected>Main Store Bay-01</option>
-                  <option value="Mechanical Stores">Mechanical Stores</option>
-                  <option value="Electrical Supplies Sub-Store">Electrical Supplies Sub-Store</option>
-                  <option value="Central Warehouse - Main Store">Central Warehouse - Main Store</option>
-                  <option value="Chemical & Oil Depot Bay-03">Chemical & Oil Depot Bay-03</option>
-                  <option value="Heavy Yard Bay-04">Heavy Yard Bay-04</option>
-                </select>
-              </div>
+                <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="grnEditPosting" onchange="Desk.toggleEditPostingDate('grn', this.checked)" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
+                  <label for="grnEditPosting" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Edit Posting Date and Time</label>
+                </div>
 
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Posting Date</label>
+                  <input type="date" name="posting_date" id="grnPostingDate" class="frappe-control" readonly>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Posting Time</label>
+                  <input type="time" step="1" name="posting_time" id="grnPostingTime" class="frappe-control" readonly>
+                </div>
+              </div>
             </div>
 
-            <!-- Right Column: Delivery Date, Acc Date, Due Date -->
-            <div style="display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-md);">
-              <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
-                <?= Icon::get('calendar', 14) ?> Posting &amp; Delivery Dates
+            <!-- Inspection Required Checkbox -->
+            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="grnInspectionRequired" name="inspection_required" value="1" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
+              <label for="grnInspectionRequired" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Inspection Required</label>
+            </div>
+
+            <!-- BOM Info (Collapsible) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 14px;">
+              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('grnBomSection', this)">
+                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8250;</span> BOM Info
               </div>
+              <div id="grnBomSection" style="display: none; padding: 12px 0 6px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                  <div>
+                    <label class="frappe-label">From BOM</label>
+                    <input type="checkbox" id="grnFromBom" name="from_bom" value="1" style="accent-color: #18181b;">
+                    <div style="margin-top: 10px;">
+                      <label class="frappe-label">BOM No</label>
+                      <input type="text" name="bom_no" id="grnBomNo" class="frappe-control" placeholder="Select or enter BOM...">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="frappe-label">Qty to Manufacture</label>
+                    <input type="number" step="0.001" name="qty_to_manufacture" id="grnQtyToManufacture" class="frappe-control" value="1.000">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Default Warehouse (Collapsible, OPEN by default) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
+              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('grnWhSection', this)">
+                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default Warehouse
+              </div>
+              <div id="grnWhSection" style="display: block; padding: 12px 0 6px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                  <div id="grnSourceWhGroup" style="display: none;">
+                    <label class="frappe-label">Default Source Warehouse</label>
+                    <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('grn')">
+                      <option value="">Select Warehouse...</option>
+                    </select>
+                    <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
+                  </div>
+                  <div id="grnTargetWhGroup" style="display: block;">
+                    <label class="frappe-label">Default Target Warehouse</label>
+                    <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('grn')">
+                      <option value="">Select Warehouse...</option>
+                    </select>
+                    <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scan Barcode -->
+            <div style="margin-bottom: 24px;">
+              <label class="frappe-label">Scan Barcode</label>
+              <div style="position: relative; max-width: 520px;">
+                <input type="text" id="grnBarcodeScan" class="frappe-control" placeholder="Scan or type barcode and hit Enter..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Desk.onStockEntryBarcode(event, 'grn', this);}" style="padding-right: 40px;">
+                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #8d99a6; font-size: 13px; pointer-events: none; letter-spacing: -1px;">[|||||]</span>
+              </div>
+            </div>
+
+            <!-- Items Section -->
+            <div style="margin-bottom: 18px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1f272e; margin-bottom: 4px;">Items</div>
+              <label class="frappe-label" style="margin-bottom: 8px;">Items</label>
+
+              <!-- Child Table -->
+              <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px;">
+                <table class="frappe-table" id="grnItemsTable">
+                  <thead>
+                    <tr>
+                      <th style="width: 38px; text-align: center;"><input type="checkbox" id="grnCheckAll" onchange="Desk.toggleSelectAllRows('grn', this.checked)"></th>
+                      <th style="width: 44px; text-align: center;">No.</th>
+                      <th id="grnColWhHeader" style="width: 240px;">Target Warehouse</th>
+                      <th>Item Code <span style="color: #e02424;">*</span></th>
+                      <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
+                      <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
+                      <th style="width: 44px; text-align: center; color: #8d99a6;">&#9881;</th>
+                    </tr>
+                  </thead>
+                  <tbody id="grnItemsBody">
+                    <!-- Populated dynamically via Desk.renderStockEntryRows('grn') -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Buttons Under Table -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('grn')">Add row</button>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('grn')">Add multiple</button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="frappe-table-btn" onclick="Desk.downloadStockEntryCSV('grn')">Download</button>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.triggerStockEntryUpload('grn')">Upload</button>
+                  <input type="file" id="grnCsvFileInput" accept=".csv" style="display: none;" onchange="Desk.uploadStockEntryCSV('grn', this)">
+                </div>
+              </div>
+
               <div>
-                <label class="grn-field-label">Delivery Date</label>
-                <input type="date" name="delivery_date" id="grnDeliveryDate" value="<?= date('Y-m-d') ?>" class="grn-input">
-              </div>
-              <div>
-                <label class="grn-field-label">Acc Date</label>
-                <input type="date" name="acc_date" id="grnAccDate" value="<?= date('Y-m-d') ?>" class="grn-input">
-              </div>
-              <div>
-                <label class="grn-field-label">Due Date</label>
-                <input type="date" name="due_date" id="grnDueDate" class="grn-input">
-              </div>
-            </div>
-
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 1: Values To Consider for Material Unit Price -->
-          <div class="grn-accordion-card">
-            <div class="grn-accordion-header" onclick="Desk.toggleGrnSection('grnValuesBox', this)">
-              <span style="display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('percent', 14) ?> Values To Consider for Material Unit Price (Taxes &amp; Landed Costs)
-              </span>
-              <span class="grn-toggle-icon">-</span>
-            </div>
-            <div id="grnValuesBox" class="grn-accordion-body" style="display: flex; flex-direction: column; gap: 12px;">
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
-                <!-- NBT -->
-                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
-                  <label class="grn-field-label">NBT (Rs.)</label>
-                  <input type="number" step="0.01" name="nbt" id="grnNbt" value="0.00" class="grn-input" style="margin-bottom: 8px;">
-                  <label class="grn-checkbox-label">
-                    <input type="checkbox" name="nbt_excluded" id="grnNbtExcluded" value="1">
-                    Exclude from Unit Price
-                  </label>
-                </div>
-                <!-- VAT -->
-                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
-                  <label class="grn-field-label">VAT (Rs.)</label>
-                  <input type="number" step="0.01" name="vat" id="grnVat" value="0.00" class="grn-input" style="margin-bottom: 8px;">
-                  <label class="grn-checkbox-label">
-                    <input type="checkbox" name="vat_excluded" id="grnVatExcluded" value="1">
-                    Exclude from Unit Price
-                  </label>
-                </div>
-                <!-- Transport -->
-                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
-                  <label class="grn-field-label">Transport (Rs.)</label>
-                  <input type="number" step="0.01" name="transport" id="grnTransport" value="0.00" class="grn-input" style="margin-bottom: 8px;">
-                  <label class="grn-checkbox-label">
-                    <input type="checkbox" name="transport_excluded" id="grnTransportExcluded" value="1">
-                    Exclude from Unit Price
-                  </label>
-                </div>
-                <!-- Other -->
-                <div style="background: #f8fafc; padding: 12px 14px; border: 1px solid var(--border); border-radius: 6px;">
-                  <label class="grn-field-label">Other Cost (Rs.)</label>
-                  <input type="number" step="0.01" name="other_cost" id="grnOther" value="0.00" class="grn-input" style="margin-bottom: 8px;">
-                  <label class="grn-checkbox-label">
-                    <input type="checkbox" name="other_excluded" id="grnOtherExcluded" value="1">
-                    Exclude from Unit Price
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 2: Reference Data -->
-          <div class="grn-accordion-card">
-            <div class="grn-accordion-header" onclick="Desk.toggleGrnSection('grnRefBox', this)">
-              <span style="display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('file-text', 14) ?> Expand to Add, Edit Or view Reference Data
-              </span>
-              <span class="grn-toggle-icon">-</span>
-            </div>
-            <div id="grnRefBox" class="grn-accordion-body" style="display: flex; flex-direction: column; gap: 14px;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div>
-                  <label class="grn-field-label">Invoice No *</label>
-                  <input type="text" name="invoice_number" id="grnInvoiceNo" class="grn-input" placeholder="e.g. INV-2026-001">
-                </div>
-                <div>
-                  <label class="grn-field-label">Order No *</label>
-                  <input type="text" name="order_reference" id="grnOrderNo" class="grn-input" placeholder="e.g. PO-832-2026-01">
-                </div>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div>
-                  <label class="grn-field-label">Other Reference 1</label>
-                  <input type="text" name="other_ref_1" id="grnOtherRef1" class="grn-input" placeholder="e.g. Dispatch Note Ref">
-                </div>
-                <div>
-                  <label class="grn-field-label">Other Reference 2</label>
-                  <input type="text" name="other_ref_2" id="grnOtherRef2" class="grn-input" placeholder="e.g. Delivery Challan Ref">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 3: Remarks -->
-          <div class="grn-accordion-card">
-            <div class="grn-accordion-header" onclick="Desk.toggleGrnSection('grnRemarksBox', this)">
-              <span style="display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('message-square', 14) ?> Expand to Add, Edit Or view Remarks
-              </span>
-              <span class="grn-toggle-icon">+</span>
-            </div>
-            <div id="grnRemarksBox" class="grn-accordion-body" style="display: none;">
-              <textarea name="remarks" id="grnRemarks" rows="2" class="grn-input" style="height: auto; min-height: 70px; padding: 8px 12px; resize: vertical;" placeholder="Inspection remarks, delivery comments, or quality clearance notes..."></textarea>
-            </div>
-          </div>
-
-          <!-- INVOICE TOTAL, DISCOUNTS & MATERIAL SELECTION AREA -->
-          <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 16px;">
-            
-            <!-- Row 1: Invoice Total, Single Material, Retrieve Materials -->
-            <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 220px;">
-                <label class="grn-field-label">Invoice Total (Without Tax) *</label>
-                <input type="number" step="0.01" name="invoice_total" id="grnInvoiceTotal" class="grn-input" placeholder="0.00">
-              </div>
-              
-              <div style="padding-top: 22px;">
-                <label class="grn-checkbox-label">
-                  <input type="checkbox" name="is_single_material" id="grnSingleMaterial" value="1">
-                  Single Material
-                </label>
-              </div>
-
-              <div style="padding-top: 22px;">
-                <button type="button" class="desk-btn desk-btn-default" onclick="Desk.retrieveGrnMaterials()" style="height: 36px;">
-                  <?= Icon::get('download', 14) ?> Retrieve Materials
+                <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('grn')">
+                  Update Rate and Availability
                 </button>
               </div>
             </div>
 
-            <!-- Row 2: Discount For All, Precentage, Discount Type -->
-            <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
-              <div style="flex: 1; min-width: 180px;">
-                <label class="grn-field-label">Discount For All</label>
-                <input type="number" step="0.01" name="discount_for_all" id="grnDiscountForAll" value="0.00" class="grn-input">
-              </div>
-              
-              <div style="padding-top: 22px;">
-                <label class="grn-checkbox-label">
-                  <input type="checkbox" name="is_percentage" id="grnIsPercentage" value="1">
-                  Percentage
-                </label>
-              </div>
+          </div><!-- /tabContent-grn-details -->
 
-              <div style="flex: 1; min-width: 200px;">
-                <label class="grn-field-label">Discount Type</label>
-                <select name="discount_type" id="grnDiscountType" class="grn-input">
-                  <option value="">-Select Discount Type-</option>
-                  <option value="Item-wise">Item-wise Discount</option>
-                  <option value="Invoice-level">Invoice-level Discount</option>
-                  <option value="Cash Discount">Cash Discount</option>
-                </select>
+          <!-- TAB CONTENT: OTHER INFO -->
+          <div id="tabContent-grn-other" class="frappe-tab-content" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 20px;">
+              <div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Supplier / Source Name</label>
+                  <input type="text" name="party_name" id="grnPartyName" class="frappe-control" placeholder="Select or type Supplier...">
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Purchase Order Ref</label>
+                  <input type="text" name="po_reference" id="grnPoRef" class="frappe-control" placeholder="PO-XXXXX">
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Delivery Note / Invoice No</label>
+                  <input type="text" name="invoice_no" id="grnInvoiceNo" class="frappe-control" placeholder="Invoice or Delivery Note #">
+                </div>
               </div>
-            </div>
-
-            <!-- Row 3: Material Dropdown & Add Material Button -->
-            <div>
-              <label class="grn-field-label">Select Material From Inventory Master</label>
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <select id="grnSelectMaterial" class="grn-input" style="flex: 1; min-width: 300px;">
-                  <option value="">-- Select Material For Receipt--</option>
-                </select>
-                <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.addGrnMaterialItem()" style="height: 36px; padding: 0 18px;">
-                  <?= Icon::get('plus', 14) ?> Add Material
-                </button>
-              </div>
-            </div>
-
-            <!-- Row 4: Search input -->
-            <div>
-              <div style="position: relative;">
-                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
-                  <?= Icon::get('search', 14) ?>
-                </span>
-                <input type="text" id="grnSearchMaterial" class="grn-input" style="padding-left: 36px;" placeholder="Search material by SKU or name..." oninput="Desk.filterGrnMaterialDropdown(this.value)">
+              <div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Letter Head</label>
+                  <select name="letter_head" class="frappe-control">
+                    <option value="EGL Power Generation" selected>EGL Power Generation</option>
+                    <option value="Standard Header">Standard Header</option>
+                  </select>
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Transporter Details / Vehicle No</label>
+                  <input type="text" name="transporter_info" id="grnTransporterInfo" class="frappe-control" placeholder="Vehicle / Driver / Carrier">
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Remarks / Note</label>
+                  <textarea name="remarks" id="grnRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
+                </div>
               </div>
             </div>
-
-          </div>
-
-          <!-- ADDED MATERIALS LIST TABLE -->
-          <div id="grnItemsTableWrap" class="desk-table-wrapper" style="margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: #ffffff;">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th style="width: 140px;">SKU</th>
-                  <th>Material Description</th>
-                  <th style="width: 100px; text-align: right;">Quantity</th>
-                  <th style="width: 130px; text-align: right;">Unit Price (Rs.)</th>
-                  <th style="width: 140px; text-align: right;">Line Total (Rs.)</th>
-                  <th style="width: 120px;">Storage Bin</th>
-                  <th style="width: 80px; text-align: center;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="grnItemsTableBody">
-                <tr id="grnEmptyRow">
-                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 22px;">
-                    No materials added yet. Select a material above and click &quot;Add Material&quot;.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- BOTTOM ACTION BUTTONS: SAVE & CLEAR -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border);">
-            <button type="button" class="desk-btn desk-btn-default" onclick="Desk.clearDetailedGrn()" style="height: 38px; padding: 0 20px;">
-              <?= Icon::get('rotate-ccw', 13) ?> Clear Form
-            </button>
-            <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.submitDetailedGrn()" style="height: 38px; padding: 0 24px; font-weight: 600;">
-              <?= Icon::get('check', 14) ?> Save GRN
-            </button>
-          </div>
+          </div><!-- /tabContent-grn-other -->
 
         </form>
       </div>
@@ -1003,298 +899,247 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body Material Issue Entry Form (Modern Frappe/ERPNext Desk Design System) -->
-      <div id="bodyIssueEntryCard" class="desk-card grn-card">
-        <form id="formBodyNewIssue" onsubmit="event.preventDefault(); Desk.submitDetailedIssue();">
+            <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
+      <div id="bodyIssueEntryCard" class="frappe-form-page" style="display: none; margin-bottom: 24px;">
+        <form id="formStockEntry_issue" onsubmit="event.preventDefault(); Desk.submitStockEntryForm('issue');">
           
-          <!-- FORM HEADER -->
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('send', 18) ?> Enter Material Issue Requisition (Issue Entry)
-              </h3>
-              <p style="margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted);">
-                Submit material requisition from active FIFO inventory batches to department, project, section or maintenance.
-              </p>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span id="issueDocPfNotice" style="color: var(--primary); font-weight: 600; font-size: 12px; background: var(--primary-light); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(13, 148, 136, 0.2);">Material Issue Requisition</span>
-              <span class="desk-badge badge-draft" style="font-size: 11px; padding: 4px 10px;">Status: New Draft</span>
-            </div>
-          </div>
-
-          <!-- TOP FORM GRID -->
-          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-bottom: 20px; align-items: start;">
-            
-            <!-- Left Column: Profiles, Issue To, Dynamic Fields, Warehouse -->
-            <div style="display: flex; flex-direction: column; gap: 14px;">
-              
-              <!-- Row 1: Document Profile & Issue To -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                <div>
-                  <label class="grn-field-label">Document Profile</label>
-                  <select id="issueDocProfile" name="doc_profile" class="grn-input" onchange="Desk.onIssueDocProfileChange(this.value)">
-                    <option value="">-Select DOC PF-</option>
-                    <option value="Material Issue Requisition" selected>Material Issue Requisition</option>
-                    <option value="Plant Maintenance Issue">Plant Maintenance Issue</option>
-                    <option value="Overhaul Capital Issue">Overhaul Capital Issue</option>
-                    <option value="Inter-Store Issue">Inter-Store Issue</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="grn-field-label">Issue To (Destination Type)</label>
-                  <select id="issueToSelect" name="issue_to" class="grn-input" onchange="Desk.onIssueToChange(this.value)">
-                    <option value="">-- Select Issue To --</option>
-                    <option value="Project">Project</option>
-                    <option value="Cost Center">Cost Center</option>
-                    <option value="Warehouse">Warehouse</option>
-                    <option value="My Project">My Project</option>
-                    <option value="Section">Section</option>
-                    <option value="Genaration as Expenditure">Genaration as Expenditure</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- DYNAMIC CONTAINER FOR THE 6 CHOICES -->
-
-              <!-- 1. Project Block -->
-              <div id="issueBlockProject" style="display: none; flex-direction: column; gap: 12px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                  <div>
-                    <label class="grn-field-label">Project Dest Dept</label>
-                    <select id="issueProjectDestDept" name="project_dest_dept" class="grn-input">
-                      <option value="">---- Select Cost Center----</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="grn-field-label">Project</label>
-                    <select id="issueProjectSelect" name="project_code" class="grn-input">
-                      <option value="">---- Select Project----</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 2. Cost Center Block -->
-              <div id="issueBlockCostCenter" style="display: none; flex-direction: column;">
-                <label class="grn-field-label">Dept Id / Cost Center</label>
-                <select id="issueDeptId" name="dept_id" class="grn-input">
-                  <option value="">---- Select Cost Center----</option>
-                </select>
-              </div>
-
-              <!-- 3. Warehouse Block -->
-              <div id="issueBlockWarehouse" style="display: none; flex-direction: column;">
-                <label class="grn-field-label">Warehouse to Issue (Receiving Store)</label>
-                <select id="issueWarehouseToIssue" name="warehouse_to_issue" class="grn-input">
-                  <option value="">---- Select Issue To Warehouse----</option>
-                </select>
-              </div>
-
-              <!-- 4. My Project Block -->
-              <div id="issueBlockMyProject" style="display: none; flex-direction: column; gap: 12px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                  <div>
-                    <label class="grn-field-label">My Prj Dest Dept</label>
-                    <select id="issueMyPrjDestDept" name="my_prj_dest_dept" class="grn-input">
-                      <option value="">---- Select Your Project----</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="grn-field-label">My Project</label>
-                    <select id="issueMyProjectSelect" name="my_project" class="grn-input">
-                      <option value="">---- Select My Project----</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 5. Section Block -->
-              <div id="issueBlockSection" style="display: none; flex-direction: column; gap: 12px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                  <div>
-                    <label class="grn-field-label">Section</label>
-                    <select id="issueSectionSelect" name="section" class="grn-input">
-                      <option value="">---- Select Section----</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="grn-field-label">Cost Code</label>
-                    <select id="issueCostCode" name="cost_code" class="grn-input">
-                      <option value="">---- Select Cost Cd----</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 6. Genaration as Expenditure Block -->
-              <div id="issueBlockExpenditure" style="display: none; flex-direction: column;">
-                <label class="grn-field-label">Issuing Type</label>
-                <select id="issueIssuingType" name="issuing_type" class="grn-input">
-                  <option value="">---- Select Issuing Type----</option>
-                </select>
-              </div>
-
-              <!-- Row: Warehouse (Source Warehouse) & Retrieve Materials -->
-              <div>
-                <label class="grn-field-label">Source Issuing Warehouse</label>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <select name="warehouse" id="issueSourceWarehouse" class="grn-input" style="flex: 1;">
-                    <option value="">---- Select Source Warehouse----</option>
-                  </select>
-                  <button type="button" class="desk-btn desk-btn-default" onclick="Desk.retrieveIssueMaterials()" style="height: 36px; white-space: nowrap;">
-                    <?= Icon::get('download', 14) ?> Retrieve Materials
-                  </button>
-                </div>
-              </div>
-
+          <!-- TOP BREADCRUMB & HEADER BAR -->
+          <div class="frappe-top-bar">
+            <div class="frappe-breadcrumbs">
+              <span style="font-size: 15px; color: #6c7680; margin-right: 4px;">&#8962;</span>
+              <span>/</span>
+              <a href="javascript:void(0)" onclick="Desk.setTab('stock')">Stock</a>
+              <span>/</span>
+              <a href="javascript:void(0)" onclick="Desk.setTab('issues')">Stock Entry</a>
+              <span>/</span>
+              <span class="current-doc" id="issueDocTitle">New Stock Entry</span>
+              <span class="frappe-badge-not-saved" id="issueStatusBadge">Not Saved</span>
             </div>
 
-            <!-- Right Column: Trx Date & Acc Date -->
-            <div style="display: flex; flex-direction: column; gap: 12px; background: #f8fafc; padding: 18px 20px; border: 1px solid var(--border); border-radius: var(--radius-md);">
-              <div style="font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 2px; display: flex; align-items: center; gap: 6px;">
-                <?= Icon::get('calendar', 14) ?> Transaction Dates
-              </div>
-              <div>
-                <label class="grn-field-label">Trx Date</label>
-                <input type="date" name="trx_date" id="issueTrxDate" value="<?= date('Y-m-d') ?>" class="grn-input">
-              </div>
-              <div>
-                <label class="grn-field-label">Acc Date</label>
-                <input type="date" name="acc_date" id="issueAccDate" value="<?= date('Y-m-d') ?>" class="grn-input">
-              </div>
-            </div>
-
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 1: Reference Data -->
-          <div class="grn-accordion-card">
-            <div class="grn-accordion-header" onclick="Desk.toggleIssueSection('issueRefBox', this)">
-              <span style="display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('file-text', 14) ?> Expand to Add, Edit Or view Reference Data
-              </span>
-              <span class="grn-toggle-icon">+</span>
-            </div>
-            <div id="issueRefBox" class="grn-accordion-body" style="display: none; flex-direction: column; gap: 14px;">
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div>
-                  <label class="grn-field-label">Reference 1</label>
-                  <input type="text" name="other_ref_1" id="issueRef1" class="grn-input" placeholder="e.g. Work Order / Requisition No">
-                </div>
-                <div>
-                  <label class="grn-field-label">Reference 2</label>
-                  <input type="text" name="other_ref_2" id="issueRef2" class="grn-input" placeholder="e.g. Plant Equipment ID">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="dropdown-wrapper" style="position: relative;">
+                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
+                  Create <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                </button>
+                <div id="issueCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createSeDuplicate('issue')">Duplicate</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.resetStockEntryForm('issue')">New Stock Entry</a>
                 </div>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                <div>
-                  <label class="grn-field-label">Reference 3</label>
-                  <input type="text" name="other_ref_3" id="issueRef3" class="grn-input" placeholder="e.g. Gate Pass / Permit Ref">
+
+              <div class="dropdown-wrapper" style="position: relative;">
+                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
+                  Get Items From <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                </button>
+                <div id="issueGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 200px; padding: 4px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromPO('issue')">Purchase Order</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromMaterialRequest('issue')">Material Request</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromBOM('issue')">Bill of Materials (BOM)</a>
                 </div>
-                <div>
-                  <label class="grn-field-label">Reference 4</label>
-                  <input type="text" name="other_ref_4" id="issueRef4" class="grn-input" placeholder="e.g. Technical Approval Ref">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- COLLAPSIBLE SECTION 2: Remarks -->
-          <div class="grn-accordion-card">
-            <div class="grn-accordion-header" onclick="Desk.toggleIssueSection('issueRemarksBox', this)">
-              <span style="display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('message-square', 14) ?> Expand to Add, Edit Or view Remarks
-              </span>
-              <span class="grn-toggle-icon">+</span>
-            </div>
-            <div id="issueRemarksBox" class="grn-accordion-body" style="display: none;">
-              <textarea name="remarks" id="issueRemarks" rows="2" class="grn-input" style="height: auto; min-height: 70px; padding: 8px 12px; resize: vertical;" placeholder="Issue remarks, work order description, or destination details..."></textarea>
-            </div>
-          </div>
-
-          <!-- MATERIAL SELECTION & QUANTITIES AREA -->
-          <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 14px;">
-            <div style="display: grid; grid-template-columns: 2fr 110px 130px 130px; gap: 14px; align-items: end;">
-              
-              <!-- Material Selection -->
-              <div>
-                <label class="grn-field-label">Material Selection</label>
-                <select id="issueSelectMaterial" class="grn-input" onchange="Desk.onIssueMaterialChange(this.value)">
-                  <option value="">-- Select Material For Issues--</option>
-                </select>
               </div>
 
-              <!-- Avail Quantity -->
-              <div>
-                <label class="grn-field-label">Avail Qty</label>
-                <input type="text" id="issueAvailQty" readonly class="grn-input" style="text-align: right;" value="0">
-              </div>
-
-              <!-- Re Order Qty Level -->
-              <div>
-                <label class="grn-field-label">Reorder Level</label>
-                <input type="text" id="issueReorderQty" readonly class="grn-input" style="text-align: right;" value="0">
-              </div>
-
-              <!-- Required Quantity -->
-              <div>
-                <label class="grn-field-label">Req Qty *</label>
-                <input type="number" id="issueReqQty" min="1" value="1" class="grn-input" style="text-align: right;">
-              </div>
-
-            </div>
-
-            <!-- Add Material Button & Search row -->
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
-              <div style="position: relative; flex: 1; min-width: 260px;">
-                <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;">
-                  <?= Icon::get('search', 14) ?>
-                </span>
-                <input type="text" id="issueSearchMaterial" class="grn-input" style="padding-left: 36px;" placeholder="Search material by code or description..." oninput="Desk.filterIssueMaterialDropdown(this.value)">
-              </div>
-              <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.addIssueMaterialItem()" style="height: 36px; padding: 0 20px;">
-                <?= Icon::get('plus', 14) ?> Add Material To Issue
+              <button type="submit" class="frappe-btn frappe-btn-primary" id="issueSaveBtn">
+                Save
               </button>
             </div>
           </div>
 
-          <!-- ADDED MATERIALS LIST TABLE -->
-          <div id="issueItemsTableWrap" class="desk-table-wrapper" style="margin-bottom: 20px; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: #ffffff;">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th style="width: 140px;">SKU / Code</th>
-                  <th>Material Description</th>
-                  <th style="width: 100px; text-align: right;">Avail Qty</th>
-                  <th style="width: 100px; text-align: right;">Req Qty</th>
-                  <th style="width: 120px; text-align: right;">Est. Unit Cost</th>
-                  <th style="width: 130px; text-align: right;">Line Total</th>
-                  <th style="width: 80px; text-align: center;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="issueItemsTableBody">
-                <tr id="issueEmptyRow">
-                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 22px;">
-                    No materials added yet. Select a material above and click &quot;Add Material To Issue&quot;.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- TABS -->
+          <div class="frappe-tabs">
+            <button type="button" class="frappe-tab-btn active" id="tabBtn-issue-details" onclick="Desk.switchStockEntryTab('issue', 'details')">Details</button>
+            <button type="button" class="frappe-tab-btn" id="tabBtn-issue-other" onclick="Desk.switchStockEntryTab('issue', 'other')">Other Info</button>
           </div>
 
-          <!-- BOTTOM ACTION BUTTONS: SAVE & CLEAR ALL -->
-          <div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 14px; border-top: 1px solid var(--border);">
-            <button type="button" class="desk-btn desk-btn-default" onclick="Desk.clearDetailedIssue()" style="height: 38px; padding: 0 20px;">
-              <?= Icon::get('rotate-ccw', 13) ?> Clear All
-            </button>
-            <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.submitDetailedIssue()" style="height: 38px; padding: 0 24px; font-weight: 600;">
-              <?= Icon::get('check', 14) ?> Save Requisition
-            </button>
-          </div>
+          <!-- TAB CONTENT: DETAILS -->
+          <div id="tabContent-issue-details" class="frappe-tab-content">
+            
+            <!-- 2-COLUMN GRID: Series, Stock Entry Type, Posting Date & Time -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 18px;">
+              <div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Series <span style="color: #e02424;">*</span></label>
+                  <select name="series" id="issueSeries" class="frappe-control" style="font-weight: 500;">
+                    <option value="MAT-STE-.YYYY.-" selected>MAT-STE-.YYYY.-</option>
+                    <option value="MAT-STE-RET-.YYYY.-">MAT-STE-RET-.YYYY.-</option>
+                  </select>
+                </div>
 
-        </form>
-      </div>
-            </button>
-          </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Stock Entry Type <span style="color: #e02424;">*</span></label>
+                  <select name="stock_entry_type" id="issueStockEntryType" class="frappe-control" onchange="Desk.onStockEntryTypeChange('issue', this.value)">
+                    <option value="Material Issue" selected>Material Issue</option>
+                    <option value="Material Receipt" >Material Receipt</option>
+                    <option value="Material Transfer" >Material Transfer</option>
+                    <option value="Manufacture">Manufacture</option>
+                    <option value="Repack">Repack</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="issueEditPosting" onchange="Desk.toggleEditPostingDate('issue', this.checked)" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
+                  <label for="issueEditPosting" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Edit Posting Date and Time</label>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Posting Date</label>
+                  <input type="date" name="posting_date" id="issuePostingDate" class="frappe-control" readonly>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Posting Time</label>
+                  <input type="time" step="1" name="posting_time" id="issuePostingTime" class="frappe-control" readonly>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inspection Required Checkbox -->
+            <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="issueInspectionRequired" name="inspection_required" value="1" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
+              <label for="issueInspectionRequired" class="frappe-label" style="margin-bottom: 0; cursor: pointer; user-select: none;">Inspection Required</label>
+            </div>
+
+            <!-- BOM Info (Collapsible) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 14px;">
+              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('issueBomSection', this)">
+                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8250;</span> BOM Info
+              </div>
+              <div id="issueBomSection" style="display: none; padding: 12px 0 6px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                  <div>
+                    <label class="frappe-label">From BOM</label>
+                    <input type="checkbox" id="issueFromBom" name="from_bom" value="1" style="accent-color: #18181b;">
+                    <div style="margin-top: 10px;">
+                      <label class="frappe-label">BOM No</label>
+                      <input type="text" name="bom_no" id="issueBomNo" class="frappe-control" placeholder="Select or enter BOM...">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="frappe-label">Qty to Manufacture</label>
+                    <input type="number" step="0.001" name="qty_to_manufacture" id="issueQtyToManufacture" class="frappe-control" value="1.000">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Default Warehouse (Collapsible, OPEN by default) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
+              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('issueWhSection', this)">
+                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default Warehouse
+              </div>
+              <div id="issueWhSection" style="display: block; padding: 12px 0 6px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                  <div id="issueSourceWhGroup" style="display: block;">
+                    <label class="frappe-label">Default Source Warehouse</label>
+                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('issue')">
+                      <option value="">Select Warehouse...</option>
+                    </select>
+                    <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
+                  </div>
+                  <div id="issueTargetWhGroup" style="display: none;">
+                    <label class="frappe-label">Default Target Warehouse</label>
+                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control" onchange="Desk.applyDefaultWarehouse('issue')">
+                      <option value="">Select Warehouse...</option>
+                    </select>
+                    <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scan Barcode -->
+            <div style="margin-bottom: 24px;">
+              <label class="frappe-label">Scan Barcode</label>
+              <div style="position: relative; max-width: 520px;">
+                <input type="text" id="issueBarcodeScan" class="frappe-control" placeholder="Scan or type barcode and hit Enter..." onkeydown="if(event.key==='Enter'){event.preventDefault(); Desk.onStockEntryBarcode(event, 'issue', this);}" style="padding-right: 40px;">
+                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #8d99a6; font-size: 13px; pointer-events: none; letter-spacing: -1px;">[|||||]</span>
+              </div>
+            </div>
+
+            <!-- Items Section -->
+            <div style="margin-bottom: 18px;">
+              <div style="font-size: 14px; font-weight: 700; color: #1f272e; margin-bottom: 4px;">Items</div>
+              <label class="frappe-label" style="margin-bottom: 8px;">Items</label>
+
+              <!-- Child Table -->
+              <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px;">
+                <table class="frappe-table" id="issueItemsTable">
+                  <thead>
+                    <tr>
+                      <th style="width: 38px; text-align: center;"><input type="checkbox" id="issueCheckAll" onchange="Desk.toggleSelectAllRows('issue', this.checked)"></th>
+                      <th style="width: 44px; text-align: center;">No.</th>
+                      <th id="issueColWhHeader" style="width: 240px;">Source Warehouse</th>
+                      <th>Item Code <span style="color: #e02424;">*</span></th>
+                      <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
+                      <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
+                      <th style="width: 44px; text-align: center; color: #8d99a6;">&#9881;</th>
+                    </tr>
+                  </thead>
+                  <tbody id="issueItemsBody">
+                    <!-- Populated dynamically via Desk.renderStockEntryRows('issue') -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Buttons Under Table -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('issue')">Add row</button>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('issue')">Add multiple</button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="frappe-table-btn" onclick="Desk.downloadStockEntryCSV('issue')">Download</button>
+                  <button type="button" class="frappe-table-btn" onclick="Desk.triggerStockEntryUpload('issue')">Upload</button>
+                  <input type="file" id="issueCsvFileInput" accept=".csv" style="display: none;" onchange="Desk.uploadStockEntryCSV('issue', this)">
+                </div>
+              </div>
+
+              <div>
+                <button type="button" class="frappe-table-btn" onclick="Desk.updateStockEntryRatesAndAvailability('issue')">
+                  Update Rate and Availability
+                </button>
+              </div>
+            </div>
+
+          </div><!-- /tabContent-issue-details -->
+
+          <!-- TAB CONTENT: OTHER INFO -->
+          <div id="tabContent-issue-other" class="frappe-tab-content" style="display: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 20px;">
+              <div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Destination / Cost Center</label>
+                  <input type="text" name="party_name" id="issuePartyName" class="frappe-control" placeholder="Select or type Destination / Cost Center...">
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Requisition / Work Order Ref</label>
+                  <input type="text" name="po_reference" id="issuePoRef" class="frappe-control" placeholder="REQ-XXXXX">
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Department / Section</label>
+                  <input type="text" name="invoice_no" id="issueInvoiceNo" class="frappe-control" placeholder="Department Code">
+                </div>
+              </div>
+              <div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Letter Head</label>
+                  <select name="letter_head" class="frappe-control">
+                    <option value="EGL Power Generation" selected>EGL Power Generation</option>
+                    <option value="Standard Header">Standard Header</option>
+                  </select>
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Issued To / Employee</label>
+                  <input type="text" name="transporter_info" id="issueTransporterInfo" class="frappe-control" placeholder="Receiver Name / Staff ID">
+                </div>
+                <div style="margin-bottom: 16px;">
+                  <label class="frappe-label">Remarks / Note</label>
+                  <textarea name="remarks" id="issueRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
+                </div>
+              </div>
+            </div>
+          </div><!-- /tabContent-issue-other -->
 
         </form>
       </div>

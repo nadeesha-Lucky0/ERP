@@ -1138,5 +1138,189 @@ textarea.desk-form-control {
   padding-left: 42px !important;
 }
 
+/* -------------------------------------------------------------
+ * Frappe / ERPNext Standard "Stock Entry" Design System
+ * ------------------------------------------------------------- */
+.frappe-form-page {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px 28px 36px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1f272e;
+  margin-bottom: 24px;
+}
+.frappe-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.frappe-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6c7680;
+}
+.frappe-breadcrumbs a {
+  color: #6c7680;
+  text-decoration: none;
+}
+.frappe-breadcrumbs .current-doc {
+  font-weight: 700;
+  color: #1f272e;
+  font-size: 15px;
+}
+.frappe-badge-not-saved {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+.frappe-btn {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d8dd;
+  background: #ffffff;
+  color: #1f272e;
+  transition: all 0.15s;
+}
+.frappe-btn:hover {
+  background: #f8fafc;
+  border-color: #b2bcc4;
+}
+.frappe-btn-primary {
+  background: #18181b;
+  color: #ffffff;
+  border-color: #18181b;
+  font-weight: 600;
+  padding: 0 16px;
+}
+.frappe-btn-primary:hover {
+  background: #27272a;
+}
+.frappe-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+.frappe-tab-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c7680;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.frappe-tab-btn.active {
+  font-weight: 600;
+  color: #1f272e;
+  border-bottom-color: #18181b;
+}
+.frappe-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6c7680;
+  margin-bottom: 5px;
+}
+.frappe-control {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  background: #f4f5f7;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #1f272e;
+  outline: none;
+  transition: all 0.15s;
+  box-sizing: border-box;
+}
+.frappe-control:focus {
+  background: #ffffff;
+  border-color: #18181b;
+  box-shadow: 0 0 0 2px rgba(24, 24, 27, 0.08);
+}
+.frappe-control[readonly], .frappe-control:disabled {
+  background: #f1f3f5;
+  color: #8d99a6;
+  cursor: not-allowed;
+}
+.frappe-help-text {
+  font-size: 11px;
+  color: #8d99a6;
+  margin-top: 4px;
+}
+.frappe-section-head {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f272e;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  user-select: none;
+}
+.frappe-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.frappe-table th {
+  background: #f8fafc;
+  color: #6c7680;
+  font-weight: 600;
+  font-size: 11.5px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+.frappe-table td {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  vertical-align: middle;
+}
+.frappe-table-btn {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  background: #f4f5f7;
+  color: #1f272e;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.frappe-table-btn:hover {
+  background: #e9ecef;
+}
+
+
 
 

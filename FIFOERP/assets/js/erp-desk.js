@@ -508,6 +508,9 @@ const Desk = {
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
       entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+      if (filter === 'Entry') {
+        this.initStockEntryForm('grn');
+      }
     }
 
     if (filter === 'Entry') {
@@ -628,6 +631,7 @@ const Desk = {
     if (issueEntryCard) {
       issueEntryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
       if (filter === 'Entry') {
+        this.initStockEntryForm('issue');
         this.populateTaskBatches();
         this.initIssueFormLookups();
       }
@@ -3857,6 +3861,701 @@ const Desk = {
         }
       });
     });
+  },
+
+  // =========================================================================
+  // REAL FRAPPE / ERPNEXT STOCK ENTRY CONTROLLER
+  // =========================================================================
+  stockEntryState: {
+    grn: {
+      items: [],
+      nextId: 1,
+      docTitle: 'New Stock Entry',
+      status: 'Not Saved',
+      selectedIds: new Set()
+    },
+    issue: {
+      items: [],
+      nextId: 1,
+      docTitle: 'New Stock Entry',
+      status: 'Not Saved',
+      selectedIds: new Set()
+    }
+  },
+  cachedStockLookups: null,
+  activeMultipleContext: 'grn',
+
+  async loadStockEntryLookups() {
+    if (this.cachedStockLookups) return this.cachedStockLookups;
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_receipt_lookups`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        this.cachedStockLookups = data.data;
+        return data.data;
+      }
+    } catch (e) {
+      console.error('Failed to load stock lookups:', e);
+    }
+    return null;
+  },
+
+  async initStockEntryForm(context) {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    const dateEl = document.getElementById(`${context}PostingDate`);
+    const timeEl = document.getElementById(`${context}PostingTime`);
+    if (dateEl && !dateEl.value) dateEl.value = dateStr;
+    if (timeEl && !timeEl.value) timeEl.value = timeStr;
+
+    // Load lookups if needed
+    const lookups = await this.loadStockEntryLookups();
+    if (lookups) {
+      const defSource = document.getElementById(`${context}DefSourceWh`);
+      const defTarget = document.getElementById(`${context}DefTargetWh`);
+      const warehouses = lookups.warehouses || [
+        'Main Store Bay-01',
+        'Mechanical Stores',
+        'Electrical Supplies Sub-Store',
+        'Central Warehouse - Main Store'
+      ];
+
+      const populateWh = (sel, defaultVal) => {
+        if (!sel || sel.children.length > 1) return;
+        sel.innerHTML = '<option value="">Select Warehouse...</option>';
+        warehouses.forEach(wh => {
+          const opt = document.createElement('option');
+          opt.value = wh;
+          opt.textContent = wh;
+          if (wh === defaultVal) opt.selected = true;
+          sel.appendChild(opt);
+        });
+      };
+
+      populateWh(defSource, 'Main Store Bay-01');
+      populateWh(defTarget, 'Main Store Bay-01');
+    }
+
+    // Initialize 1 default row if table empty
+    const state = this.stockEntryState[context];
+    if (state.items.length === 0) {
+      this.addStockEntryRow(context, false);
+    }
+    this.renderStockEntryRows(context);
+  },
+
+  renderStockEntryRows(context) {
+    const tbody = document.getElementById(`${context}ItemsBody`);
+    if (!tbody) return;
+
+    const state = this.stockEntryState[context];
+    const lookups = this.cachedStockLookups || { warehouses: [], materials: [] };
+    const warehouses = lookups.warehouses || ['Main Store Bay-01', 'Mechanical Stores', 'Electrical Supplies Sub-Store'];
+    const materials = lookups.materials || [];
+
+    if (state.items.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
+            No items in table. Click <strong>Add row</strong> or <strong>Add multiple</strong> to add items.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let html = '';
+    state.items.forEach((row, idx) => {
+      const isChecked = state.selectedIds.has(row.id);
+      
+      let whOptions = '<option value="">Select Warehouse...</option>';
+      warehouses.forEach(w => {
+        whOptions += `<option value="${w}" ${row.warehouse === w ? 'selected' : ''}>${w}</option>`;
+      });
+
+      let matOptions = '<option value="">Select or type Item Code...</option>';
+      materials.forEach(m => {
+        matOptions += `<option value="${m.sku}" ${row.item_code === m.sku ? 'selected' : ''}>${m.sku} - ${m.item_name}</option>`;
+      });
+
+      html += `
+        <tr data-row-id="${row.id}" style="${isChecked ? 'background: #f8fafc;' : ''}">
+          <td style="text-align: center;">
+            <input type="checkbox" onchange="Desk.toggleStockEntryRowCheck('${context}', ${row.id}, this.checked)" ${isChecked ? 'checked' : ''} style="cursor: pointer; accent-color: #18181b;">
+          </td>
+          <td style="text-align: center; color: #6c7680; font-size: 12px; font-weight: 500;">
+            ${idx + 1}
+          </td>
+          <td>
+            <select class="frappe-control" style="height: 30px; font-size: 12px;" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'warehouse', this.value)">
+              ${whOptions}
+            </select>
+          </td>
+          <td>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select class="frappe-control" style="height: 30px; font-size: 12px; font-weight: 500;" onchange="Desk.onStockEntryItemSelect('${context}', ${row.id}, this.value)">
+                ${matOptions}
+              </select>
+            </div>
+            ${row.item_name ? `<div style="font-size: 11px; color: #6c7680; margin-top: 2px;">${row.item_name} ${row.uom ? `(${row.uom})` : ''}</div>` : ''}
+          </td>
+          <td>
+            <input type="number" step="0.001" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${parseFloat(row.qty || 0).toFixed(3)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)">
+          </td>
+          <td>
+            <div style="position: relative;">
+              <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #6c7680;">Rs</span>
+              <input type="number" step="0.01" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; padding-left: 28px;" value="${parseFloat(row.basic_rate || 0).toFixed(2)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'basic_rate', parseFloat(this.value)||0)">
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+              <button type="button" class="frappe-table-btn" style="padding: 2px 6px; height: 26px; border: none; background: transparent; color: #dc2626; cursor: pointer;" title="Remove Row" onclick="Desk.removeStockEntryRow('${context}', ${row.id})">
+                &#10005;
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  },
+
+  addStockEntryRow(context, shouldRender = true) {
+    const state = this.stockEntryState[context];
+    const defSource = document.getElementById(`${context}DefSourceWh`)?.value || '';
+    const defTarget = document.getElementById(`${context}DefTargetWh`)?.value || '';
+    const defWh = (context === 'grn' ? defTarget : defSource) || 'Main Store Bay-01';
+
+    state.items.push({
+      id: state.nextId++,
+      warehouse: defWh,
+      item_code: '',
+      item_name: '',
+      qty: 1.0,
+      basic_rate: 0.0,
+      uom: 'Nos'
+    });
+
+    if (shouldRender) {
+      this.renderStockEntryRows(context);
+    }
+  },
+
+  removeStockEntryRow(context, rowId) {
+    const state = this.stockEntryState[context];
+    state.items = state.items.filter(r => r.id !== rowId);
+    state.selectedIds.delete(rowId);
+    this.renderStockEntryRows(context);
+  },
+
+  toggleStockEntryRowCheck(context, rowId, checked) {
+    const state = this.stockEntryState[context];
+    if (checked) state.selectedIds.add(rowId);
+    else state.selectedIds.delete(rowId);
+  },
+
+  toggleSelectAllRows(context, checked) {
+    const state = this.stockEntryState[context];
+    if (checked) {
+      state.items.forEach(r => state.selectedIds.add(r.id));
+    } else {
+      state.selectedIds.clear();
+    }
+    this.renderStockEntryRows(context);
+  },
+
+  updateStockEntryRow(context, rowId, field, value) {
+    const state = this.stockEntryState[context];
+    const row = state.items.find(r => r.id === rowId);
+    if (!row) return;
+    row[field] = value;
+  },
+
+  onStockEntryItemSelect(context, rowId, sku) {
+    const state = this.stockEntryState[context];
+    const row = state.items.find(r => r.id === rowId);
+    if (!row) return;
+
+    row.item_code = sku;
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const mat = (lookups.materials || []).find(m => m.sku === sku);
+    if (mat) {
+      row.item_name = mat.item_name;
+      row.uom = mat.uom || 'Nos';
+      if (mat.unit_price) {
+        row.basic_rate = parseFloat(mat.unit_price) || 0;
+      }
+    }
+    this.renderStockEntryRows(context);
+  },
+
+  applyDefaultWarehouse(context) {
+    const state = this.stockEntryState[context];
+    const type = document.getElementById(`${context}StockEntryType`)?.value || '';
+    const defWh = (type === 'Material Receipt'
+      ? document.getElementById(`${context}DefTargetWh`)?.value
+      : document.getElementById(`${context}DefSourceWh`)?.value) || '';
+
+    if (!defWh) return;
+    state.items.forEach(r => {
+      if (!r.warehouse) r.warehouse = defWh;
+    });
+    this.renderStockEntryRows(context);
+  },
+
+  onStockEntryTypeChange(context, type) {
+    const whHeader = document.getElementById(`${context}ColWhHeader`);
+    const srcGrp = document.getElementById(`${context}SourceWhGroup`);
+    const tgtGrp = document.getElementById(`${context}TargetWhGroup`);
+
+    if (type === 'Material Receipt') {
+      if (whHeader) whHeader.textContent = 'Target Warehouse';
+      if (srcGrp) srcGrp.style.display = 'none';
+      if (tgtGrp) tgtGrp.style.display = 'block';
+    } else if (type === 'Material Issue') {
+      if (whHeader) whHeader.textContent = 'Source Warehouse';
+      if (srcGrp) srcGrp.style.display = 'block';
+      if (tgtGrp) tgtGrp.style.display = 'none';
+    } else {
+      if (whHeader) whHeader.textContent = 'Warehouse';
+      if (srcGrp) srcGrp.style.display = 'block';
+      if (tgtGrp) tgtGrp.style.display = 'block';
+    }
+  },
+
+  switchStockEntryTab(context, tabName) {
+    const card = document.getElementById(`body${context.charAt(0).toUpperCase() + context.slice(1)}EntryCard`);
+    if (card) {
+      card.querySelectorAll('.frappe-tab-btn').forEach(b => b.classList.remove('active'));
+    }
+    const btn = document.getElementById(`tabBtn-${context}-${tabName}`);
+    if (btn) btn.classList.add('active');
+
+    const detailsTab = document.getElementById(`tabContent-${context}-details`);
+    const otherTab = document.getElementById(`tabContent-${context}-other`);
+
+    if (tabName === 'details') {
+      if (detailsTab) detailsTab.style.display = 'block';
+      if (otherTab) otherTab.style.display = 'none';
+    } else {
+      if (detailsTab) detailsTab.style.display = 'none';
+      if (otherTab) otherTab.style.display = 'block';
+    }
+  },
+
+  toggleEditPostingDate(context, checked) {
+    const dateEl = document.getElementById(`${context}PostingDate`);
+    const timeEl = document.getElementById(`${context}PostingTime`);
+    if (dateEl) {
+      if (checked) dateEl.removeAttribute('readonly');
+      else dateEl.setAttribute('readonly', 'readonly');
+    }
+    if (timeEl) {
+      if (checked) timeEl.removeAttribute('readonly');
+      else timeEl.setAttribute('readonly', 'readonly');
+    }
+  },
+
+  toggleStockEntrySection(sectionId, headerEl) {
+    const sec = document.getElementById(sectionId);
+    if (!sec) return;
+    const arrow = headerEl.querySelector('.frappe-sec-arrow');
+    if (sec.style.display === 'none') {
+      sec.style.display = 'block';
+      if (arrow) arrow.innerHTML = '&#8744;';
+    } else {
+      sec.style.display = 'none';
+      if (arrow) arrow.innerHTML = '&#8250;';
+    }
+  },
+
+  toggleSeDropdown(menuId) {
+    const menu = document.getElementById(menuId);
+    if (!menu) return;
+    const isOpen = menu.style.display === 'block';
+    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
+    menu.style.display = isOpen ? 'none' : 'block';
+  },
+
+  onStockEntryBarcode(event, context, input) {
+    const code = (input.value || '').trim();
+    if (!code) return;
+
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const mat = (lookups.materials || []).find(m => m.sku.toLowerCase() === code.toLowerCase());
+    const state = this.stockEntryState[context];
+
+    if (mat) {
+      const existing = state.items.find(r => r.item_code === mat.sku);
+      if (existing) {
+        existing.qty = (parseFloat(existing.qty) || 0) + 1;
+        this.showToast(`Updated qty for ${mat.sku} (${existing.qty})`);
+      } else {
+        const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'Main Store Bay-01';
+        state.items.push({
+          id: state.nextId++,
+          warehouse: defWh,
+          item_code: mat.sku,
+          item_name: mat.item_name,
+          qty: 1.0,
+          basic_rate: parseFloat(mat.unit_price || 0),
+          uom: mat.uom || 'Nos'
+        });
+        this.showToast(`Scanned: ${mat.sku} - ${mat.item_name}`);
+      }
+    } else {
+      const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'Main Store Bay-01';
+      state.items.push({
+        id: state.nextId++,
+        warehouse: defWh,
+        item_code: code,
+        item_name: 'Custom / Scanned Item',
+        qty: 1.0,
+        basic_rate: 0.0,
+        uom: 'Nos'
+      });
+      this.showToast(`Added scanned code: ${code}`);
+    }
+
+    input.value = '';
+    this.renderStockEntryRows(context);
+  },
+
+  // Add Multiple Modal
+  openAddMultipleModal(context) {
+    this.activeMultipleContext = context;
+    const modal = document.getElementById('modalStockEntryAddMultiple');
+    if (!modal) return;
+
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const materials = lookups.materials || [];
+    const tbody = document.getElementById('seAddMultipleBody');
+
+    let html = '';
+    materials.forEach(m => {
+      html += `
+        <tr class="se-multiple-row" data-sku="${m.sku}" data-name="${(m.item_name||'').toLowerCase()}">
+          <td style="text-align: center;">
+            <input type="checkbox" class="se-multi-chk" value="${m.sku}" data-name="${m.item_name}" data-uom="${m.uom||'Nos'}" data-rate="${m.unit_price||0}" style="cursor: pointer; accent-color: #18181b;">
+          </td>
+          <td>
+            <div style="font-weight: 600; font-size: 12.5px;">${m.sku}</div>
+            <div style="font-size: 11.5px; color: #6c7680;">${m.item_name}</div>
+          </td>
+          <td style="text-align: center; font-size: 12px; color: #6c7680;">
+            ${m.uom || 'Nos'}
+          </td>
+          <td style="text-align: right; font-size: 12px; font-weight: 500;">
+            Rs. ${parseFloat(m.unit_price || 0).toFixed(2)}
+          </td>
+        </tr>
+      `;
+    });
+    if (tbody) tbody.innerHTML = html;
+
+    const searchInput = document.getElementById('seAddMultipleSearch');
+    if (searchInput) searchInput.value = '';
+
+    modal.style.display = 'flex';
+  },
+
+  closeAddMultipleModal() {
+    const modal = document.getElementById('modalStockEntryAddMultiple');
+    if (modal) modal.style.display = 'none';
+  },
+
+  filterAddMultipleList(query) {
+    const q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('.se-multiple-row').forEach(tr => {
+      const sku = (tr.getAttribute('data-sku') || '').toLowerCase();
+      const name = (tr.getAttribute('data-name') || '').toLowerCase();
+      tr.style.display = (!q || sku.includes(q) || name.includes(q)) ? '' : 'none';
+    });
+  },
+
+  toggleAddMultipleAll(checked) {
+    document.querySelectorAll('.se-multiple-row').forEach(tr => {
+      if (tr.style.display !== 'none') {
+        const chk = tr.querySelector('.se-multi-chk');
+        if (chk) chk.checked = checked;
+      }
+    });
+  },
+
+  confirmAddMultiple() {
+    const ctx = this.activeMultipleContext || 'grn';
+    const state = this.stockEntryState[ctx];
+    const defSource = document.getElementById(`${ctx}DefSourceWh`)?.value || '';
+    const defTarget = document.getElementById(`${ctx}DefTargetWh`)?.value || '';
+    const defWh = (ctx === 'grn' ? defTarget : defSource) || 'Main Store Bay-01';
+
+    let count = 0;
+    document.querySelectorAll('.se-multi-chk:checked').forEach(chk => {
+      const sku = chk.value;
+      const name = chk.getAttribute('data-name') || '';
+      const uom = chk.getAttribute('data-uom') || 'Nos';
+      const rate = parseFloat(chk.getAttribute('data-rate') || 0);
+
+      const existing = state.items.find(r => r.item_code === sku);
+      if (!existing) {
+        if (state.items.length === 1 && !state.items[0].item_code) {
+          state.items[0].item_code = sku;
+          state.items[0].item_name = name;
+          state.items[0].uom = uom;
+          state.items[0].basic_rate = rate;
+          state.items[0].qty = 1.0;
+          state.items[0].warehouse = defWh;
+        } else {
+          state.items.push({
+            id: state.nextId++,
+            warehouse: defWh,
+            item_code: sku,
+            item_name: name,
+            uom: uom,
+            qty: 1.0,
+            basic_rate: rate
+          });
+        }
+        count++;
+      }
+    });
+
+    this.closeAddMultipleModal();
+    this.renderStockEntryRows(ctx);
+    this.showToast(`Added ${count} items to Stock Entry.`);
+  },
+
+  downloadStockEntryCSV(context) {
+    const state = this.stockEntryState[context];
+    let csv = 'Item Code,Item Name,Warehouse,Quantity,Basic Rate\n';
+    state.items.forEach(r => {
+      if (r.item_code) {
+        csv += `"${r.item_code}","${(r.item_name||'').replace(/"/g, '""')}","${r.warehouse}","${r.qty}","${r.basic_rate}"\n`;
+      }
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Stock_Entry_${context.toUpperCase()}_Template.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
+
+  triggerStockEntryUpload(context) {
+    const fileInput = document.getElementById(`${context}CsvFileInput`);
+    if (fileInput) fileInput.click();
+  },
+
+  uploadStockEntryCSV(context, input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const lines = text.split(/\r\n|\n/).filter(l => l.trim().length > 0);
+      if (lines.length <= 1) {
+        this.showToast('CSV file is empty or missing data rows.', true);
+        return;
+      }
+
+      const state = this.stockEntryState[context];
+      let imported = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+        const sku = parts[0];
+        const name = parts[1] || '';
+        const wh = parts[2] || 'Main Store Bay-01';
+        const qty = parseFloat(parts[3]) || 1.0;
+        const rate = parseFloat(parts[4]) || 0.0;
+
+        if (sku) {
+          state.items.push({
+            id: state.nextId++,
+            warehouse: wh,
+            item_code: sku,
+            item_name: name,
+            uom: 'Nos',
+            qty: qty,
+            basic_rate: rate
+          });
+          imported++;
+        }
+      }
+
+      input.value = '';
+      this.renderStockEntryRows(context);
+      this.showToast(`Successfully uploaded ${imported} items from CSV.`);
+    };
+    reader.readAsText(file);
+  },
+
+  updateStockEntryRatesAndAvailability(context) {
+    const state = this.stockEntryState[context];
+    const lookups = this.cachedStockLookups || { materials: [] };
+    const materials = lookups.materials || [];
+
+    state.items.forEach(r => {
+      if (r.item_code) {
+        const mat = materials.find(m => m.sku === r.item_code);
+        if (mat && mat.unit_price) {
+          r.basic_rate = parseFloat(mat.unit_price) || 0;
+        }
+      }
+    });
+
+    this.renderStockEntryRows(context);
+    this.showToast('Rates and availability refreshed from master.');
+  },
+
+  async submitStockEntryForm(context) {
+    const state = this.stockEntryState[context];
+    const docType = context === 'grn' ? 'GRN' : 'ISSUE';
+
+    const validItems = state.items.filter(r => r.item_code && r.qty > 0);
+    if (validItems.length === 0) {
+      this.showToast('Please add at least one item with valid Item Code and Quantity.', true);
+      return;
+    }
+
+    const series = document.getElementById(`${context}Series`)?.value || 'MAT-STE-.YYYY.-';
+    const entryType = document.getElementById(`${context}StockEntryType`)?.value || (context === 'grn' ? 'Material Receipt' : 'Material Issue');
+    const postingDate = document.getElementById(`${context}PostingDate`)?.value || '';
+    const postingTime = document.getElementById(`${context}PostingTime`)?.value || '';
+    const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'Main Store Bay-01';
+
+    const partyName = document.getElementById(`${context}PartyName`)?.value || '';
+    const poRef = document.getElementById(`${context}PoRef`)?.value || '';
+    const invoiceNo = document.getElementById(`${context}InvoiceNo`)?.value || '';
+    const remarks = document.getElementById(`${context}Remarks`)?.value || '';
+
+    let invTotal = 0;
+    const formattedItems = validItems.map(r => {
+      const lineTotal = (parseFloat(r.qty) || 0) * (parseFloat(r.basic_rate) || 0);
+      invTotal += lineTotal;
+      return {
+        sku: r.item_code,
+        item_name: r.item_name || r.item_code,
+        quantity: parseFloat(r.qty) || 1,
+        unit_cost: parseFloat(r.basic_rate) || 0,
+        warehouse: r.warehouse || defWh
+      };
+    });
+
+    const fd = new FormData();
+    fd.append('action', 'create_document');
+    fd.append('doc_type', docType);
+    fd.append('series', series);
+    fd.append('stock_entry_type', entryType);
+    fd.append('acc_date', postingDate);
+    fd.append('delivery_date', postingDate);
+    fd.append('warehouse', defWh);
+    fd.append('receipt_from', partyName);
+    fd.append('order_reference', poRef);
+    fd.append('invoice_number', invoiceNo);
+    fd.append('remarks', `[Type: ${entryType}] [Posting: ${postingDate} ${postingTime}] ${remarks}`);
+    fd.append('invoice_total', invTotal);
+    fd.append('items', JSON.stringify(formattedItems));
+
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    if (token) fd.append('_csrf_token', token);
+
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php`, {
+        method: 'POST',
+        body: fd
+      });
+      const data = await res.json();
+      if (data.success) {
+        const docNo = data.data?.doc_no || 'STE-' + Date.now();
+        state.docTitle = docNo;
+        state.status = 'Draft';
+
+        const badge = document.getElementById(`${context}StatusBadge`);
+        const titleEl = document.getElementById(`${context}DocTitle`);
+        if (badge) {
+          badge.className = 'desk-badge badge-draft';
+          badge.textContent = 'Draft';
+        }
+        if (titleEl) {
+          titleEl.textContent = docNo;
+        }
+
+        this.showToast(`Stock Entry ${docNo} created successfully as Draft!`);
+
+        if (context === 'grn') {
+          this.loadReceipts();
+        } else {
+          this.loadIssues();
+        }
+      } else {
+        this.showToast(data.message || 'Failed to save Stock Entry.', true);
+      }
+    } catch (err) {
+      console.error(err);
+      this.showToast('Network error while saving Stock Entry.', true);
+    }
+  },
+
+  resetStockEntryForm(context) {
+    const state = this.stockEntryState[context];
+    state.items = [];
+    state.nextId = 1;
+    state.selectedIds.clear();
+    state.docTitle = 'New Stock Entry';
+    state.status = 'Not Saved';
+
+    const badge = document.getElementById(`${context}StatusBadge`);
+    const titleEl = document.getElementById(`${context}DocTitle`);
+    if (badge) {
+      badge.className = 'frappe-badge-not-saved';
+      badge.textContent = 'Not Saved';
+    }
+    if (titleEl) {
+      titleEl.textContent = 'New Stock Entry';
+    }
+
+    this.initStockEntryForm(context);
+    this.showToast('Ready for New Stock Entry.');
+  },
+
+  createSeDuplicate(context) {
+    const state = this.stockEntryState[context];
+    state.docTitle = 'New Stock Entry';
+    state.status = 'Not Saved';
+    const badge = document.getElementById(`${context}StatusBadge`);
+    const titleEl = document.getElementById(`${context}DocTitle`);
+    if (badge) {
+      badge.className = 'frappe-badge-not-saved';
+      badge.textContent = 'Not Saved';
+    }
+    if (titleEl) {
+      titleEl.textContent = 'New Stock Entry';
+    }
+    this.showToast('Duplicated entries ready as New Stock Entry.');
+  },
+
+  getItemsFromPO(context) {
+    this.showToast('Select items from Purchase Order list:');
+    this.openAddMultipleModal(context);
+  },
+
+  getItemsFromMaterialRequest(context) {
+    this.showToast('Select items from Material Request list:');
+    this.openAddMultipleModal(context);
+  },
+
+  getItemsFromBOM(context) {
+    this.showToast('Select items from Bill of Materials list:');
+    this.openAddMultipleModal(context);
   }
 };
 
@@ -3864,3 +4563,8 @@ window.openModal = function(id) { Desk.openModal(id); };
 window.closeModal = function(id) { Desk.closeModal(id); };
 window.Desk = Desk;
 
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown-wrapper')) {
+    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
+  }
+});

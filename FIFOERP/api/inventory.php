@@ -113,7 +113,7 @@ try {
             // Common materials
             $materials = [];
             try {
-                $stMat = $central->query("SELECT formatted_code as sku, item_name, uom FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 200");
+                $stMat = $central->query("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 500");
                 $materials = $stMat->fetchAll();
             } catch (\Throwable $e) {}
 
@@ -135,12 +135,12 @@ try {
             $central = Database::getConnection();
             $materials = [];
             if (!empty($q)) {
-                $stmt = $central->prepare("SELECT formatted_code as sku, item_name, uom FROM fifo_master_items WHERE (formatted_code LIKE :q1 OR item_name LIKE :q2) AND status = 'ACTIVE' LIMIT 50");
+                $stmt = $central->prepare("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE (formatted_code LIKE :q1 OR item_name LIKE :q2) AND status = 'ACTIVE' LIMIT 100");
                 $param = '%' . $q . '%';
                 $stmt->execute([':q1' => $param, ':q2' => $param]);
                 $materials = $stmt->fetchAll();
             } else {
-                $materials = $central->query("SELECT formatted_code as sku, item_name, uom FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 50")->fetchAll();
+                $materials = $central->query("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 100")->fetchAll();
             }
             Response::success('Materials found', ['materials' => $materials]);
             break;
