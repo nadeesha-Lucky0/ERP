@@ -619,6 +619,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div id="grnGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 210px; padding: 6px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('grn')">Purchase Order</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('grn')">Cost Center</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('grn')">Section</a>
                   <div class="frappe-dropdown-divider"></div>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromMaterialRequest('grn')">Material Request</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromBOM('grn')">Bill of Materials (BOM)</a>
@@ -720,7 +721,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                   Browse Cost Center Items &rarr;
                 </button>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label class="frappe-label">Cost Center</label>
                   <select name="cost_center" id="grnCostCenterSelect" class="frappe-control" onchange="Desk.onCostCenterSelectChange('grn', this.value)">
@@ -728,7 +729,13 @@ require_once __DIR__ . '/views/layouts/header.php';
                   </select>
                 </div>
                 <div>
-                  <label class="frappe-label">Project / Maintenance Section</label>
+                  <label class="frappe-label">Section (Destination Code)</label>
+                  <select name="section_code" id="grnSectionSelect" class="frappe-control" onchange="Desk.onSectionSelectChange('grn', this.value)">
+                    <option value="">-- Select Section Code --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="frappe-label">Project / Work Order</label>
                   <select name="project_select" id="grnProjectSelect" class="frappe-control">
                     <option value="">-- Select Project / Section --</option>
                   </select>
@@ -991,6 +998,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div id="issueGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 210px; padding: 6px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('issue')">Purchase Order</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('issue')">Cost Center</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('issue')">Section</a>
                   <div class="frappe-dropdown-divider"></div>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromMaterialRequest('issue')">Material Request</a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.getItemsFromBOM('issue')">Bill of Materials (BOM)</a>
@@ -1061,7 +1069,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                   Browse Cost Center Items &rarr;
                 </button>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label class="frappe-label">Cost Center</label>
                   <select name="cost_center" id="issueCostCenterSelect" class="frappe-control" onchange="Desk.onCostCenterSelectChange('issue', this.value)">
@@ -1069,7 +1077,13 @@ require_once __DIR__ . '/views/layouts/header.php';
                   </select>
                 </div>
                 <div>
-                  <label class="frappe-label">Project / Maintenance Section</label>
+                  <label class="frappe-label">Section (Destination Code)</label>
+                  <select name="section_code" id="issueSectionSelect" class="frappe-control" onchange="Desk.onSectionSelectChange('issue', this.value)">
+                    <option value="">-- Select Section Code --</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="frappe-label">Project / Work Order</label>
                   <select name="project_select" id="issueProjectSelect" class="frappe-control">
                     <option value="">-- Select Project / Section --</option>
                   </select>
@@ -3608,6 +3622,57 @@ require_once __DIR__ . '/views/layouts/header.php';
     <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closeCostCenterSelectionModal()">Cancel</button>
       <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromCostCenter()">Get Items</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal 4: Get Items From Section -->
+<div id="modalGetItemsFromSection" class="desk-modal-backdrop" style="display: none;">
+  <div class="desk-modal" style="max-width: 760px; width: 92%; border-radius: 8px; background: #fff;">
+    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Get Items From Plant Section</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeSectionSelectionModal()">&times;</button>
+    </div>
+    <div class="desk-modal-body" style="padding: 18px 20px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div>
+          <label class="frappe-label">Select Section (Destination Code) <span style="color: #e02424;">*</span></label>
+          <select id="modalSectionSelector" class="frappe-control" style="font-weight: 500;" onchange="Desk.onModalSectionSelected(this.value)">
+            <option value="">-- Select Section Code --</option>
+          </select>
+        </div>
+        <div>
+          <label class="frappe-label">Filter Section Items</label>
+          <input type="text" id="modalSectionSearch" class="frappe-control" placeholder="Search item or SKU..." oninput="Desk.filterSectionItems(this.value)">
+        </div>
+      </div>
+
+      <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 8px;">Section Requisition Spares &amp; Consumables</div>
+      <div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <table class="frappe-table" id="modalSectionItemsTable">
+          <thead>
+            <tr>
+              <th style="width: 36px; text-align: center;"><input type="checkbox" id="modalSectionCheckAll" onchange="Desk.toggleModalSectionCheckAll(this.checked)" checked></th>
+              <th>Item Code / Description</th>
+              <th style="width: 70px; text-align: center;">UOM</th>
+              <th style="width: 110px; text-align: right;">Unit Rate</th>
+              <th style="width: 100px; text-align: right;">Requisition Qty</th>
+            </tr>
+          </thead>
+          <tbody id="modalSectionItemsBody">
+            <tr>
+              <td colspan="5" style="text-align: center; color: #8d99a6; padding: 20px;">
+                Please select a Section above to view items.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
+      <button type="button" class="frappe-btn" onclick="Desk.closeSectionSelectionModal()">Cancel</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromSection()">Get Items</button>
     </div>
   </div>
 </div>
