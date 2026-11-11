@@ -678,52 +678,62 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Purchase Order & Supplier Information (When Material Receipt) -->
-            <div id="grnPurchaseSection" style="display: block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+            <!-- Purchase Order & Supplier Information (Displayed only when selected from Get Items From) -->
+            <div id="grnPurchaseSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Purchase &amp; Predefined Supplier Selection</span>
-                <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('grn')">
-                  Select Purchase Order &rarr;
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('grn')">
+                    Select Purchase Order &rarr;
+                  </button>
+                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('grn')">
+                    &times;
+                  </button>
+                </div>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="document.getElementById('grnPoRef').value = this.value;">
+                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="Desk.syncPoRefInput('grn', this.value)">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
-                  <select name="supplier_selection" id="grnSupplierSelect" class="frappe-control" onchange="Desk.onSupplierSelectChange('grn', this.value)">
+                  <select name="supplier_selection" id="grnSupplierSelect" class="frappe-control frappe-select" onchange="Desk.onSupplierSelectChange('grn', this.value)">
                     <option value="">-- Select Supplier --</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            <!-- Cost Center Selection (When Material Issue) -->
+            <!-- Cost Center Selection (Displayed only when selected from Get Items From) -->
             <div id="grnCostCenterSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Cost Center &amp; Purpose Selection</span>
-                <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openCostCenterSelectionModal('grn')">
-                  Browse Cost Center Items &rarr;
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openCostCenterSelectionModal('grn')">
+                    Select Cost Center &rarr;
+                  </button>
+                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('grn')">
+                    &times;
+                  </button>
+                </div>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label class="frappe-label">Cost Center</label>
-                  <select name="cost_center" id="grnCostCenterSelect" class="frappe-control" onchange="Desk.onCostCenterSelectChange('grn', this.value)">
+                  <select name="cost_center" id="grnCostCenterSelect" class="frappe-control frappe-select" onchange="Desk.onCostCenterSelectChange('grn', this.value)">
                     <option value="">-- Select Cost Center --</option>
                   </select>
                 </div>
                 <div>
                   <label class="frappe-label">Section (Destination Code)</label>
-                  <select name="section_code" id="grnSectionSelect" class="frappe-control" onchange="Desk.onSectionSelectChange('grn', this.value)">
+                  <select name="section_code" id="grnSectionSelect" class="frappe-control frappe-select" onchange="Desk.onSectionSelectChange('grn', this.value)">
                     <option value="">-- Select Section Code --</option>
                   </select>
                 </div>
                 <div>
                   <label class="frappe-label">Project / Work Order</label>
-                  <select name="project_select" id="grnProjectSelect" class="frappe-control">
+                  <select name="project_select" id="grnProjectSelect" class="frappe-control frappe-select">
                     <option value="">-- Select Project / Section --</option>
                   </select>
                 </div>
@@ -1137,52 +1147,62 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
-            <!-- Cost Center Selection (When Material Issue) -->
-            <div id="issueCostCenterSection" style="display: block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+            <!-- Cost Center Selection (Displayed only when selected from Get Items From) -->
+            <div id="issueCostCenterSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Cost Center &amp; Purpose Selection</span>
-                <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openCostCenterSelectionModal('issue')">
-                  Browse Cost Center Items &rarr;
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openCostCenterSelectionModal('issue')">
+                    Select Cost Center &rarr;
+                  </button>
+                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('issue')">
+                    &times;
+                  </button>
+                </div>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label class="frappe-label">Cost Center</label>
-                  <select name="cost_center" id="issueCostCenterSelect" class="frappe-control" onchange="Desk.onCostCenterSelectChange('issue', this.value)">
+                  <select name="cost_center" id="issueCostCenterSelect" class="frappe-control frappe-select" onchange="Desk.onCostCenterSelectChange('issue', this.value)">
                     <option value="">-- Select Cost Center --</option>
                   </select>
                 </div>
                 <div>
                   <label class="frappe-label">Section (Destination Code)</label>
-                  <select name="section_code" id="issueSectionSelect" class="frappe-control" onchange="Desk.onSectionSelectChange('issue', this.value)">
+                  <select name="section_code" id="issueSectionSelect" class="frappe-control frappe-select" onchange="Desk.onSectionSelectChange('issue', this.value)">
                     <option value="">-- Select Section Code --</option>
                   </select>
                 </div>
                 <div>
                   <label class="frappe-label">Project / Work Order</label>
-                  <select name="project_select" id="issueProjectSelect" class="frappe-control">
+                  <select name="project_select" id="issueProjectSelect" class="frappe-control frappe-select">
                     <option value="">-- Select Project / Section --</option>
                   </select>
                 </div>
               </div>
             </div>
 
-            <!-- Purchase Order & Supplier Information (When Material Receipt) -->
+            <!-- Purchase Order & Supplier Information (Displayed only when selected from Get Items From) -->
             <div id="issuePurchaseSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Purchase &amp; Predefined Supplier Selection</span>
-                <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('issue')">
-                  Select Purchase Order &rarr;
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('issue')">
+                    Select Purchase Order &rarr;
+                  </button>
+                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('issue')">
+                    &times;
+                  </button>
+                </div>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="document.getElementById('issuePoRef').value = this.value;">
+                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="Desk.syncPoRefInput('issue', this.value)">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
-                  <select name="supplier_selection" id="issueSupplierSelect" class="frappe-control" onchange="Desk.onSupplierSelectChange('issue', this.value)">
+                  <select name="supplier_selection" id="issueSupplierSelect" class="frappe-control frappe-select" onchange="Desk.onSupplierSelectChange('issue', this.value)">
                     <option value="">-- Select Supplier --</option>
                   </select>
                 </div>
@@ -3612,50 +3632,28 @@ require_once __DIR__ . '/views/layouts/header.php';
 </div>
 
 <div id="modalGetItemsFromCostCenter" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 760px; width: 92%; border-radius: 8px; background: #fff;">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Get Items From Cost Center</h3>
+  <div class="desk-modal" style="max-width: 540px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Cost Center</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeCostCenterSelectionModal()">&times;</button>
     </div>
-    <div class="desk-modal-body" style="padding: 18px 20px;">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-        <div>
-          <label class="frappe-label">Select Cost Center <span style="color: #e02424;">*</span></label>
-          <select id="modalCostCenterSelector" class="frappe-control" style="font-weight: 500;" onchange="Desk.onModalCostCenterSelected(this.value)">
-            <option value="">-- Select Cost Center --</option>
-          </select>
-        </div>
-        <div>
-          <label class="frappe-label">Filter Spares / Items</label>
-          <input type="text" id="modalCostCenterSearch" class="frappe-control" placeholder="Search item or SKU..." oninput="Desk.filterCostCenterItems(this.value)">
-        </div>
+    <div class="desk-modal-body" style="padding: 22px 26px;">
+      <div style="margin-bottom: 16px;">
+        <label class="frappe-label">Cost Center <span style="color: #e02424;">*</span></label>
+        <select id="modalCostCenterSelector" class="frappe-control frappe-select" style="font-weight: 500; width: 100%;">
+          <option value="">-- Select Cost Center --</option>
+        </select>
       </div>
-
-      <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 8px;">Standard Requisition Items</div>
-      <div style="max-height: 280px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
-        <table class="frappe-table" id="modalCostCenterItemsTable">
-          <thead>
-            <tr>
-              <th style="width: 36px; text-align: center;"><input type="checkbox" id="modalCostCenterCheckAll" onchange="Desk.toggleModalCostCenterCheckAll(this.checked)" checked></th>
-              <th>Item Code / Description</th>
-              <th style="width: 70px; text-align: center;">UOM</th>
-              <th style="width: 110px; text-align: right;">Unit Rate</th>
-              <th style="width: 100px; text-align: right;">Requisition Qty</th>
-            </tr>
-          </thead>
-          <tbody id="modalCostCenterItemsBody">
-            <tr>
-              <td colspan="5" style="text-align: center; color: #8d99a6; padding: 20px;">
-                Please select a Cost Center above to view items.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div>
+        <label class="frappe-label">Plant Section / Destination (Optional)</label>
+        <select id="modalCostCenterSectionSelector" class="frappe-control frappe-select" style="font-weight: 500; width: 100%;">
+          <option value="">-- Select Section (Optional) --</option>
+        </select>
       </div>
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closeCostCenterSelectionModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromCostCenter()">Get Items</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromCostCenter()">Apply Cost Center</button>
     </div>
   </div>
 </div>

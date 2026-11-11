@@ -4762,9 +4762,20 @@ const Desk = {
       const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
       if (unitPriceSec) unitPriceSec.style.display = 'block';
       if (invoiceTotalsSec) invoiceTotalsSec.style.display = 'block';
-
-
     }
+
+    // Hide Get Items From selection cards on reset
+    const poCard = document.getElementById(`${context}PurchaseSection`);
+    const ccCard = document.getElementById(`${context}CostCenterSection`);
+    if (poCard) poCard.style.display = 'none';
+    if (ccCard) ccCard.style.display = 'none';
+
+    const poInput = document.getElementById(`${context}PoRefInput`);
+    if (poInput) poInput.value = '';
+    const supSel = document.getElementById(`${context}SupplierSelect`);
+    if (supSel) supSel.value = '';
+    const ccSel = document.getElementById(`${context}CostCenterSelect`);
+    if (ccSel) ccSel.value = '';
 
     this.setSelectedCreateDoc(context, defaultDoc);
     this.setSelectedGetItemsFrom(context, '');
@@ -4849,9 +4860,20 @@ const Desk = {
       const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
       if (unitPriceSec) unitPriceSec.style.display = 'block';
       if (invoiceTotalsSec) invoiceTotalsSec.style.display = 'block';
-
-
     }
+
+    // Hide Get Items From selection cards on reset
+    const poCard = document.getElementById(`${context}PurchaseSection`);
+    const ccCard = document.getElementById(`${context}CostCenterSection`);
+    if (poCard) poCard.style.display = 'none';
+    if (ccCard) ccCard.style.display = 'none';
+
+    const poInput = document.getElementById(`${context}PoRefInput`);
+    if (poInput) poInput.value = '';
+    const supSel = document.getElementById(`${context}SupplierSelect`);
+    if (supSel) supSel.value = '';
+    const ccSel = document.getElementById(`${context}CostCenterSelect`);
+    if (ccSel) ccSel.value = '';
 
     // Close any open dropdown menu
     document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
@@ -4940,8 +4962,8 @@ const Desk = {
     const poRef = document.getElementById('modalPoRefInput')?.value || '';
     const targetWh = document.getElementById('modalPoWarehouseSelect')?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
 
-    if (!supplier) {
-      this.showToast('Please select a supplier.', true);
+    if (!supplier && !poRef) {
+      this.showToast('Please select a supplier or enter a PO reference.', true);
       return;
     }
 
@@ -4964,20 +4986,47 @@ const Desk = {
     const whTarget = document.getElementById(`${ctx}DefTargetWh`);
     if (whTarget && ctx === 'grn') whTarget.value = targetWh;
 
-    this.closePoSelectionModal();
-    this.showToast(`Applied ${supplier} (PO: ${poRef || 'N/A'}). Now add your store items.`);
-  },
-  activeSectionContext: 'issue',
+    // Reveal the Purchase card on the form body and hide Cost Center card
+    const poCard = document.getElementById(`${ctx}PurchaseSection`);
+    const ccCard = document.getElementById(`${ctx}CostCenterSection`);
+    if (poCard) poCard.style.display = 'block';
+    if (ccCard) ccCard.style.display = 'none';
 
-    onSupplierSelectChange(context, val) {
+    this.setSelectedGetItemsFrom(ctx, 'Purchase Order');
+    this.closePoSelectionModal();
+    this.showToast(`Applied ${supplier || 'PO'} (Ref: ${poRef || 'N/A'}).`);
+  },
+
+  syncPoRefInput(context, value) {
+    const poHidden = document.getElementById(`${context}PoRef`);
+    if (poHidden) poHidden.value = value;
+  },
+
+  onSupplierSelectChange(context, val) {
     const partyName = document.getElementById(`${context}PartyName`);
     if (partyName) partyName.value = val;
+  },
+
+  clearSourceSelection(context) {
+    const poCard = document.getElementById(`${context}PurchaseSection`);
+    const ccCard = document.getElementById(`${context}CostCenterSection`);
+    if (poCard) poCard.style.display = 'none';
+    if (ccCard) ccCard.style.display = 'none';
+
+    const poInput = document.getElementById(`${context}PoRefInput`);
+    if (poInput) poInput.value = '';
+    const supSel = document.getElementById(`${context}SupplierSelect`);
+    if (supSel) supSel.value = '';
+    const ccSel = document.getElementById(`${context}CostCenterSelect`);
+    if (ccSel) ccSel.value = '';
+
+    this.setSelectedGetItemsFrom(context, '');
+    this.showToast('Selection cleared.');
   },
 
   // Cost Center Selection Dialog
   openCostCenterSelectionModal(context) {
     this.activeCostCenterContext = context;
-    this.setSelectedGetItemsFrom(context, 'Cost Center');
     document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
     const modal = document.getElementById('modalGetItemsFromCostCenter');
     if (!modal) return;
@@ -4993,9 +5042,15 @@ const Desk = {
       });
     }
 
-    if (sel && sel.options.length > 1) {
-      sel.selectedIndex = 1;
-      this.onModalCostCenterSelected(sel.value);
+    const secSel = document.getElementById('modalCostCenterSectionSelector');
+    if (secSel && secSel.children.length <= 1) {
+      const lookups = this.cachedStockLookups || { sections: [] };
+      (lookups.sections || []).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.code;
+        opt.textContent = s.display_label || `${s.code} - ${s.title}`;
+        secSel.appendChild(opt);
+      });
     }
 
     modal.style.display = 'flex';
@@ -5006,106 +5061,43 @@ const Desk = {
     if (modal) modal.style.display = 'none';
   },
 
-  onModalCostCenterSelected(code) {
-    const tbody = document.getElementById('modalCostCenterItemsBody');
-    if (!tbody) return;
+  confirmGetItemsFromCostCenter() {
+    const ctx = this.activeCostCenterContext || 'grn';
+    const selEl = document.getElementById('modalCostCenterSelector');
+    const selCode = selEl?.value || '';
+    const selText = selEl?.selectedOptions[0]?.textContent || selCode;
 
-    const lookups = this.cachedStockLookups || { materials: [] };
-    const materials = (lookups.materials || []).slice(0, 15);
-
-    if (materials.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #8d99a6; padding: 20px;">No items configured for this Cost Center.</td></tr>';
+    if (!selCode) {
+      this.showToast('Please select a Cost Center.', true);
       return;
     }
 
-    let html = '';
-    materials.forEach(m => {
-      html += `
-        <tr class="cc-modal-item-row" data-sku="${m.sku}" data-name="${(m.item_name||'').toLowerCase()}">
-          <td style="text-align: center;">
-            <input type="checkbox" class="cc-item-chk" value="${m.sku}" data-name="${m.item_name}" data-uom="${m.uom||'Nos'}" data-rate="${m.unit_price||0}" checked style="accent-color: #18181b; cursor: pointer;">
-          </td>
-          <td>
-            <div style="font-weight: 600; font-size: 12.5px;">${m.sku}</div>
-            <div style="font-size: 11.5px; color: #6c7680;">${m.item_name}</div>
-          </td>
-          <td style="text-align: center; font-size: 12px; color: #6c7680;">${m.uom || 'Nos'}</td>
-          <td style="text-align: right; font-size: 12px;">Rs. ${parseFloat(m.unit_price||0).toFixed(2)}</td>
-          <td style="text-align: right;">
-            <input type="number" step="0.001" min="0" class="frappe-control cc-req-qty" style="height: 28px; width: 85px; text-align: right; font-size: 12px; font-weight: 600;" value="1.000">
-          </td>
-        </tr>
-      `;
-    });
-    tbody.innerHTML = html;
-  },
-
-  filterCostCenterItems(query) {
-    const q = (query || '').toLowerCase().trim();
-    document.querySelectorAll('.cc-modal-item-row').forEach(tr => {
-      const sku = (tr.getAttribute('data-sku') || '').toLowerCase();
-      const name = (tr.getAttribute('data-name') || '').toLowerCase();
-      tr.style.display = (!q || sku.includes(q) || name.includes(q)) ? '' : 'none';
-    });
-  },
-
-  toggleModalCostCenterCheckAll(checked) {
-    document.querySelectorAll('.cc-item-chk').forEach(c => c.checked = checked);
-  },
-
-  confirmGetItemsFromCostCenter() {
-    const ctx = this.activeCostCenterContext || 'issue';
-    const selCode = document.getElementById('modalCostCenterSelector')?.value || '';
-    const state = this.stockEntryState[ctx];
-    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
-
-    let count = 0;
-    document.querySelectorAll('#modalCostCenterItemsBody tr').forEach(tr => {
-      const chk = tr.querySelector('.cc-item-chk');
-      if (chk && chk.checked) {
-        const sku = chk.value;
-        const name = chk.getAttribute('data-name');
-        const uom = chk.getAttribute('data-uom');
-        const rate = parseFloat(chk.getAttribute('data-rate') || 0);
-        const qty = parseFloat(tr.querySelector('.cc-req-qty')?.value || 1);
-
-        if (state.items.length === 1 && !state.items[0].item_code) {
-          state.items[0].item_code = sku;
-          state.items[0].item_name = name;
-          state.items[0].uom = uom;
-          state.items[0].basic_rate = rate;
-          state.items[0].qty = qty;
-          state.items[0].warehouse = defWh;
-        } else {
-          state.items.push({
-            id: state.nextId++,
-            warehouse: defWh,
-            item_code: sku,
-            item_name: name,
-            uom: uom,
-            qty: qty,
-            basic_rate: rate
-          });
-        }
-        count++;
-      }
-    });
-
-    // Populate on-form fields
     const ccSel = document.getElementById(`${ctx}CostCenterSelect`);
     if (ccSel) ccSel.value = selCode;
 
-    const partyInput = document.getElementById(`${ctx}PartyName`);
-    if (partyInput && selCode) partyInput.value = `Cost Center: ${selCode}`;
+    const modalSec = document.getElementById('modalCostCenterSectionSelector')?.value;
+    const secSel = document.getElementById(`${ctx}SectionSelect`);
+    if (secSel && modalSec) secSel.value = modalSec;
 
+    const partyInput = document.getElementById(`${ctx}PartyName`);
+    if (partyInput) partyInput.value = selText;
+
+    // Reveal the Cost Center card in that spot and hide Purchase card
+    const ccCard = document.getElementById(`${ctx}CostCenterSection`);
+    const poCard = document.getElementById(`${ctx}PurchaseSection`);
+    if (ccCard) ccCard.style.display = 'block';
+    if (poCard) poCard.style.display = 'none';
+
+    this.setSelectedGetItemsFrom(ctx, 'Cost Center');
     this.closeCostCenterSelectionModal();
-    this.renderStockEntryRows(ctx);
-    this.showToast(`Loaded ${count} items for Cost Center ${selCode}.`);
+    this.showToast(`Applied Cost Center: ${selText}.`);
   },
 
   onCostCenterSelectChange(context, val) {
+    const ccSel = document.getElementById(`${context}CostCenterSelect`);
+    const selText = ccSel?.selectedOptions[0]?.textContent || val;
     const partyInput = document.getElementById(`${context}PartyName`);
-    if (partyInput) partyInput.value = val ? `Cost Center: ${val}` : '';
+    if (partyInput && val) partyInput.value = selText;
   },
 
   // Section Selection Dialog
