@@ -84,9 +84,9 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
             <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
             <span>Approval</span>
           </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Posting" onclick="Desk.navigateWorkflow('tab-receipts', 'Posting', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
-            <span>Posting</span>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Unposted Document Edit" onclick="Desk.navigateWorkflow('tab-receipts', 'Unposted Document Edit', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
+            <span>Unposted Document Edit</span>
           </button>
           <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Posted Cancellation', this)">
             <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
@@ -119,9 +119,9 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
             <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
             <span>Approval</span>
           </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Posting" onclick="Desk.navigateWorkflow('tab-issues', 'Posting', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
-            <span>Posting</span>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Unposted Document Edit" onclick="Desk.navigateWorkflow('tab-issues', 'Unposted Document Edit', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
+            <span>Unposted Document Edit</span>
           </button>
           <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Posted Cancellation', this)">
             <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
@@ -133,6 +133,15 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
           </button>
         </div>
       </div>
+    <?php endif; ?>
+    <?php
+    $canPosting = $permModel->canAccessTab('tab-posting', $roleId, $userId) || $permModel->canAccessTab('tab-user-posting', $roleId, $userId) || $canReceipts || $canIssues;
+    if ($canPosting):
+    ?>
+      <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-posting') ?>" data-tab="tab-posting">
+        <span class="sidebar-icon"><?= Icon::get('send') ?></span>
+        <span>Posting</span>
+      </button>
     <?php endif; ?>
   <?php endif; ?>
 

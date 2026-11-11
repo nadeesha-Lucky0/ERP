@@ -561,6 +561,9 @@ class Permission {
                 'tab-user-issue-approval', 'tab-user-issue-posted-cancel', 'tab-user-issue-unposted-cancel',
                 'tab-user-posting'
             ],
+            'tab-posting' => [
+                'tab-user-posting', 'tab-user-receipts-approval', 'tab-user-issue-approval'
+            ],
             'tab-pv-workflow' => [
                 'tab-user-pv-freeze', 'tab-user-pv-generate-sheet', 'tab-user-pv-entry', 'tab-user-pv-edit',
                 'tab-user-pv-validation', 'tab-user-pv-approval', 'tab-user-pv-posting', 'tab-user-pv-gl-posting',

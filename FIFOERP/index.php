@@ -1486,6 +1486,52 @@ require_once __DIR__ . '/views/layouts/header.php';
     </div>
 
     <!-- ============================================================
+         PANE: TRANSACTION POSTING (MAIN TAB)
+         ============================================================ -->
+    <div id="tab-posting" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>FIFO Transaction Posting</h1>
+          <div class="workspace-subtitle">Commit approved Goods Received Notes (GRN) and Material Issues into active FIFO inventory ledger</div>
+        </div>
+        <div class="header-action-btns">
+          <button class="desk-btn desk-btn-default" onclick="Desk.loadPostingTab()">
+            <?= Icon::get('refresh', 13) ?> Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="desk-card" style="margin-top: 16px;">
+        <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px;">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 600; color: #1e293b; margin: 0;">Approved Documents Ready for Posting</h3>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+              Documents with Chief Engineer / Authorized Officer electronic approval ready to commit into the active FIFO queue
+            </div>
+          </div>
+          <div id="postingHeaderBadge"></div>
+        </div>
+        <div class="desk-table-wrapper">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Document No</th>
+                <th>Doc Date</th>
+                <th>Party / Department</th>
+                <th>Destination / Warehouse</th>
+                <th>Items &amp; Total Value</th>
+                <th>Workflow Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="postingTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
          PANE: PHYSICAL VERIFICATION (WORKFLOW DESK)
          ============================================================ -->
     <div id="tab-pv-workflow" class="tab-pane" style="display: none;">

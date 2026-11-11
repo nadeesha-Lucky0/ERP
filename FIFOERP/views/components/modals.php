@@ -442,6 +442,65 @@
 </div>
 
 <!-- ==============================================================
+     MODAL: Edit Unposted Goods Received Note (GRN)
+     ============================================================== -->
+<div id="modalEditReceipt" class="desk-modal-backdrop">
+  <div class="desk-modal">
+    <div class="desk-modal-header">
+      <h3 id="editReceiptModalTitle">Edit Unposted Goods Received Note</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('modalEditReceipt')">&times;</button>
+    </div>
+    <div class="desk-modal-body">
+      <form id="formEditReceipt" onsubmit="event.preventDefault(); submitEditReceipt();">
+        <input type="hidden" id="editReceiptDocId">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="desk-form-group">
+            <label class="desk-form-label">Document Number</label>
+            <input type="text" id="editReceiptDocNo" class="desk-form-control" readonly style="background: #f1f5f9; font-weight: 600;">
+          </div>
+          <div class="desk-form-group">
+            <label class="desk-form-label">Current Status</label>
+            <input type="text" id="editReceiptDocStatus" class="desk-form-control" readonly style="background: #f1f5f9;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="desk-form-group">
+            <label class="desk-form-label">Supplier / Source</label>
+            <input type="text" id="editReceiptSupplier" class="desk-form-control" required>
+          </div>
+          <div class="desk-form-group">
+            <label class="desk-form-label">Warehouse Bay</label>
+            <input type="text" id="editReceiptWarehouse" class="desk-form-control" required>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div class="desk-form-group">
+            <label class="desk-form-label">Material Line Item</label>
+            <input type="text" id="editReceiptItemName" class="desk-form-control" readonly style="background: #f1f5f9;">
+          </div>
+          <div class="desk-form-group">
+            <label class="desk-form-label">Received Quantity</label>
+            <input type="number" id="editReceiptQty" class="desk-form-control" min="1" required>
+          </div>
+        </div>
+
+        <div class="desk-form-group">
+          <label class="desk-form-label">Delivery Notes / Remarks</label>
+          <textarea id="editReceiptRemarks" class="desk-form-control" rows="3"></textarea>
+        </div>
+
+        <div class="desk-modal-footer">
+          <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('modalEditReceipt')">Cancel</button>
+          <button type="submit" class="desk-btn desk-btn-primary">Save Document Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==============================================================
      MODAL 9: View / Inspect Document Details
      ============================================================== -->
 <div id="modalViewDoc" class="desk-modal-backdrop">
@@ -1088,6 +1147,28 @@ function submitEditIssue() {
         Desk.showToast(r.message);
         Desk.closeModal('modalEditIssue');
         Desk.loadIssues();
+      } else {
+        Desk.showToast(r.message, true);
+      }
+    });
+}
+
+function submitEditReceipt() {
+  const fd = new FormData();
+  fd.append('action', 'update_document');
+  fd.append('id', document.getElementById('editReceiptDocId').value);
+  fd.append('receipt_from', document.getElementById('editReceiptSupplier').value);
+  fd.append('destination_code', document.getElementById('editReceiptWarehouse').value);
+  fd.append('quantity', document.getElementById('editReceiptQty').value);
+  fd.append('remarks', document.getElementById('editReceiptRemarks').value);
+
+  fetch(`${Desk.baseUrl}/api/inventory.php`, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(r => {
+      if (r.success) {
+        Desk.showToast(r.message);
+        Desk.closeModal('modalEditReceipt');
+        Desk.loadReceipts();
       } else {
         Desk.showToast(r.message, true);
       }

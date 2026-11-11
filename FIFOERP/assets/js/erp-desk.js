@@ -242,6 +242,9 @@ const Desk = {
         }
         this.loadIssues();
         break;
+      case 'tab-posting':
+        this.loadPostingTab();
+        break;
       case 'tab-transactions':
         this.loadDocuments();
         break;
@@ -575,6 +578,11 @@ const Desk = {
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your approval';
       if (subEl) subEl.textContent = 'Station Chief Engineer / Authorized Officer electronic sign-off prior to FIFO ledger posting';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Pending Approval: ${docs.length}</span>`;
+    } else if (filter === 'Unposted Document Edit') {
+      docs = allDocs.filter(d => ['draft', 'validated', 'approved'].includes((d.status || '').toLowerCase()));
+      if (titleEl) titleEl.textContent = 'Unposted Receipts (GRN) - Document Edit';
+      if (subEl) subEl.textContent = 'Edit unposted consignment details, supplier references, warehouse allocation, and line items prior to posting';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Unposted Documents: ${docs.length}</span>`;
     } else if (filter === 'Posting') {
       docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'approved');
       if (titleEl) titleEl.textContent = 'Following Documents are approved and ready for posting to FIFO Ledger';
@@ -631,6 +639,7 @@ const Desk = {
           <td>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
+              ${d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${d.id})" title="Edit unposted consignment details">✏️ Edit</button>` : ''}
               ${d.status === 'Draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Certify delivery & send to Approval stage">✓ Validate</button>` : ''}
               ${d.status === 'Validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
               ${d.status === 'Approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
@@ -726,6 +735,11 @@ const Desk = {
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your approval';
       if (subEl) subEl.textContent = 'Chief Engineer / Plant Manager authorization required before issuing spares';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Pending Approval: ${docs.length}</span>`;
+    } else if (filter === 'Unposted Document Edit') {
+      docs = allDocs.filter(d => ['draft', 'validated', 'approved'].includes((d.status || '').toLowerCase()));
+      if (titleEl) titleEl.textContent = 'Unposted Material Issues - Document Edit';
+      if (subEl) subEl.textContent = 'Edit unposted requisition notes, quantities, destination codes, and requesting departments prior to posting';
+      if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Unposted Documents: ${docs.length}</span>`;
     } else if (filter === 'Posting') {
       docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'approved');
       if (titleEl) titleEl.textContent = 'Following Documents are approved and ready for posting to FIFO Ledger';
@@ -769,7 +783,7 @@ const Desk = {
         statusLabel = 'Cancelled';
       }
 
-      const canEdit = (rawStatus === 'Draft' || rawStatus === 'Validated');
+      const canEdit = (rawStatus !== 'Posted' && rawStatus !== 'Cancelled');
 
       html += `
         <tr>
@@ -825,6 +839,99 @@ const Desk = {
           Desk.showToast(res.message, true);
         }
       });
+  },
+
+  openEditReceipt(docId) {
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          const doc = res.data.document;
+          const items = res.data.items || [];
+          const firstItem = items[0] || {};
+
+          document.getElementById('editReceiptDocId').value = doc.id;
+          document.getElementById('editReceiptDocNo').value = doc.doc_no;
+          document.getElementById('editReceiptDocStatus').value = doc.status;
+          document.getElementById('editReceiptSupplier').value = doc.receipt_from || '';
+          document.getElementById('editReceiptWarehouse').value = doc.warehouse || doc.destination_code || 'WH 831.00 --VICTORIA WAREHOUSE';
+          document.getElementById('editReceiptItemName').value = firstItem.item_name ? `${firstItem.sku} - ${firstItem.item_name}` : 'Item';
+          document.getElementById('editReceiptQty').value = firstItem.quantity || 1;
+          document.getElementById('editReceiptRemarks').value = doc.remarks || '';
+
+          Desk.openModal('modalEditReceipt');
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
+  },
+
+  loadPostingTab() {
+    const tbody = document.getElementById('postingTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">Loading approved documents for posting...</td></tr>`;
+
+    Promise.all([
+      fetch(`${this.baseUrl}/api/inventory.php?action=get_documents&type=GRN`).then(r => r.json()),
+      fetch(`${this.baseUrl}/api/inventory.php?action=get_documents&type=ISSUE`).then(r => r.json())
+    ]).then(([resGrn, resIssue]) => {
+      const grnDocs = (resGrn.success && resGrn.data && resGrn.data.documents) ? resGrn.data.documents : [];
+      const issueDocs = (resIssue.success && resIssue.data && resIssue.data.documents) ? resIssue.data.documents : [];
+
+      const approvedGrn = grnDocs.filter(d => (d.status || '').toLowerCase() === 'approved');
+      const approvedIssues = issueDocs.filter(d => (d.status || '').toLowerCase() === 'approved');
+      const allApproved = [...approvedGrn, ...approvedIssues].sort((a, b) => b.id - a.id);
+
+      const badgeEl = document.getElementById('postingHeaderBadge');
+      if (badgeEl) {
+        badgeEl.innerHTML = `<span class="badge badge-success" style="font-size: 11px;">Ready to Post: ${allApproved.length}</span>`;
+      }
+
+      if (allApproved.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 36px 20px; color: #64748b; font-size: 13px;">No approved documents currently awaiting FIFO posting.</td></tr>`;
+        return;
+      }
+
+      let html = '';
+      allApproved.forEach(d => {
+        const isGrn = (d.doc_type || 'GRN').toUpperCase() === 'GRN';
+        const typeBadge = isGrn 
+          ? `<span class="desk-badge" style="background: #e0f2fe; color: #0369a1; font-weight: 600;">Receipt (GRN)</span>`
+          : `<span class="desk-badge" style="background: #fef3c7; color: #92400e; font-weight: 600;">Issue (Requisition)</span>`;
+        const party = isGrn ? (d.receipt_from || 'Supplier') : (d.department_code || '-');
+        const dest = isGrn ? (d.warehouse || 'Warehouse') : (d.destination_code || '-');
+        const total = parseFloat(d.invoice_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+        html += `
+          <tr>
+            <td>${typeBadge}</td>
+            <td><strong>${d.doc_no}</strong></td>
+            <td>${d.doc_date}</td>
+            <td>${party}</td>
+            <td>${dest}</td>
+            <td>${d.item_count || 1} item(s) &bull; <strong>Rs. ${total}</strong></td>
+            <td>
+              <span class="desk-badge badge-success" style="display: inline-flex; align-items: center; gap: 4px;">
+                <span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:currentColor;"></span>
+                Ready to Post
+              </span>
+            </td>
+            <td>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})">Inspect</button>
+                <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id}); setTimeout(() => Desk.loadPostingTab(), 500);">
+                  🚀 Post to FIFO
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }).catch(err => {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #ef4444; padding: 24px;">Failed to load documents: ${err.message}</td></tr>`;
+    });
   },
 
   viewDocDetail(docId) {
