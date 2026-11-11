@@ -637,23 +637,19 @@ require_once __DIR__ . '/views/layouts/header.php';
             <input type="hidden" name="series" id="grnSeries" value="GRN-.YYYY.-">
             <input type="hidden" name="stock_entry_type" id="grnStockEntryType" value="Material Receipt">
 
-            <!-- Posting Date & Time Section -->
+            <!-- Delivery Date & Acc Date Section -->
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <span style="font-size: 13px; font-weight: 600; color: #1f272e;">Posting Date &amp; Time</span>
-                <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-                  <input type="checkbox" id="grnEditPosting" onchange="Desk.toggleEditPostingDate('grn', this.checked)" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
-                  Edit Posting Date and Time
-                </label>
+              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 12px;">
+                Delivery &amp; Accounting Dates
               </div>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
                 <div>
-                  <label class="frappe-label">Posting Date</label>
-                  <input type="date" name="posting_date" id="grnPostingDate" class="frappe-control" readonly>
+                  <label class="frappe-label">Delivery Date <span style="color: #e02424;">*</span></label>
+                  <input type="date" name="delivery_date" id="grnDeliveryDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
                 </div>
                 <div>
-                  <label class="frappe-label">Posting Time</label>
-                  <input type="time" step="1" name="posting_time" id="grnPostingTime" class="frappe-control" readonly>
+                  <label class="frappe-label">Acc Date <span style="color: #e02424;">*</span></label>
+                  <input type="date" name="acc_date" id="grnAccDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
                 </div>
               </div>
             </div>
@@ -1059,23 +1055,19 @@ require_once __DIR__ . '/views/layouts/header.php';
             <input type="hidden" name="series" id="issueSeries" value="MRA-.YYYY.-">
             <input type="hidden" name="stock_entry_type" id="issueStockEntryType" value="Material Issue">
 
-            <!-- Posting Date & Time Section -->
+            <!-- Delivery Date & Acc Date Section -->
             <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <span style="font-size: 13px; font-weight: 600; color: #1f272e;">Posting Date &amp; Time</span>
-                <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-                  <input type="checkbox" id="issueEditPosting" onchange="Desk.toggleEditPostingDate('issue', this.checked)" style="width: 14px; height: 14px; accent-color: #18181b; cursor: pointer;">
-                  Edit Posting Date and Time
-                </label>
+              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 12px;">
+                Delivery &amp; Accounting Dates
               </div>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
                 <div>
-                  <label class="frappe-label">Posting Date</label>
-                  <input type="date" name="posting_date" id="issuePostingDate" class="frappe-control" readonly>
+                  <label class="frappe-label">Delivery Date <span style="color: #e02424;">*</span></label>
+                  <input type="date" name="delivery_date" id="issueDeliveryDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
                 </div>
                 <div>
-                  <label class="frappe-label">Posting Time</label>
-                  <input type="time" step="1" name="posting_time" id="issuePostingTime" class="frappe-control" readonly>
+                  <label class="frappe-label">Acc Date <span style="color: #e02424;">*</span></label>
+                  <input type="date" name="acc_date" id="issueAccDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
                 </div>
               </div>
             </div>

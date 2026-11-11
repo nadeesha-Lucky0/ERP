@@ -3967,12 +3967,11 @@ const Desk = {
     const now = new Date();
     const pad = n => String(n).padStart(2, '0');
     const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    const dateEl = document.getElementById(`${context}PostingDate`);
-    const timeEl = document.getElementById(`${context}PostingTime`);
-    if (dateEl && !dateEl.value) dateEl.value = dateStr;
-    if (timeEl && !timeEl.value) timeEl.value = timeStr;
+    const delivEl = document.getElementById(`${context}DeliveryDate`);
+    const accEl = document.getElementById(`${context}AccDate`);
+    if (delivEl && !delivEl.value) delivEl.value = dateStr;
+    if (accEl && !accEl.value) accEl.value = dateStr;
 
     // Load lookups if needed
     const lookups = await this.loadStockEntryLookups();
@@ -4598,10 +4597,14 @@ const Desk = {
       return;
     }
 
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+
     const series = document.getElementById(`${context}Series`)?.value || 'MAT-STE-.YYYY.-';
     const entryType = document.getElementById(`${context}StockEntryType`)?.value || (context === 'grn' ? 'Material Receipt' : 'Material Issue');
-    const postingDate = document.getElementById(`${context}PostingDate`)?.value || '';
-    const postingTime = document.getElementById(`${context}PostingTime`)?.value || '';
+    const deliveryDate = document.getElementById(`${context}DeliveryDate`)?.value || todayStr;
+    const accDate = document.getElementById(`${context}AccDate`)?.value || todayStr;
     const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     const partyName = document.getElementById(`${context}PartyName`)?.value || '';
@@ -4624,7 +4627,7 @@ const Desk = {
       };
     });
 
-    let fullRemarks = `[Type: ${entryType}] [Posting: ${postingDate} ${postingTime}]`;
+    let fullRemarks = `[Type: ${entryType}] [Acc: ${accDate}] [Deliv: ${deliveryDate}]`;
     if (supplierRef) fullRemarks += ` [Supplier Ref: ${supplierRef}]`;
     if (invoiceDate) fullRemarks += ` [Inv Date: ${invoiceDate}]`;
     if (remarks) fullRemarks += ` ${remarks}`;
@@ -4634,8 +4637,8 @@ const Desk = {
     fd.append('doc_type', docType);
     fd.append('series', series);
     fd.append('stock_entry_type', entryType);
-    fd.append('acc_date', postingDate);
-    fd.append('delivery_date', postingDate);
+    fd.append('acc_date', accDate);
+    fd.append('delivery_date', deliveryDate);
     fd.append('warehouse', defWh);
     fd.append('receipt_from', partyName);
     fd.append('order_reference', poRef);
@@ -4777,6 +4780,14 @@ const Desk = {
     const ccSel = document.getElementById(`${context}CostCenterSelect`);
     if (ccSel) ccSel.value = '';
 
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+    const delivEl = document.getElementById(`${context}DeliveryDate`);
+    const accEl = document.getElementById(`${context}AccDate`);
+    if (delivEl) delivEl.value = todayStr;
+    if (accEl) accEl.value = todayStr;
+
     this.setSelectedCreateDoc(context, defaultDoc);
     this.setSelectedGetItemsFrom(context, '');
     this.initStockEntryForm(context);
@@ -4878,6 +4889,14 @@ const Desk = {
     if (supSel) supSel.value = '';
     const ccSel = document.getElementById(`${context}CostCenterSelect`);
     if (ccSel) ccSel.value = '';
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+    const delivEl = document.getElementById(`${context}DeliveryDate`);
+    const accEl = document.getElementById(`${context}AccDate`);
+    if (delivEl) delivEl.value = todayStr;
+    if (accEl) accEl.value = todayStr;
 
     // Close any open dropdown menu
     document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
