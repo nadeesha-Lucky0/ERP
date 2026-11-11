@@ -3385,6 +3385,87 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
     </div>
 
+    <!-- ============================================================
+         PANE: Item & Material Codes (Code Main Tab)
+         ============================================================ -->
+    <div id="tab-codes" class="tab-pane" style="display: none;">
+      <div class="workspace-header">
+        <div class="workspace-title-box">
+          <h1>Item &amp; Material Codes Directory</h1>
+          <div class="workspace-subtitle">Master CEB Inventory Items, Technical Specifications &amp; Stock SKU Registry</div>
+        </div>
+        <div class="workspace-actions">
+          <button type="button" class="desk-btn desk-btn-primary" onclick="Desk.openRequestItemCodeModal('grn')">
+            <span class="desk-btn-icon"><?= Icon::get('plus', 14) ?></span>
+            <span>+ Request &amp; Add New Code</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search, Filter & Quick Stats Bar -->
+      <div class="desk-card" style="margin-bottom: 16px; padding: 14px 18px;">
+        <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: space-between;">
+          <!-- Multi-format Search Input -->
+          <div style="position: relative; flex: 1; min-width: 320px; max-width: 540px;">
+            <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 13px;">🔍</span>
+            <input type="text" 
+                   id="masterCodesSearchInput" 
+                   class="frappe-control" 
+                   style="height: 36px; padding-left: 36px; padding-right: 30px; font-size: 12.5px; border-radius: 6px; width: 100%;"
+                   placeholder="Search code or name (e.g. 10101000, 01-01-01-000, 1-01, Bearing...)"
+                   oninput="Desk.filterCodesTab(this.value)">
+            <span id="codesSearchClearBtn" 
+                  onclick="document.getElementById('masterCodesSearchInput').value=''; Desk.filterCodesTab('');"
+                  style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #94a3b8; font-size: 16px;">&times;</span>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;" id="codesCategoryPills">
+            <button type="button" class="desk-tab-pill active" onclick="Desk.setCodesCategoryFilter('', this)">All Categories</button>
+            <button type="button" class="desk-tab-pill" onclick="Desk.setCodesCategoryFilter('Mechanical', this)">Mechanical</button>
+            <button type="button" class="desk-tab-pill" onclick="Desk.setCodesCategoryFilter('Electrical', this)">Electrical</button>
+            <button type="button" class="desk-tab-pill" onclick="Desk.setCodesCategoryFilter('Civil', this)">Civil</button>
+            <button type="button" class="desk-tab-pill" onclick="Desk.setCodesCategoryFilter('Consumable', this)">Consumables</button>
+            <button type="button" class="desk-tab-pill" onclick="Desk.setCodesCategoryFilter('Lubricant', this)">Lubricants</button>
+            <button type="button" class="desk-tab-pill" onclick="Desk.setCodesCategoryFilter('Instrumentation', this)">Instrumentation</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Master Codes Table Card -->
+      <div class="desk-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid #e2e8f0; background: #f8fafc;">
+          <div style="font-size: 13px; font-weight: 600; color: #1e293b;" id="codesCountBadge">
+            Loading item codes...
+          </div>
+          <div style="font-size: 11.5px; color: #64748b;">
+            Intelligent format search active (hyphens, raw digits, leading zeros)
+          </div>
+        </div>
+        <div class="desk-table-wrapper" style="max-height: 560px; overflow-y: auto;">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th style="width: 50px; text-align: center;">#</th>
+                <th style="width: 170px;">Item Code (SKU)</th>
+                <th>Item Description / Name</th>
+                <th style="width: 140px;">Category</th>
+                <th style="width: 90px; text-align: center;">UOM</th>
+                <th style="width: 140px; text-align: right;">Std Unit Rate</th>
+                <th style="width: 100px; text-align: center;">Status</th>
+                <th style="width: 120px; text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="codesTableBody">
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 30px; color: #64748b;">Loading codes directory...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <?php if ($isAdmin): ?>
       <!-- ============================================================
          PANE 16: Administration & Governance

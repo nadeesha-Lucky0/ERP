@@ -168,6 +168,26 @@ try {
             Response::success('Materials found', ['materials' => $materials]);
             break;
 
+        case 'get_all_master_codes':
+            $central = Database::getConnection();
+            $sql = "SELECT id, formatted_code as sku, raw_code, item_name, specifications, uom, unit_price, status, created_at,
+                           CASE tier1 
+                             WHEN 1 THEN 'Mechanical'
+                             WHEN 2 THEN 'Electrical'
+                             WHEN 3 THEN 'Civil'
+                             WHEN 4 THEN 'Consumable'
+                             WHEN 5 THEN 'Lubricant'
+                             WHEN 6 THEN 'Instrumentation'
+                             ELSE 'General'
+                           END as category
+                    FROM fifo_master_items 
+                    WHERE status = 'ACTIVE'
+                    ORDER BY id DESC";
+            $stmt = $central->query($sql);
+            $items = $stmt->fetchAll();
+            Response::success('Master codes loaded', ['codes' => $items]);
+            break;
+
         // -------------------------------------------------------------
         // Request & Add New Material Item Code
         // -------------------------------------------------------------

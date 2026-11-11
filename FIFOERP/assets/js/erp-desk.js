@@ -298,6 +298,9 @@ const Desk = {
       case 'tab-dest-codes':
         this.loadDestinationCodes();
         break;
+      case 'tab-codes':
+        this.loadCodesTab();
+        break;
       case 'tab-admin':
         this.switchAdminSubTab(adminSubToActivate || this.currentAdminSubTab || sessionStorage.getItem('fifoerp_active_admin_sub') || 'admin-sub-locations');
         break;
@@ -2396,6 +2399,171 @@ const Desk = {
           tbody.innerHTML = html;
         }
       });
+  },
+
+  // -----------------------------------------------------------------
+  // Codes Directory Main Tab (Central Master Materials Catalog)
+  // -----------------------------------------------------------------
+  cachedMasterCodes: [],
+  currentCodesCategory: '',
+  currentCodesQuery: '',
+
+  loadCodesTab() {
+    const tbody = document.getElementById('codesTableBody');
+    const countBadge = document.getElementById('codesCountBadge');
+    if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 28px; color: #64748b;">Loading Master Item Codes...</td></tr>`;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_all_master_codes`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && Array.isArray(res.data?.codes)) {
+          this.cachedMasterCodes = res.data.codes;
+          this.renderCodesTable();
+        } else {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: #ef4444;">Failed to load item codes.</td></tr>`;
+        }
+      })
+      .catch(() => {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px; color: #ef4444;">Error connecting to server.</td></tr>`;
+      });
+  },
+
+  setCodesCategoryFilter(category, btnEl) {
+    this.currentCodesCategory = category;
+    if (btnEl) {
+      document.querySelectorAll('#codesCategoryPills .desk-tab-pill').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+    }
+    this.renderCodesTable();
+  },
+
+  filterCodesTab(query) {
+    this.currentCodesQuery = query || '';
+    const clearBtn = document.getElementById('codesSearchClearBtn');
+    if (clearBtn) {
+      clearBtn.style.display = query ? 'inline-block' : 'none';
+    }
+    this.renderCodesTable();
+  },
+
+  renderCodesTable() {
+    const tbody = document.getElementById('codesTableBody');
+    const countBadge = document.getElementById('codesCountBadge');
+    if (!tbody) return;
+
+    const q = (this.currentCodesQuery || '').trim();
+    const cat = this.currentCodesCategory || '';
+
+    let items = (this.cachedMasterCodes || []).filter(item => {
+      if (cat && item.category !== cat) return false;
+      if (q && !Desk.matchesItemCodeOrName(item, q)) return false;
+      return true;
+    });
+
+    if (countBadge) {
+      const catLabel = cat ? ` [${cat}]` : '';
+      const filterLabel = q ? ` matching "${Desk.escapeHtml(q)}"` : '';
+      countBadge.innerHTML = `Showing <strong>${items.length}</strong> of <strong>${(this.cachedMasterCodes || []).length}</strong> Master Codes${catLabel}${filterLabel}`;
+    }
+
+    if (items.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 36px; color: #64748b;">
+            <div style="font-size: 28px; margin-bottom: 6px;">🔍</div>
+            <div style="font-size: 13px; font-weight: 600; color: #1e293b;">No master item codes found</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">No codes match your search criteria. You can request to register a new code anytime.</div>
+            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 14px;" onclick="Desk.openRequestItemCodeModal('grn', '${Desk.escapeHtml(q)}')">
+              + Request &amp; Add New Code
+            </button>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    let html = '';
+    items.forEach((item, idx) => {
+      const rateFormatted = item.unit_price ? `Rs. ${parseFloat(item.unit_price).toFixed(2)}` : '<span style="color: #94a3b8;">-</span>';
+      const categoryColor = {
+        'Mechanical': '#0284c7',
+        'Electrical': '#d97706',
+        'Civil': '#16a34a',
+        'Consumable': '#9333ea',
+        'Lubricant': '#ea580c',
+        'Instrumentation': '#0d9488'
+      }[item.category] || '#64748b';
+
+      html += `
+        <tr>
+          <td style="text-align: center; color: #64748b; font-size: 11.5px; font-weight: 500;">${idx + 1}</td>
+          <td>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <code style="font-weight: 700; color: #0f172a; font-size: 12px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-family: monospace;">${Desk.escapeHtml(item.sku)}</code>
+              <button type="button" 
+                      onclick="Desk.copyItemCodeToClipboard('${Desk.escapeHtml(item.sku)}')" 
+                      title="Copy Code" 
+                      style="border: none; background: transparent; cursor: pointer; color: #64748b; font-size: 12px; padding: 1px 3px;"
+                      onmouseenter="this.style.color='#0f172a'"
+                      onmouseleave="this.style.color='#64748b'">📋</button>
+            </div>
+            ${item.raw_code && item.raw_code !== item.sku ? `<div style="font-size: 10.5px; color: #94a3b8; font-family: monospace; margin-top: 2px;">Raw: ${Desk.escapeHtml(item.raw_code)}</div>` : ''}
+          </td>
+          <td>
+            <div style="font-weight: 600; color: #1e293b; font-size: 12.5px;">${Desk.escapeHtml(item.item_name || '')}</div>
+            ${item.specifications ? `<div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">${Desk.escapeHtml(item.specifications)}</div>` : ''}
+          </td>
+          <td>
+            <span style="display: inline-block; font-size: 11px; font-weight: 600; color: ${categoryColor}; background: ${categoryColor}15; padding: 2px 8px; border-radius: 12px; border: 1px solid ${categoryColor}30;">
+              ${Desk.escapeHtml(item.category || 'General')}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <span class="desk-badge" style="background: #f1f5f9; color: #475569; font-size: 11px;">${Desk.escapeHtml(item.uom || 'Nos')}</span>
+          </td>
+          <td style="text-align: right; font-weight: 600; font-size: 12px; color: #0284c7;">
+            ${rateFormatted}
+          </td>
+          <td style="text-align: center;">
+            <span class="desk-badge badge-approved" style="font-size: 10.5px;">${Desk.escapeHtml(item.status || 'ACTIVE')}</span>
+          </td>
+          <td style="text-align: center;">
+            <button type="button" 
+                    class="desk-btn desk-btn-default desk-btn-sm" 
+                    style="font-size: 11px; padding: 3px 8px;" 
+                    onclick="Desk.useCodeInStockEntry('${Desk.escapeHtml(item.sku)}')">
+              Use in GRN
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  },
+
+  copyItemCodeToClipboard(code) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => {
+        this.showToast(`Code copied: ${code}`);
+      }).catch(() => {
+        this.showToast(`Code: ${code}`);
+      });
+    } else {
+      this.showToast(`Code: ${code}`);
+    }
+  },
+
+  useCodeInStockEntry(sku) {
+    this.switchTab('tab-receipts');
+    setTimeout(() => {
+      const state = this.stockEntryState['grn'];
+      if (state && state.items.length > 0) {
+        this.selectItemCombo('grn', state.items[0].id, sku);
+      }
+    }, 150);
   },
 
   // -----------------------------------------------------------------
@@ -5960,6 +6128,24 @@ const Desk = {
           uom: newItem.uom || 'Nos',
           unit_price: newItem.unit_price || 0
         });
+
+        // Update cachedMasterCodes for Code tab
+        if (Array.isArray(this.cachedMasterCodes)) {
+          this.cachedMasterCodes.unshift({
+            id: newItem.id || Date.now(),
+            sku: newItem.sku,
+            raw_code: newItem.raw_code || newItem.sku,
+            item_name: newItem.item_name,
+            specifications: specs,
+            uom: newItem.uom || 'Nos',
+            unit_price: newItem.unit_price || 0,
+            status: 'ACTIVE',
+            category: category
+          });
+          if (this.currentTab === 'tab-codes') {
+            this.renderCodesTable();
+          }
+        }
 
         // Insert or populate into active items table
         const ctx = this.activeItemCodeContext || 'grn';

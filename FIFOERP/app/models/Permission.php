@@ -545,6 +545,9 @@ class Permission {
     }
 
     public function canAccessTab(string $tabId, int $roleId, ?int $userId = null): bool {
+        if ($tabId === 'tab-codes') {
+            return true;
+        }
         $role = ($roleId > 0) ? (new Role())->findById($roleId) : null;
         if ($role && $role['name'] === 'super_admin') {
             return true;
