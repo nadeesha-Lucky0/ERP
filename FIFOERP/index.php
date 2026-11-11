@@ -766,7 +766,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default Warehouse
               </div>
               <div id="grnWhSection" style="display: block; padding: 12px 0 6px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
                   <div id="grnSourceWhGroup" style="display: none;">
                     <label class="frappe-label">Default Source Warehouse</label>
                     <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('grn')">
@@ -1133,7 +1133,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default Warehouse
               </div>
               <div id="issueWhSection" style="display: block; padding: 12px 0 6px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
                   <div id="issueSourceWhGroup" style="display: block;">
                     <label class="frappe-label">Default Source Warehouse</label>
                     <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('issue')">
@@ -3498,39 +3498,38 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 <!-- Modal: Select Purchase Order with Predefined Suppliers -->
 <div id="modalGetItemsFromPO" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 580px; width: 90%; border-radius: 8px; background: #fff;">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+  <div class="desk-modal" style="max-width: 660px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
       <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Purchase Order &amp; Supplier</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closePoSelectionModal()">&times;</button>
     </div>
-    <div class="desk-modal-body" style="padding: 20px 24px;">
+    <div class="desk-modal-body" style="padding: 22px 26px;">
       
       <div style="margin-bottom: 16px;">
         <label class="frappe-label">Predefined Supplier <span style="color: #e02424;">*</span></label>
-        <select id="modalPoSupplierSelect" class="frappe-control" style="font-weight: 500;" onchange="Desk.onModalSupplierChanged(this.value)">
+        <select id="modalPoSupplierSelect" class="frappe-control frappe-select" style="font-weight: 500;" onchange="Desk.onModalSupplierChanged(this.value)">
           <option value="">-- Select Predefined Supplier --</option>
         </select>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px;">
-        <div>
-          <label class="frappe-label">Purchase Order Ref <span style="color: #e02424;">*</span></label>
-          <input type="text" id="modalPoRefInput" class="frappe-control" placeholder="e.g. PO-2026-081" value="PO-2026-081">
-        </div>
-        <div>
-          <label class="frappe-label">Target Warehouse</label>
-          <select id="modalPoWarehouseSelect" class="frappe-control frappe-select">
-            <option value="" selected>-- Select Warehouse --</option>
-            <option value="WH 832.00 --KOTMALE WAREHOUSE">WH 832.00 --KOTMALE WAREHOUSE</option>
-            <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
-            <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
-            <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
-          </select>
-        </div>
+      <div style="margin-bottom: 16px;">
+        <label class="frappe-label">Target Warehouse</label>
+        <select id="modalPoWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
+          <option value="" selected>-- Select Warehouse --</option>
+          <option value="WH 832.00 --KOTMALE WAREHOUSE">WH 832.00 --KOTMALE WAREHOUSE</option>
+          <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
+          <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
+          <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 8px;">
+        <label class="frappe-label">Purchase Order Ref <span style="color: #e02424;">*</span></label>
+        <input type="text" id="modalPoRefInput" class="frappe-control" placeholder="e.g. PO-2026-081" value="PO-2026-081">
       </div>
 
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 24px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closePoSelectionModal()">Cancel</button>
       <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromPO()">Apply to Stock Entry</button>
     </div>
