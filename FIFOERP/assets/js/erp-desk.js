@@ -557,7 +557,7 @@ const Desk = {
           <td><strong>${d.doc_no}</strong></td>
           <td>${d.doc_date}</td>
           <td><strong>${d.receipt_from || '-'}</strong></td>
-          <td>${d.warehouse || 'Main Store Bay-01'}</td>
+          <td>${d.warehouse || 'WH 832.00 --KOTMALE WAREHOUSE'}</td>
           <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
           <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
           <td>
@@ -2694,7 +2694,7 @@ const Desk = {
     formData.append('receipt_from', receiptFrom);
     formData.append('receipt_details', receiptDetails);
     formData.append('source_dept', document.getElementById('grnSourceDept')?.value || '832.00');
-    formData.append('warehouse', document.getElementById('grnWarehouse')?.value || 'Main Store Bay-01');
+    formData.append('warehouse', document.getElementById('grnWarehouse')?.value || 'WH 832.00 --KOTMALE WAREHOUSE');
     formData.append('base_on', document.getElementById('grnBaseOn')?.value || 'PO');
     formData.append('delivery_date', document.getElementById('grnDeliveryDate')?.value || '');
     formData.append('acc_date', document.getElementById('grnAccDate')?.value || '');
@@ -3917,10 +3917,10 @@ const Desk = {
       const defSource = document.getElementById(`${context}DefSourceWh`);
       const defTarget = document.getElementById(`${context}DefTargetWh`);
       const warehouses = lookups.warehouses || [
-        'Main Store Bay-01',
-        'Mechanical Stores',
-        'Electrical Supplies Sub-Store',
-        'Central Warehouse - Main Store'
+        'WH 832.00 --KOTMALE WAREHOUSE',
+        'WH_CON_KOT --CONSUMABLES - KOTMALE PS',
+        'WH_DMG_KOT --DAMAGES - KOTMALE PS',
+        'WH_SP_KOT --SPARE WAREHOUSE - KOTMALE'
       ];
 
       const populateWh = (sel, defaultVal) => {
@@ -3935,8 +3935,8 @@ const Desk = {
         });
       };
 
-      populateWh(defSource, 'Main Store Bay-01');
-      populateWh(defTarget, 'Main Store Bay-01');
+      populateWh(defSource, 'WH 832.00 --KOTMALE WAREHOUSE');
+      populateWh(defTarget, 'WH 832.00 --KOTMALE WAREHOUSE');
 
       // Populate Suppliers
       const supSel = document.getElementById(`${context}SupplierSelect`);
@@ -3997,7 +3997,12 @@ const Desk = {
 
     const state = this.stockEntryState[context];
     const lookups = this.cachedStockLookups || { warehouses: [], materials: [] };
-    const warehouses = lookups.warehouses || ['Main Store Bay-01', 'Mechanical Stores', 'Electrical Supplies Sub-Store'];
+    const warehouses = lookups.warehouses || [
+      'WH 832.00 --KOTMALE WAREHOUSE',
+      'WH_CON_KOT --CONSUMABLES - KOTMALE PS',
+      'WH_DMG_KOT --DAMAGES - KOTMALE PS',
+      'WH_SP_KOT --SPARE WAREHOUSE - KOTMALE'
+    ];
     const materials = lookups.materials || [];
 
     if (state.items.length === 0) {
@@ -4073,7 +4078,7 @@ const Desk = {
     const state = this.stockEntryState[context];
     const defSource = document.getElementById(`${context}DefSourceWh`)?.value || '';
     const defTarget = document.getElementById(`${context}DefTargetWh`)?.value || '';
-    const defWh = (context === 'grn' ? defTarget : defSource) || 'Main Store Bay-01';
+    const defWh = (context === 'grn' ? defTarget : defSource) || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     state.items.push({
       id: state.nextId++,
@@ -4248,7 +4253,7 @@ const Desk = {
         existing.qty = (parseFloat(existing.qty) || 0) + 1;
         this.showToast(`Updated qty for ${mat.sku} (${existing.qty})`);
       } else {
-        const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'Main Store Bay-01';
+        const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
         state.items.push({
           id: state.nextId++,
           warehouse: defWh,
@@ -4261,7 +4266,7 @@ const Desk = {
         this.showToast(`Scanned: ${mat.sku} - ${mat.item_name}`);
       }
     } else {
-      const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'Main Store Bay-01';
+      const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
       state.items.push({
         id: state.nextId++,
         warehouse: defWh,
@@ -4344,7 +4349,7 @@ const Desk = {
     const state = this.stockEntryState[ctx];
     const defSource = document.getElementById(`${ctx}DefSourceWh`)?.value || '';
     const defTarget = document.getElementById(`${ctx}DefTargetWh`)?.value || '';
-    const defWh = (ctx === 'grn' ? defTarget : defSource) || 'Main Store Bay-01';
+    const defWh = (ctx === 'grn' ? defTarget : defSource) || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     let count = 0;
     document.querySelectorAll('.se-multi-chk:checked').forEach(chk => {
@@ -4425,7 +4430,7 @@ const Desk = {
         const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g, ''));
         const sku = parts[0];
         const name = parts[1] || '';
-        const wh = parts[2] || 'Main Store Bay-01';
+        const wh = parts[2] || 'WH 832.00 --KOTMALE WAREHOUSE';
         const qty = parseFloat(parts[3]) || 1.0;
         const rate = parseFloat(parts[4]) || 0.0;
 
@@ -4482,7 +4487,7 @@ const Desk = {
     const entryType = document.getElementById(`${context}StockEntryType`)?.value || (context === 'grn' ? 'Material Receipt' : 'Material Issue');
     const postingDate = document.getElementById(`${context}PostingDate`)?.value || '';
     const postingTime = document.getElementById(`${context}PostingTime`)?.value || '';
-    const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'Main Store Bay-01';
+    const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     const partyName = document.getElementById(`${context}PartyName`)?.value || '';
     const poRef = document.getElementById(`${context}PoRef`)?.value || '';
@@ -4657,7 +4662,7 @@ const Desk = {
     const ctx = this.activePoContext || 'grn';
     const supplier = document.getElementById('modalPoSupplierSelect')?.value || '';
     const poRef = document.getElementById('modalPoRefInput')?.value || '';
-    const targetWh = document.getElementById('modalPoWarehouseSelect')?.value || 'Main Store Bay-01';
+    const targetWh = document.getElementById('modalPoWarehouseSelect')?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     if (!supplier) {
       this.showToast('Please select a supplier.', true);
@@ -4774,7 +4779,7 @@ const Desk = {
     const ctx = this.activeCostCenterContext || 'issue';
     const selCode = document.getElementById('modalCostCenterSelector')?.value || '';
     const state = this.stockEntryState[ctx];
-    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'Main Store Bay-01';
+    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     let count = 0;
     document.querySelectorAll('#modalCostCenterItemsBody tr').forEach(tr => {
@@ -4906,7 +4911,7 @@ const Desk = {
     const ctx = this.activeSectionContext || 'issue';
     const selCode = document.getElementById('modalSectionSelector')?.value || '';
     const state = this.stockEntryState[ctx];
-    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'Main Store Bay-01';
+    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
 
     let count = 0;
     document.querySelectorAll('#modalSectionItemsBody tr').forEach(tr => {

@@ -3520,10 +3520,10 @@ require_once __DIR__ . '/views/layouts/header.php';
         <div>
           <label class="frappe-label">Target Warehouse</label>
           <select id="modalPoWarehouseSelect" class="frappe-control">
-            <option value="Main Store Bay-01" selected>Main Store Bay-01</option>
-            <option value="Mechanical Stores">Mechanical Stores</option>
-            <option value="Electrical Supplies Sub-Store">Electrical Supplies Sub-Store</option>
-            <option value="Central Warehouse - Main Store">Central Warehouse - Main Store</option>
+            <option value="WH 832.00 --KOTMALE WAREHOUSE" selected>WH 832.00 --KOTMALE WAREHOUSE</option>
+            <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
+            <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
+            <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
           </select>
         </div>
       </div>

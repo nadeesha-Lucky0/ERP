@@ -102,12 +102,10 @@ try {
 
             // Warehouses
             $warehouses = [
-                'Main Store Bay-01',
-                'Mechanical Stores',
-                'Electrical Supplies Sub-Store',
-                'Central Warehouse - Main Store',
-                'Chemical & Oil Depot Bay-03',
-                'Heavy Yard Bay-04'
+                'WH 832.00 --KOTMALE WAREHOUSE',
+                'WH_CON_KOT --CONSUMABLES - KOTMALE PS',
+                'WH_DMG_KOT --DAMAGES - KOTMALE PS',
+                'WH_SP_KOT --SPARE WAREHOUSE - KOTMALE'
             ];
 
             // Common materials
