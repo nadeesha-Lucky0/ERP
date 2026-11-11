@@ -585,8 +585,9 @@ require_once __DIR__ . '/views/layouts/header.php';
                   Create <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="grnCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createSeDuplicate('grn')">Duplicate</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.resetStockEntryForm('grn')">New Stock Entry</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('grn', 'GRN')">GRN</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('grn', 'GRSP')">GRSP</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('grn', 'MRA')">MRA</a>
                 </div>
               </div>
 
@@ -622,7 +623,10 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div style="margin-bottom: 16px;">
                   <label class="frappe-label">Series <span style="color: #e02424;">*</span></label>
                   <select name="series" id="grnSeries" class="frappe-control" style="font-weight: 500;">
-                    <option value="MAT-STE-.YYYY.-" selected>MAT-STE-.YYYY.-</option>
+                    <option value="GRN-.YYYY.-" selected>GRN-.YYYY.-</option>
+                    <option value="GRSP-.YYYY.-">GRSP-.YYYY.-</option>
+                    <option value="MRA-.YYYY.-">MRA-.YYYY.-</option>
+                    <option value="MAT-STE-.YYYY.-">MAT-STE-.YYYY.-</option>
                     <option value="MAT-STE-RET-.YYYY.-">MAT-STE-RET-.YYYY.-</option>
                   </select>
                 </div>
@@ -930,8 +934,9 @@ require_once __DIR__ . '/views/layouts/header.php';
                   Create <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createSeDuplicate('issue')">Duplicate</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.resetStockEntryForm('issue')">New Stock Entry</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('issue', 'GRN')">GRN</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('issue', 'GRSP')">GRSP</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('issue', 'MRA')">MRA</a>
                 </div>
               </div>
 
@@ -967,7 +972,10 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div style="margin-bottom: 16px;">
                   <label class="frappe-label">Series <span style="color: #e02424;">*</span></label>
                   <select name="series" id="issueSeries" class="frappe-control" style="font-weight: 500;">
-                    <option value="MAT-STE-.YYYY.-" selected>MAT-STE-.YYYY.-</option>
+                    <option value="GRN-.YYYY.-">GRN-.YYYY.-</option>
+                    <option value="GRSP-.YYYY.-">GRSP-.YYYY.-</option>
+                    <option value="MRA-.YYYY.-" selected>MRA-.YYYY.-</option>
+                    <option value="MAT-STE-.YYYY.-">MAT-STE-.YYYY.-</option>
                     <option value="MAT-STE-RET-.YYYY.-">MAT-STE-RET-.YYYY.-</option>
                   </select>
                 </div>

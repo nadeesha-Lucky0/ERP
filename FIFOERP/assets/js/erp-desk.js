@@ -4649,6 +4649,50 @@ const Desk = {
     this.showToast('Ready for New Stock Entry.');
   },
 
+  createDocType(context, type) {
+    this.resetStockEntryForm(context);
+    const state = this.stockEntryState[context];
+    state.docTitle = `New ${type}`;
+    state.docType = type;
+    state.status = 'Not Saved';
+
+    const titleEl = document.getElementById(`${context}DocTitle`);
+    if (titleEl) {
+      titleEl.textContent = `New ${type}`;
+    }
+
+    // Update Series
+    const seriesEl = document.getElementById(`${context}Series`);
+    if (seriesEl) {
+      const matchOpt = Array.from(seriesEl.options).find(o => o.value.startsWith(type));
+      if (matchOpt) {
+        seriesEl.value = matchOpt.value;
+      }
+    }
+
+    // Set Stock Entry Type and Warehouses
+    const seTypeEl = document.getElementById(`${context}StockEntryType`);
+    if (type === 'MRA') {
+      if (seTypeEl) seTypeEl.value = 'Material Receipt';
+    } else if (type === 'GRSP') {
+      if (seTypeEl) seTypeEl.value = (context === 'issue') ? 'Material Issue' : 'Material Receipt';
+      const whTarget = document.getElementById(`${context}DefaultTargetWarehouse`);
+      if (whTarget) {
+        Array.from(whTarget.options).forEach(opt => {
+          if (opt.value.includes('WH_SP_KOT') || opt.value.toLowerCase().includes('spare')) {
+            whTarget.value = opt.value;
+          }
+        });
+      }
+    } else {
+      if (seTypeEl) seTypeEl.value = 'Material Receipt';
+    }
+
+    // Close any open dropdown menu
+    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
+    this.showToast(`New ${type} initialized.`);
+  },
+
   createSeDuplicate(context) {
     const state = this.stockEntryState[context];
     state.docTitle = 'New Stock Entry';
