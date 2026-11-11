@@ -15,8 +15,18 @@ $isAdmin = $isSuperAdmin;
 // =========================================================================
 $chartYear = (int) date('Y');
 $monthNames = [
-  1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June',
-  7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'
+  1 => 'January',
+  2 => 'February',
+  3 => 'March',
+  4 => 'April',
+  5 => 'May',
+  6 => 'June',
+  7 => 'July',
+  8 => 'August',
+  9 => 'September',
+  10 => 'October',
+  11 => 'November',
+  12 => 'December'
 ];
 $monthColors = [
   1 => '#e8a238', // Golden yellow
@@ -100,11 +110,11 @@ $permissionsMatrix = $permModel->getMatrix();
 $userPermissionsMatrix = $permModel->getUserMatrix();
 
 // Group active operational users by Station / Location for Permissions Matrix
-$rawMatrixUsers = array_values(array_filter($allUsers, fn($u) => $u['role_name'] !== 'super_admin' && (int)$u['role_id'] !== 1));
+$rawMatrixUsers = array_values(array_filter($allUsers, fn($u) => $u['role_name'] !== 'super_admin' && (int) $u['role_id'] !== 1));
 $locMapById = [];
 $locMapByCode = [];
 foreach ($locations as $loc) {
-  $locMapById[(int)$loc['id']] = $loc;
+  $locMapById[(int) $loc['id']] = $loc;
   if (!empty($loc['code'])) {
     $locMapByCode[strtoupper(trim($loc['code']))] = $loc;
   }
@@ -113,8 +123,8 @@ foreach ($locations as $loc) {
 $groupedUsersByStation = [];
 foreach ($rawMatrixUsers as $u) {
   $stName = '';
-  if (!empty($u['location_id']) && isset($locMapById[(int)$u['location_id']])) {
-    $l = $locMapById[(int)$u['location_id']];
+  if (!empty($u['location_id']) && isset($locMapById[(int) $u['location_id']])) {
+    $l = $locMapById[(int) $u['location_id']];
     $stName = $l['name'] . (!empty($l['code']) ? ' (' . $l['code'] . ')' : '');
   }
   if (empty($stName) && !empty($u['department'])) {
@@ -141,308 +151,329 @@ require_once __DIR__ . '/views/layouts/header.php';
   <main class="desk-content">
 
     <?php if (!$isAdmin): ?>
-    <!-- ============================================================
+      <!-- ============================================================
          PANE 1: Home Dashboard Workspace (Operational Power Stations Only)
          ============================================================ -->
-    <div id="tab-dashboard" class="tab-pane">
-      <div class="workspace-header" style="margin-bottom: 16px;">
-        <div class="workspace-title-box">
-          <h1>Home Desk</h1>
-          <div class="workspace-subtitle">Cumulative Transaction Values &amp; Financial Ledger Overview</div>
-        </div>
-      </div>
-
-      <!-- ============================================================
-           MAIN CUMULATIVE TRANSACTION VALUES CHART (MATCHING SCREENSHOT)
-           ============================================================ -->
-      <div class="chart-card">
-        <div class="chart-card-header">
-          <h2 class="chart-italic-title">
-            Below Chart Displays the Cumulative Transaction Values for Each Month on the Current Year
-          </h2>
-          <div class="chart-sub-meta">
-            Financial Year <?= $chartYear ?> &bull; Electricity Generation Lanka (Pvt) Ltd Operational Ledger &bull; Victoria Hydro Power Station (831)
-          </div>
-        </div>
-
-        <div class="chart-layout-grid">
-          <!-- Interactive SVG Bar Chart -->
-          <div class="chart-svg-container" id="svgChartWrapper">
-            <div id="chartTooltip" class="chart-tooltip"></div>
-            <svg viewBox="0 0 740 380" width="100%" height="380" style="overflow: visible; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <!-- Grid lines -->
-              <g class="chart-grid" stroke="#d1d5db" stroke-dasharray="2,3" stroke-width="0.8">
-                <line x1="120" y1="40" x2="680" y2="40" />
-                <line x1="120" y1="105" x2="680" y2="105" />
-                <line x1="120" y1="170" x2="680" y2="170" />
-                <line x1="120" y1="235" x2="680" y2="235" />
-                <line x1="120" y1="300" x2="680" y2="300" stroke="#475569" stroke-dasharray="0" stroke-width="1.5" />
-              </g>
-              <line x1="120" y1="35" x2="120" y2="305" stroke="#475569" stroke-width="1.5" />
-
-              <!-- Y-Axis Ticks & Labels -->
-              <g font-size="12" fill="#1e293b" text-anchor="end" font-weight="500">
-                <text x="112" y="44">$20,000,000.00</text>
-                <line x1="115" y1="40" x2="120" y2="40" stroke="#475569" stroke-width="1.5" />
-
-                <text x="112" y="109">$15,000,000.00</text>
-                <line x1="115" y1="105" x2="120" y2="105" stroke="#475569" stroke-width="1.5" />
-
-                <text x="112" y="174">$10,000,000.00</text>
-                <line x1="115" y1="170" x2="120" y2="170" stroke="#475569" stroke-width="1.5" />
-
-                <text x="112" y="239">$5,000,000.00</text>
-                <line x1="115" y1="235" x2="120" y2="235" stroke="#475569" stroke-width="1.5" />
-
-                <text x="112" y="304">$0.00</text>
-                <line x1="115" y1="300" x2="120" y2="300" stroke="#475569" stroke-width="1.5" />
-              </g>
-
-              <!-- Y-Axis Title -->
-              <text transform="rotate(-90)" x="-170" y="20" font-size="12" font-weight="600" fill="#334155" text-anchor="middle">
-                Transaction Value in LKR
-              </text>
-
-              <!-- Cluster 1: Receipts Bars -->
-              <g id="receiptsBarsGroup">
-                <?php
-                $barWidth = 14;
-                $barGap = 3;
-                $step = $barWidth + $barGap;
-                $numBars = count($monthlyTransactionData);
-                $groupWidth = ($numBars * $step) - $barGap;
-                $receiptsBaseX = 282 - ($groupWidth / 2);
-                $maxVal = 20000000.00;
-                $chartHeightPixels = 260;
-
-                $posIdx = 0;
-                foreach ($monthlyTransactionData as $m):
-                  $val = $m['receipts'];
-                  $barHeight = ($val / $maxVal) * $chartHeightPixels;
-                  if ($barHeight < 2 && $val > 0) $barHeight = 2;
-                  $xPos = $receiptsBaseX + ($posIdx * $step);
-                  $yPos = 300 - $barHeight;
-                  $posIdx++;
-                ?>
-                  <rect x="<?= round($xPos, 1) ?>" y="<?= round($yPos, 1) ?>" width="<?= $barWidth ?>" height="<?= round($barHeight, 1) ?>"
-                    fill="<?= $m['color'] ?>" class="chart-bar-rect" data-category="Receipts" data-month="<?= htmlspecialchars($m['label']) ?>"
-                    data-month-name="<?= htmlspecialchars($m['month_name']) ?>" data-val="<?= number_format($val, 2) ?>"
-                    style="cursor: pointer; transition: opacity 0.15s ease;">
-                    <title>Receipts (<?= $m['label'] ?>): Rs. <?= number_format($val, 2) ?></title>
-                  </rect>
-                <?php endforeach; ?>
-              </g>
-
-              <!-- Cluster 2: Issues Bars -->
-              <g id="issuesBarsGroup">
-                <?php
-                $issuesBaseX = 502 - ($groupWidth / 2);
-                $posIdx = 0;
-                foreach ($monthlyTransactionData as $m):
-                  $val = $m['issues'];
-                  $barHeight = ($val / $maxVal) * $chartHeightPixels;
-                  if ($barHeight < 2 && $val > 0) $barHeight = 2;
-                  $xPos = $issuesBaseX + ($posIdx * $step);
-                  $yPos = 300 - $barHeight;
-                  $posIdx++;
-                ?>
-                  <rect x="<?= round($xPos, 1) ?>" y="<?= round($yPos, 1) ?>" width="<?= $barWidth ?>" height="<?= round($barHeight, 1) ?>"
-                    fill="<?= $m['color'] ?>" class="chart-bar-rect" data-category="Issues" data-month="<?= htmlspecialchars($m['label']) ?>"
-                    data-month-name="<?= htmlspecialchars($m['month_name']) ?>" data-val="<?= number_format($val, 2) ?>"
-                    style="cursor: pointer; transition: opacity 0.15s ease;">
-                    <title>Issues (<?= $m['label'] ?>): Rs. <?= number_format($val, 2) ?></title>
-                  </rect>
-                <?php endforeach; ?>
-              </g>
-
-              <!-- X-Axis Major Labels -->
-              <text x="282" y="324" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">
-                Receipts
-              </text>
-              <text x="502" y="324" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">
-                Issues
-              </text>
-              <text x="392" y="354" font-size="13" font-weight="600" fill="#334155" text-anchor="middle">
-                Transaction Type
-              </text>
-            </svg>
-          </div>
-
-          <!-- Color-Coded Right Legend (11-2026 to 1-2026) -->
-          <div class="chart-legend-box">
-            <?php
-            $reversedMonths = array_reverse($monthlyTransactionData);
-            foreach ($reversedMonths as $rm):
-            ?>
-              <div class="legend-item" title="<?= htmlspecialchars($rm['month_name']) ?> <?= $chartYear ?>">
-                <span class="legend-color-box" style="background-color: <?= $rm['color'] ?>;"></span>
-                <span><?= htmlspecialchars($rm['label']) ?></span>
-              </div>
-            <?php endforeach; ?>
+      <div id="tab-dashboard" class="tab-pane">
+        <div class="workspace-header" style="margin-bottom: 16px;">
+          <div class="workspace-title-box">
+            <h1>Home Desk</h1>
+            <div class="workspace-subtitle">Cumulative Transaction Values &amp; Financial Ledger Overview</div>
           </div>
         </div>
 
         <!-- ============================================================
+           MAIN CUMULATIVE TRANSACTION VALUES CHART (MATCHING SCREENSHOT)
+           ============================================================ -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h2 class="chart-italic-title">
+              Below Chart Displays the Cumulative Transaction Values for Each Month on the Current Year
+            </h2>
+            <div class="chart-sub-meta">
+              Financial Year <?= $chartYear ?> &bull; Electricity Generation Lanka (Pvt) Ltd Operational Ledger &bull;
+              Victoria Hydro Power Station (831)
+            </div>
+          </div>
+
+          <div class="chart-layout-grid">
+            <!-- Interactive SVG Bar Chart -->
+            <div class="chart-svg-container" id="svgChartWrapper">
+              <div id="chartTooltip" class="chart-tooltip"></div>
+              <svg viewBox="0 0 740 380" width="100%" height="380"
+                style="overflow: visible; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                <!-- Grid lines -->
+                <g class="chart-grid" stroke="#d1d5db" stroke-dasharray="2,3" stroke-width="0.8">
+                  <line x1="120" y1="40" x2="680" y2="40" />
+                  <line x1="120" y1="105" x2="680" y2="105" />
+                  <line x1="120" y1="170" x2="680" y2="170" />
+                  <line x1="120" y1="235" x2="680" y2="235" />
+                  <line x1="120" y1="300" x2="680" y2="300" stroke="#475569" stroke-dasharray="0" stroke-width="1.5" />
+                </g>
+                <line x1="120" y1="35" x2="120" y2="305" stroke="#475569" stroke-width="1.5" />
+
+                <!-- Y-Axis Ticks & Labels -->
+                <g font-size="12" fill="#1e293b" text-anchor="end" font-weight="500">
+                  <text x="112" y="44">$20,000,000.00</text>
+                  <line x1="115" y1="40" x2="120" y2="40" stroke="#475569" stroke-width="1.5" />
+
+                  <text x="112" y="109">$15,000,000.00</text>
+                  <line x1="115" y1="105" x2="120" y2="105" stroke="#475569" stroke-width="1.5" />
+
+                  <text x="112" y="174">$10,000,000.00</text>
+                  <line x1="115" y1="170" x2="120" y2="170" stroke="#475569" stroke-width="1.5" />
+
+                  <text x="112" y="239">$5,000,000.00</text>
+                  <line x1="115" y1="235" x2="120" y2="235" stroke="#475569" stroke-width="1.5" />
+
+                  <text x="112" y="304">$0.00</text>
+                  <line x1="115" y1="300" x2="120" y2="300" stroke="#475569" stroke-width="1.5" />
+                </g>
+
+                <!-- Y-Axis Title -->
+                <text transform="rotate(-90)" x="-170" y="20" font-size="12" font-weight="600" fill="#334155"
+                  text-anchor="middle">
+                  Transaction Value in LKR
+                </text>
+
+                <!-- Cluster 1: Receipts Bars -->
+                <g id="receiptsBarsGroup">
+                  <?php
+                  $barWidth = 14;
+                  $barGap = 3;
+                  $step = $barWidth + $barGap;
+                  $numBars = count($monthlyTransactionData);
+                  $groupWidth = ($numBars * $step) - $barGap;
+                  $receiptsBaseX = 282 - ($groupWidth / 2);
+                  $maxVal = 20000000.00;
+                  $chartHeightPixels = 260;
+
+                  $posIdx = 0;
+                  foreach ($monthlyTransactionData as $m):
+                    $val = $m['receipts'];
+                    $barHeight = ($val / $maxVal) * $chartHeightPixels;
+                    if ($barHeight < 2 && $val > 0)
+                      $barHeight = 2;
+                    $xPos = $receiptsBaseX + ($posIdx * $step);
+                    $yPos = 300 - $barHeight;
+                    $posIdx++;
+                    ?>
+                    <rect x="<?= round($xPos, 1) ?>" y="<?= round($yPos, 1) ?>" width="<?= $barWidth ?>"
+                      height="<?= round($barHeight, 1) ?>" fill="<?= $m['color'] ?>" class="chart-bar-rect"
+                      data-category="Receipts" data-month="<?= htmlspecialchars($m['label']) ?>"
+                      data-month-name="<?= htmlspecialchars($m['month_name']) ?>" data-val="<?= number_format($val, 2) ?>"
+                      style="cursor: pointer; transition: opacity 0.15s ease;">
+                      <title>Receipts (<?= $m['label'] ?>): Rs. <?= number_format($val, 2) ?></title>
+                    </rect>
+                  <?php endforeach; ?>
+                </g>
+
+                <!-- Cluster 2: Issues Bars -->
+                <g id="issuesBarsGroup">
+                  <?php
+                  $issuesBaseX = 502 - ($groupWidth / 2);
+                  $posIdx = 0;
+                  foreach ($monthlyTransactionData as $m):
+                    $val = $m['issues'];
+                    $barHeight = ($val / $maxVal) * $chartHeightPixels;
+                    if ($barHeight < 2 && $val > 0)
+                      $barHeight = 2;
+                    $xPos = $issuesBaseX + ($posIdx * $step);
+                    $yPos = 300 - $barHeight;
+                    $posIdx++;
+                    ?>
+                    <rect x="<?= round($xPos, 1) ?>" y="<?= round($yPos, 1) ?>" width="<?= $barWidth ?>"
+                      height="<?= round($barHeight, 1) ?>" fill="<?= $m['color'] ?>" class="chart-bar-rect"
+                      data-category="Issues" data-month="<?= htmlspecialchars($m['label']) ?>"
+                      data-month-name="<?= htmlspecialchars($m['month_name']) ?>" data-val="<?= number_format($val, 2) ?>"
+                      style="cursor: pointer; transition: opacity 0.15s ease;">
+                      <title>Issues (<?= $m['label'] ?>): Rs. <?= number_format($val, 2) ?></title>
+                    </rect>
+                  <?php endforeach; ?>
+                </g>
+
+                <!-- X-Axis Major Labels -->
+                <text x="282" y="324" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">
+                  Receipts
+                </text>
+                <text x="502" y="324" font-size="14" font-weight="600" fill="#1e293b" text-anchor="middle">
+                  Issues
+                </text>
+                <text x="392" y="354" font-size="13" font-weight="600" fill="#334155" text-anchor="middle">
+                  Transaction Type
+                </text>
+              </svg>
+            </div>
+
+            <!-- Color-Coded Right Legend (11-2026 to 1-2026) -->
+            <div class="chart-legend-box">
+              <?php
+              $reversedMonths = array_reverse($monthlyTransactionData);
+              foreach ($reversedMonths as $rm):
+                ?>
+                <div class="legend-item" title="<?= htmlspecialchars($rm['month_name']) ?> <?= $chartYear ?>">
+                  <span class="legend-color-box" style="background-color: <?= $rm['color'] ?>;"></span>
+                  <span><?= htmlspecialchars($rm['label']) ?></span>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          </div>
+
+          <!-- ============================================================
              REAL FINANCIAL REPORT BREAKDOWN TABLE
              ============================================================ -->
-        <div style="margin-top: 28px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <div style="font-weight: 700; font-size: 15px; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">
-                <?= Icon::get('file-text', 16) ?>
-                <span>Monthly Cumulative Transaction Values Ledger</span>
+          <div style="margin-top: 28px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <div
+              style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <div
+                  style="font-weight: 700; font-size: 15px; color: var(--text-dark); display: flex; align-items: center; gap: 8px;">
+                  <?= Icon::get('file-text', 16) ?>
+                  <span>Monthly Cumulative Transaction Values Ledger</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                  Audited Inward Receipts (GRN), Outward Issues (FIFO) and Net Stock Movement for Financial Year
+                  <?= $chartYear ?>
+                </div>
               </div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-                Audited Inward Receipts (GRN), Outward Issues (FIFO) and Net Stock Movement for Financial Year <?= $chartYear ?>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="window.print()">
+                  <?= Icon::get('printer', 13) ?> Print Report
+                </button>
               </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="window.print()">
-                <?= Icon::get('printer', 13) ?> Print Report
-              </button>
-            </div>
-          </div>
 
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Period (Month)</th>
-                  <th style="text-align: right;">GRN Receipts (LKR)</th>
-                  <th style="text-align: right;">Material Issues (LKR)</th>
-                  <th style="text-align: right;">Net Monthly Variance (LKR)</th>
-                  <th style="text-align: right;">Cumulative Stock Retention (LKR)</th>
-                  <th style="text-align: center;">Audit Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php
-                $totRx = 0; $totIss = 0;
-                foreach ($monthlyTransactionData as $m):
-                  $totRx += $m['receipts'];
-                  $totIss += $m['issues'];
-                ?>
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
                   <tr>
-                    <td>
-                      <span class="legend-color-box" style="display: inline-block; vertical-align: middle; margin-right: 6px; width: 10px; height: 10px; background-color: <?= $m['color'] ?>;"></span>
-                      <strong><?= htmlspecialchars($m['month_name']) ?> <?= $chartYear ?></strong> (<?= htmlspecialchars($m['label']) ?>)
-                    </td>
-                    <td style="text-align: right; color: #0d9488; font-weight: 600;">Rs. <?= number_format($m['receipts'], 2) ?></td>
-                    <td style="text-align: right; color: #e11d48; font-weight: 600;">Rs. <?= number_format($m['issues'], 2) ?></td>
-                    <td style="text-align: right; font-weight: 600; color: <?= ($m['variance'] >= 0) ? '#0284c7' : '#d97706' ?>;">
-                      Rs. <?= number_format($m['variance'], 2) ?>
-                    </td>
-                    <td style="text-align: right; font-weight: 700; color: #0f172a;">Rs. <?= number_format($m['cumulative'], 2) ?></td>
-                    <td style="text-align: center;">
-                      <?php if ($m['month_index'] <= 10): ?>
-                        <span class="badge badge-success" style="font-size: 11px;">Audit Closed</span>
-                      <?php else: ?>
-                        <span class="badge badge-warning" style="font-size: 11px;">Current Period</span>
-                      <?php endif; ?>
-                    </td>
+                    <th>Period (Month)</th>
+                    <th style="text-align: right;">GRN Receipts (LKR)</th>
+                    <th style="text-align: right;">Material Issues (LKR)</th>
+                    <th style="text-align: right;">Net Monthly Variance (LKR)</th>
+                    <th style="text-align: right;">Cumulative Stock Retention (LKR)</th>
+                    <th style="text-align: center;">Audit Status</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-              <tfoot>
-                <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #cbd5e1;">
-                  <td>Year-to-Date (YTD) Total</td>
-                  <td style="text-align: right; color: #0d9488;">Rs. <?= number_format($totRx, 2) ?></td>
-                  <td style="text-align: right; color: #e11d48;">Rs. <?= number_format($totIss, 2) ?></td>
-                  <td style="text-align: right; color: #0284c7;">Rs. <?= number_format($totRx - $totIss, 2) ?></td>
-                  <td style="text-align: right; color: #0f172a;">Rs. <?= number_format($totRx - $totIss, 2) ?></td>
-                  <td style="text-align: center;"><span class="badge badge-info" style="font-size: 11px;">Verified</span></td>
-                </tr>
-              </tfoot>
-            </table>
+                </thead>
+                <tbody>
+                  <?php
+                  $totRx = 0;
+                  $totIss = 0;
+                  foreach ($monthlyTransactionData as $m):
+                    $totRx += $m['receipts'];
+                    $totIss += $m['issues'];
+                    ?>
+                    <tr>
+                      <td>
+                        <span class="legend-color-box"
+                          style="display: inline-block; vertical-align: middle; margin-right: 6px; width: 10px; height: 10px; background-color: <?= $m['color'] ?>;"></span>
+                        <strong><?= htmlspecialchars($m['month_name']) ?>     <?= $chartYear ?></strong>
+                        (<?= htmlspecialchars($m['label']) ?>)
+                      </td>
+                      <td style="text-align: right; color: #0d9488; font-weight: 600;">Rs.
+                        <?= number_format($m['receipts'], 2) ?></td>
+                      <td style="text-align: right; color: #e11d48; font-weight: 600;">Rs.
+                        <?= number_format($m['issues'], 2) ?></td>
+                      <td
+                        style="text-align: right; font-weight: 600; color: <?= ($m['variance'] >= 0) ? '#0284c7' : '#d97706' ?>;">
+                        Rs. <?= number_format($m['variance'], 2) ?>
+                      </td>
+                      <td style="text-align: right; font-weight: 700; color: #0f172a;">Rs.
+                        <?= number_format($m['cumulative'], 2) ?></td>
+                      <td style="text-align: center;">
+                        <?php if ($m['month_index'] <= 10): ?>
+                          <span class="badge badge-success" style="font-size: 11px;">Audit Closed</span>
+                        <?php else: ?>
+                          <span class="badge badge-warning" style="font-size: 11px;">Current Period</span>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+                <tfoot>
+                  <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #cbd5e1;">
+                    <td>Year-to-Date (YTD) Total</td>
+                    <td style="text-align: right; color: #0d9488;">Rs. <?= number_format($totRx, 2) ?></td>
+                    <td style="text-align: right; color: #e11d48;">Rs. <?= number_format($totIss, 2) ?></td>
+                    <td style="text-align: right; color: #0284c7;">Rs. <?= number_format($totRx - $totIss, 2) ?></td>
+                    <td style="text-align: right; color: #0f172a;">Rs. <?= number_format($totRx - $totIss, 2) ?></td>
+                    <td style="text-align: center;"><span class="badge badge-info"
+                        style="font-size: 11px;">Verified</span></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ============================================================
+      <!-- ============================================================
          PANE: Quantity On Hand (QOH) - Batch Wise & Material Wise
          ============================================================ -->
-    <div id="tab-qoh" class="tab-pane" style="display: none;">
-      <div class="workspace-header">
-        <div class="workspace-title-box">
-          <h1>Quantity On Hand (QOH)</h1>
-          <div class="workspace-subtitle">Store Batch-wise &amp; Material-wise Physical Stock Balance Reports</div>
-        </div>
-        <div class="header-action-btns">
-          <button class="desk-btn desk-btn-default" onclick="Desk.refreshCurrentQoh()">
-            <?= Icon::get('refresh', 13) ?> Refresh
-          </button>
-        </div>
-      </div>
-
-      <!-- Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
-      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
-        <div id="qohPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-qoh-btn="qoh-sub-batch" onclick="Desk.switchQohSubTab('qoh-sub-batch')">
-            <?= Icon::get('package', 12) ?> Batch wise report
-          </button>
-          <button type="button" class="pv-pill-btn" data-qoh-btn="qoh-sub-material" onclick="Desk.switchQohSubTab('qoh-sub-material')">
-            <?= Icon::get('layers', 12) ?> Material wise report
-          </button>
-        </div>
-      </div>
-
-      <!-- SUB-PANE 1: BATCH WISE REPORT -->
-      <div id="qoh-sub-batch" class="qoh-sub-pane active">
-        <div class="desk-card">
-          <div class="desk-card-header">
-            <div class="desk-card-title">Batch-wise Quantity On Hand &amp; Valuations</div>
-            <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewGrn')">
-              <?= Icon::get('plus', 13) ?> Receive New Batch (GRN)
+      <div id="tab-qoh" class="tab-pane" style="display: none;">
+        <div class="workspace-header">
+          <div class="workspace-title-box">
+            <h1>Quantity On Hand (QOH)</h1>
+            <div class="workspace-subtitle">Store Batch-wise &amp; Material-wise Physical Stock Balance Reports</div>
+          </div>
+          <div class="header-action-btns">
+            <button class="desk-btn desk-btn-default" onclick="Desk.refreshCurrentQoh()">
+              <?= Icon::get('refresh', 13) ?> Refresh
             </button>
           </div>
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Batch Number</th>
-                  <th>SKU</th>
-                  <th>Material Description</th>
-                  <th>Remaining / Initial Qty</th>
-                  <th>Unit Cost</th>
-                  <th>Total Valuation</th>
-                  <th>Storage Bin</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="batchesTableBody"></tbody>
-            </table>
-          </div>
         </div>
-      </div>
 
-      <!-- SUB-PANE 2: MATERIAL WISE REPORT -->
-      <div id="qoh-sub-material" class="qoh-sub-pane" style="display: none;">
-        <div class="desk-card">
-          <div class="desk-card-header">
-            <div class="desk-card-title">Material-wise Consolidated Balance Grouped by SKU</div>
+        <!-- Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
+        <div class="desk-card"
+          style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
+          <div id="qohPills" class="pv-pills-wrap">
+            <button type="button" class="pv-pill-btn active" data-qoh-btn="qoh-sub-batch"
+              onclick="Desk.switchQohSubTab('qoh-sub-batch')">
+              <?= Icon::get('package', 12) ?> Batch wise report
+            </button>
+            <button type="button" class="pv-pill-btn" data-qoh-btn="qoh-sub-material"
+              onclick="Desk.switchQohSubTab('qoh-sub-material')">
+              <?= Icon::get('layers', 12) ?> Material wise report
+            </button>
           </div>
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>SKU</th>
-                  <th>Material Description</th>
-                  <th>Category</th>
-                  <th>Physical On-Hand</th>
-                  <th>Pending Reserved</th>
-                  <th>Available to Issue</th>
-                  <th>Avg Unit Cost</th>
-                  <th>Total Valuation</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="qohMaterialTableBody"></tbody>
-            </table>
+        </div>
+
+        <!-- SUB-PANE 1: BATCH WISE REPORT -->
+        <div id="qoh-sub-batch" class="qoh-sub-pane active">
+          <div class="desk-card">
+            <div class="desk-card-header">
+              <div class="desk-card-title">Batch-wise Quantity On Hand &amp; Valuations</div>
+              <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('modalNewGrn')">
+                <?= Icon::get('plus', 13) ?> Receive New Batch (GRN)
+              </button>
+            </div>
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
+                  <tr>
+                    <th>Batch Number</th>
+                    <th>SKU</th>
+                    <th>Material Description</th>
+                    <th>Remaining / Initial Qty</th>
+                    <th>Unit Cost</th>
+                    <th>Total Valuation</th>
+                    <th>Storage Bin</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="batchesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANE 2: MATERIAL WISE REPORT -->
+        <div id="qoh-sub-material" class="qoh-sub-pane" style="display: none;">
+          <div class="desk-card">
+            <div class="desk-card-header">
+              <div class="desk-card-title">Material-wise Consolidated Balance Grouped by SKU</div>
+            </div>
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Material Description</th>
+                    <th>Category</th>
+                    <th>Physical On-Hand</th>
+                    <th>Pending Reserved</th>
+                    <th>Available to Issue</th>
+                    <th>Avg Unit Cost</th>
+                    <th>Total Valuation</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="qohMaterialTableBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     <?php endif; ?>
 
     <!-- ============================================================
@@ -452,7 +483,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Receipts (GRN) Management</h1>
-          <div class="workspace-subtitle">Goods Received Notes Workflow (Entry &rarr; Validation &rarr; Approval &rarr; Posting)</div>
+          <div class="workspace-subtitle">Goods Received Notes Workflow (Entry &rarr; Validation &rarr; Approval &rarr;
+            Posting)</div>
         </div>
         <div class="header-action-btns">
           <button class="desk-btn desk-btn-default" onclick="Desk.loadReceipts()">
@@ -473,6 +505,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           background: #ffffff;
           box-shadow: var(--shadow-sm);
         }
+
         .grn-field-label {
           display: block;
           font-size: 12.5px;
@@ -480,6 +513,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           color: #475569;
           margin-bottom: 6px;
         }
+
         .grn-input {
           height: 36px;
           padding: 0 12px;
@@ -493,16 +527,19 @@ require_once __DIR__ . '/views/layouts/header.php';
           transition: border-color 0.15s, box-shadow 0.15s;
           width: 100%;
         }
+
         .grn-input:focus {
           border-color: var(--primary);
           box-shadow: 0 0 0 3px var(--primary-focus);
         }
+
         .grn-input[readonly] {
           background: #f8fafc;
           color: #64748b;
           border-color: #e2e8f0;
           cursor: not-allowed;
         }
+
         .grn-checkbox-label {
           display: inline-flex;
           align-items: center;
@@ -513,20 +550,23 @@ require_once __DIR__ . '/views/layouts/header.php';
           cursor: pointer;
           user-select: none;
         }
+
         .grn-checkbox-label input[type="checkbox"] {
           width: 16px;
           height: 16px;
           accent-color: var(--primary);
           cursor: pointer;
         }
+
         .grn-accordion-card {
           margin-bottom: 14px;
           border: 1px solid var(--border);
           border-radius: 8px;
           overflow: hidden;
           background: #ffffff;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
         }
+
         .grn-accordion-header {
           background: #f8fafc;
           color: var(--text-main);
@@ -540,9 +580,11 @@ require_once __DIR__ . '/views/layouts/header.php';
           user-select: none;
           transition: background 0.15s;
         }
+
         .grn-accordion-header:hover {
           background: #f1f5f9;
         }
+
         .grn-toggle-icon {
           display: inline-flex;
           align-items: center;
@@ -555,6 +597,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           font-size: 12px;
           font-weight: 700;
         }
+
         .grn-accordion-body {
           padding: 16px 20px;
           background: #ffffff;
@@ -562,10 +605,10 @@ require_once __DIR__ . '/views/layouts/header.php';
         }
       </style>
 
-            <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
+      <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
       <div id="bodyGrnEntryCard" class="frappe-form-page" style="display: none; margin-bottom: 24px;">
         <form id="formStockEntry_grn" onsubmit="event.preventDefault(); Desk.submitStockEntryForm('grn');">
-          
+
           <!-- TOP BREADCRUMB & HEADER BAR -->
           <div class="frappe-top-bar">
             <div class="frappe-breadcrumbs">
@@ -581,19 +624,25 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn has-selection" id="grnCreateBtn" onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
-                  <span id="grnCreateBtnText">Create: <strong>GRN</strong></span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn has-selection" id="grnCreateBtn"
+                  onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
+                  <span id="grnCreateBtnText">Create: <strong>GRN</strong></span> <span
+                    style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
-                <div id="grnCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="GRN" onclick="Desk.createDocType('grn', 'GRN')">
+                <div id="grnCreateDropdown" class="frappe-dropdown-menu"
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="GRN"
+                    onclick="Desk.createDocType('grn', 'GRN')">
                     <span>GRN</span>
                     <span class="dropdown-check">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP" onclick="Desk.createDocType('grn', 'GRSP')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP"
+                    onclick="Desk.createDocType('grn', 'GRSP')">
                     <span>GRSP</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="MRA" onclick="Desk.createDocType('grn', 'MRA')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="MRA"
+                    onclick="Desk.createDocType('grn', 'MRA')">
                     <span>MRA</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
@@ -601,68 +650,79 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
 
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn" id="grnGetItemsBtn" onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')">
-                  <span id="grnGetItemsBtnText">Get Items From</span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn" id="grnGetItemsBtn"
+                  onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')">
+                  <span id="grnGetItemsBtnText">Get Items From</span> <span
+                    style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
-                <div id="grnGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order" onclick="Desk.openPoSelectionModal('grn')">
+                <div id="grnGetItemsDropdown" class="frappe-dropdown-menu"
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order"
+                    onclick="Desk.openPoSelectionModal('grn')">
                     <span>Purchase Order</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center" onclick="Desk.openCostCenterSelectionModal('grn')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center"
+                    onclick="Desk.openCostCenterSelectionModal('grn')">
                     <span>Cost Center</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section" onclick="Desk.openSectionSelectionModal('grn')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section"
+                    onclick="Desk.openSectionSelectionModal('grn')">
                     <span>Section</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                 </div>
               </div>
-
-              <button type="submit" class="frappe-btn frappe-btn-primary" id="grnSaveBtn">
-                Save
-              </button>
             </div>
           </div>
 
           <!-- TABS -->
           <div class="frappe-tabs">
-            <button type="button" class="frappe-tab-btn active" id="tabBtn-grn-details" onclick="Desk.switchStockEntryTab('grn', 'details')">Details</button>
+            <button type="button" class="frappe-tab-btn active" id="tabBtn-grn-details"
+              onclick="Desk.switchStockEntryTab('grn', 'details')">Details</button>
           </div>
 
           <!-- TAB CONTENT: DETAILS -->
           <div id="tabContent-grn-details" class="frappe-tab-content">
-            
+
             <input type="hidden" name="series" id="grnSeries" value="GRN-.YYYY.-">
             <input type="hidden" name="stock_entry_type" id="grnStockEntryType" value="Material Receipt">
 
             <!-- Delivery Date & Acc Date Section -->
-            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
+            <div
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 12px;">
                 Delivery &amp; Accounting Dates
               </div>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
                 <div>
                   <label class="frappe-label">Delivery Date <span style="color: #e02424;">*</span></label>
-                  <input type="date" name="delivery_date" id="grnDeliveryDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
+                  <input type="date" name="delivery_date" id="grnDeliveryDate" class="frappe-control"
+                    value="<?= date('Y-m-d') ?>">
                 </div>
                 <div>
                   <label class="frappe-label">Acc Date <span style="color: #e02424;">*</span></label>
-                  <input type="date" name="acc_date" id="grnAccDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
+                  <input type="date" name="acc_date" id="grnAccDate" class="frappe-control"
+                    value="<?= date('Y-m-d') ?>">
                 </div>
               </div>
             </div>
 
             <!-- Purchase Order & Supplier Information (Displayed only when selected from Get Items From) -->
-            <div id="grnPurchaseSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
-              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div id="grnPurchaseSection"
+              style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+              <div
+                style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Purchase &amp; Predefined Supplier Selection</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('grn')">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;"
+                    onclick="Desk.openPoSelectionModal('grn')">
                     Select Purchase Order &rarr;
                   </button>
-                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('grn')">
+                  <button type="button" class="frappe-table-btn"
+                    style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection"
+                    onclick="Desk.clearSourceSelection('grn')">
                     &times;
                   </button>
                 </div>
@@ -670,11 +730,13 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-831-2026)" oninput="Desk.syncPoRefInput('grn', this.value)">
+                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control"
+                    placeholder="Enter PO Number (e.g. PO-831-2026)" oninput="Desk.syncPoRefInput('grn', this.value)">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
-                  <select name="supplier_selection" id="grnSupplierSelect" class="frappe-control frappe-select" onchange="Desk.onSupplierSelectChange('grn', this.value)">
+                  <select name="supplier_selection" id="grnSupplierSelect" class="frappe-control frappe-select"
+                    onchange="Desk.onSupplierSelectChange('grn', this.value)">
                     <option value="">-- Select Supplier --</option>
                   </select>
                 </div>
@@ -682,14 +744,19 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <!-- Cost Center Selection (Displayed only when selected from Get Items From) -->
-            <div id="grnCostCenterSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
-              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div id="grnCostCenterSection"
+              style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+              <div
+                style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Cost Center &amp; Purpose Selection</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openCostCenterSelectionModal('grn')">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;"
+                    onclick="Desk.openCostCenterSelectionModal('grn')">
                     Select Cost Center &rarr;
                   </button>
-                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('grn')">
+                  <button type="button" class="frappe-table-btn"
+                    style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection"
+                    onclick="Desk.clearSourceSelection('grn')">
                     &times;
                   </button>
                 </div>
@@ -697,13 +764,15 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label class="frappe-label">Cost Center</label>
-                  <select name="cost_center" id="grnCostCenterSelect" class="frappe-control frappe-select" onchange="Desk.onCostCenterSelectChange('grn', this.value)">
+                  <select name="cost_center" id="grnCostCenterSelect" class="frappe-control frappe-select"
+                    onchange="Desk.onCostCenterSelectChange('grn', this.value)">
                     <option value="">-- Select Cost Center --</option>
                   </select>
                 </div>
                 <div>
                   <label class="frappe-label">Section (Destination Code)</label>
-                  <select name="section_code" id="grnSectionSelect" class="frappe-control frappe-select" onchange="Desk.onSectionSelectChange('grn', this.value)">
+                  <select name="section_code" id="grnSectionSelect" class="frappe-control frappe-select"
+                    onchange="Desk.onSectionSelectChange('grn', this.value)">
                     <option value="">-- Select Section Code --</option>
                   </select>
                 </div>
@@ -721,20 +790,24 @@ require_once __DIR__ . '/views/layouts/header.php';
             <!-- Default Warehouse (Collapsible, OPEN by default) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
               <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('grnWhSection', this)">
-                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default Warehouse
+                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default
+                Warehouse
               </div>
               <div id="grnWhSection" style="display: block; padding: 12px 0 6px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
+                <div
+                  style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
                   <div id="grnSourceWhGroup" style="display: none;">
                     <label class="frappe-label">Default Source Warehouse</label>
-                    <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('grn')">
+                    <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select"
+                      onchange="Desk.applyDefaultWarehouse('grn')">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
                   </div>
                   <div id="grnTargetWhGroup" style="display: block;">
                     <label class="frappe-label">Default Target Warehouse</label>
-                    <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('grn')">
+                    <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control frappe-select"
+                      onchange="Desk.applyDefaultWarehouse('grn')">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
@@ -753,7 +826,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <table class="frappe-table" id="grnItemsTable">
                   <thead>
                     <tr>
-                      <th style="width: 38px; text-align: center;"><input type="checkbox" id="grnCheckAll" onchange="Desk.toggleSelectAllRows('grn', this.checked)"></th>
+                      <th style="width: 38px; text-align: center;"><input type="checkbox" id="grnCheckAll"
+                          onchange="Desk.toggleSelectAllRows('grn', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
                       <th id="grnColWhHeader" style="width: 240px;">Target Warehouse</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
@@ -771,55 +845,77 @@ require_once __DIR__ . '/views/layouts/header.php';
               <!-- Buttons Under Table -->
               <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 24px;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('grn')">Add row</button>
-                <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('grn')">Add multiple</button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('grn')">Add
+                  multiple</button>
               </div>
             </div>
 
             <!-- SECTION 1: Values To Consider for Material Unit Price -->
-            <div class="frappe-card-section" id="grnUnitPriceValuesSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
-              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnUnitPriceValuesBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Values To Consider for Material Unit Price</span>
-                <span class="frappe-sec-toggle-icon" style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
+            <div class="frappe-card-section" id="grnUnitPriceValuesSection"
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
+              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnUnitPriceValuesBody', this)"
+                style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Values To Consider for Material Unit
+                  Price</span>
+                <span class="frappe-sec-toggle-icon"
+                  style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
               </div>
               <div id="grnUnitPriceValuesBody" style="padding: 16px 20px;">
                 <div style="display: flex; flex-direction: column; gap: 10px; max-width: 660px;">
-                  
+
                   <!-- NBT -->
                   <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
-                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">NBT</label>
-                    <input type="number" step="0.01" min="0" name="val_nbt" id="grnValNbt" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
-                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-                      <input type="checkbox" name="nbt_exclude" id="grnNbtExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                    <label class="frappe-label"
+                      style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">NBT</label>
+                    <input type="number" step="0.01" min="0" name="val_nbt" id="grnValNbt" class="frappe-control"
+                      placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label
+                      style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="nbt_exclude" id="grnNbtExclude"
+                        style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
                       Exclude from Unit Price
                     </label>
                   </div>
 
                   <!-- VAT -->
                   <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
-                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">VAT</label>
-                    <input type="number" step="0.01" min="0" name="val_vat" id="grnValVat" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
-                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-                      <input type="checkbox" name="vat_exclude" id="grnVatExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                    <label class="frappe-label"
+                      style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">VAT</label>
+                    <input type="number" step="0.01" min="0" name="val_vat" id="grnValVat" class="frappe-control"
+                      placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label
+                      style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="vat_exclude" id="grnVatExclude"
+                        style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
                       Exclude from Unit Price
                     </label>
                   </div>
 
                   <!-- Transport -->
                   <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
-                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">Transport</label>
-                    <input type="number" step="0.01" min="0" name="val_transport" id="grnValTransport" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
-                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-                      <input type="checkbox" name="transport_exclude" id="grnTransportExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                    <label class="frappe-label"
+                      style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">Transport</label>
+                    <input type="number" step="0.01" min="0" name="val_transport" id="grnValTransport"
+                      class="frappe-control" placeholder="0.00" style="text-align: right;"
+                      oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label
+                      style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="transport_exclude" id="grnTransportExclude"
+                        style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
                       Exclude from Unit Price
                     </label>
                   </div>
 
                   <!-- Other -->
                   <div style="display: grid; grid-template-columns: 100px 180px auto; gap: 16px; align-items: center;">
-                    <label class="frappe-label" style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">Other</label>
-                    <input type="number" step="0.01" min="0" name="val_other" id="grnValOther" class="frappe-control" placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
-                    <label style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
-                      <input type="checkbox" name="other_exclude" id="grnOtherExclude" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                    <label class="frappe-label"
+                      style="margin-bottom: 0; font-weight: 600; font-size: 12.5px;">Other</label>
+                    <input type="number" step="0.01" min="0" name="val_other" id="grnValOther" class="frappe-control"
+                      placeholder="0.00" style="text-align: right;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label
+                      style="display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; color: #475569; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="other_exclude" id="grnOtherExclude"
+                        style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
                       Exclude from Unit Price
                     </label>
                   </div>
@@ -829,61 +925,83 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <!-- SECTION 2: Reference Data -->
-            <div class="frappe-card-section" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
-              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnReferenceDataBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Expand to Add,Edit Or view Reference Data</span>
-                <span class="frappe-sec-toggle-icon" style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
+            <div class="frappe-card-section"
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
+              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnReferenceDataBody', this)"
+                style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Expand to Add,Edit Or view Reference
+                  Data</span>
+                <span class="frappe-sec-toggle-icon"
+                  style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
               </div>
               <div id="grnReferenceDataBody" style="padding: 16px 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 780px;">
+                <div
+                  style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 780px;">
                   <div>
                     <label class="frappe-label" id="grnRefLabel1">INVOICE DATE :</label>
-                    <input type="text" name="invoice_date" id="grnInvoiceDate" class="frappe-control" placeholder="YYYY-MM-DD or delivery date">
+                    <input type="text" name="invoice_date" id="grnInvoiceDate" class="frappe-control"
+                      placeholder="YYYY-MM-DD or delivery date">
                   </div>
                   <div>
                     <label class="frappe-label" id="grnRefLabel2">PURCHASE ORDER NO :</label>
-                    <input type="text" name="po_reference" id="grnPoRef" class="frappe-control" placeholder="e.g. PO-2026-081">
+                    <input type="text" name="po_reference" id="grnPoRef" class="frappe-control"
+                      placeholder="e.g. PO-2026-081">
                   </div>
                   <div>
                     <label class="frappe-label" id="grnRefLabel3">INVOICE NO / DELIVERY NOTE :</label>
-                    <input type="text" name="invoice_no" id="grnInvoiceNo" class="frappe-control" placeholder="e.g. INV-2026-992">
+                    <input type="text" name="invoice_no" id="grnInvoiceNo" class="frappe-control"
+                      placeholder="e.g. INV-2026-992">
                   </div>
                   <div>
                     <label class="frappe-label" id="grnRefLabel4">SUPPLIER CONSIGNMENT REF :</label>
-                    <input type="text" name="supplier_ref" id="grnSupplierRef" class="frappe-control" placeholder="e.g. CON-2026-081">
+                    <input type="text" name="supplier_ref" id="grnSupplierRef" class="frappe-control"
+                      placeholder="e.g. CON-2026-081">
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- SECTION 3: Remarks -->
-            <div class="frappe-card-section" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
-              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnRemarksBody', this)" style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
-                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Expand to Add,Edit Or view Remarks</span>
-                <span class="frappe-sec-toggle-icon" style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
+            <div class="frappe-card-section"
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; overflow: hidden;">
+              <div class="frappe-section-header" onclick="Desk.toggleStockEntrySection('grnRemarksBody', this)"
+                style="padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                <span style="font-size: 13px; font-weight: 700; color: #0f172a;">Expand to Add,Edit Or view
+                  Remarks</span>
+                <span class="frappe-sec-toggle-icon"
+                  style="font-size: 14px; font-weight: 700; color: #64748b; line-height: 1;">&minus;</span>
               </div>
               <div id="grnRemarksBody" style="padding: 16px 20px;">
                 <div style="max-width: 780px;">
                   <label class="frappe-label">Remarks</label>
-                  <textarea name="remarks" id="grnRemarks" class="frappe-control" style="height: 75px; padding: 8px 12px; resize: vertical;" placeholder="Add internal remarks or consignment notes..."></textarea>
+                  <textarea name="remarks" id="grnRemarks" class="frappe-control"
+                    style="height: 75px; padding: 8px 12px; resize: vertical;"
+                    placeholder="Add internal remarks or consignment notes..."></textarea>
                 </div>
               </div>
             </div>
 
             <!-- SECTION 4: Invoice Total (Without Tax) & Discount Controls -->
-            <div class="frappe-card-section" id="grnInvoiceTotalsSection" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; padding: 18px 20px;">
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 820px; align-items: flex-end;">
-                
+            <div class="frappe-card-section" id="grnInvoiceTotalsSection"
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 18px; padding: 18px 20px;">
+              <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 820px; align-items: flex-end;">
+
                 <!-- Invoice Total (Without Tax) -->
                 <div>
                   <label class="frappe-label">Invoice Total (Without Tax) <span style="color: #e02424;">*</span></label>
                   <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="position: relative; flex: 1;">
-                      <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 11.5px; color: #64748b; font-weight: 600;">Rs</span>
-                      <input type="number" step="0.01" min="0" name="invoice_total_without_tax" id="grnInvoiceTotalWithoutTax" class="frappe-control" placeholder="0.00" style="padding-left: 30px; font-weight: 600;" oninput="Desk.recalcGrnUnitPriceFactors()">
+                      <span
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 11.5px; color: #64748b; font-weight: 600;">Rs</span>
+                      <input type="number" step="0.01" min="0" name="invoice_total_without_tax"
+                        id="grnInvoiceTotalWithoutTax" class="frappe-control" placeholder="0.00"
+                        style="padding-left: 30px; font-weight: 600;" oninput="Desk.recalcGrnUnitPriceFactors()">
                     </div>
-                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: #475569; white-space: nowrap; cursor: pointer; user-select: none;">
-                      <input type="checkbox" name="single_material" id="grnSingleMaterial" style="accent-color: #18181b; cursor: pointer;">
+                    <label
+                      style="display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: #475569; white-space: nowrap; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="single_material" id="grnSingleMaterial"
+                        style="accent-color: #18181b; cursor: pointer;">
                       Single Material
                     </label>
                   </div>
@@ -893,9 +1011,13 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div>
                   <label class="frappe-label">Discount For All</label>
                   <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="number" step="0.01" min="0" name="discount_for_all" id="grnDiscountForAll" class="frappe-control" placeholder="0.00" style="flex: 1;" oninput="Desk.recalcGrnUnitPriceFactors()">
-                    <label style="display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: #475569; white-space: nowrap; cursor: pointer; user-select: none;">
-                      <input type="checkbox" name="is_discount_percentage" id="grnDiscountPercentage" style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
+                    <input type="number" step="0.01" min="0" name="discount_for_all" id="grnDiscountForAll"
+                      class="frappe-control" placeholder="0.00" style="flex: 1;"
+                      oninput="Desk.recalcGrnUnitPriceFactors()">
+                    <label
+                      style="display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12px; color: #475569; white-space: nowrap; cursor: pointer; user-select: none;">
+                      <input type="checkbox" name="is_discount_percentage" id="grnDiscountPercentage"
+                        style="accent-color: #18181b; cursor: pointer;" onchange="Desk.recalcGrnUnitPriceFactors()">
                       Precentage
                     </label>
                   </div>
@@ -904,7 +1026,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <!-- Select Discount Type -->
                 <div>
                   <label class="frappe-label">Discount Type</label>
-                  <select name="discount_type" id="grnDiscountType" class="frappe-control frappe-select" onchange="Desk.recalcGrnUnitPriceFactors()">
+                  <select name="discount_type" id="grnDiscountType" class="frappe-control frappe-select"
+                    onchange="Desk.recalcGrnUnitPriceFactors()">
                     <option value="">-Select Discount Type-</option>
                     <option value="For Quantity">For Quantity</option>
                     <option value="For Cost">For Cost</option>
@@ -915,24 +1038,38 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <!-- BOTTOM APPLICATION ACTIONS (SAVE AT END OF FORM) -->
-            <div style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div
+              style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
               <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('grn', true)" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('grn', true)"
+                  style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
                   Save Draft
                 </button>
-                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('grn')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('grn')"
+                  style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
                   Request &amp; Add Code
                 </button>
               </div>
               <div style="display: flex; gap: 10px; align-items: center;">
-                <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('grn')" style="background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('grn')"
+                  style="background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
                   Cancel
                 </button>
-                <button type="submit" class="frappe-btn frappe-btn-primary" style="background: #18181b; color: #ffffff; font-weight: 600; padding: 9px 24px; border-radius: 6px; font-size: 13.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  Save Stock Entry
+                <button type="submit" class="frappe-btn frappe-btn-primary"
+                  style="background: #18181b; color: #ffffff; font-weight: 600; padding: 9px 24px; border-radius: 6px; font-size: 13.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Save
                 </button>
               </div>
             </div>
@@ -943,7 +1080,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <div class="desk-card">
-        <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div class="desk-card-header"
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div>
             <div class="desk-card-title" id="receiptsCardTitle">Goods Received Documents (GRN)</div>
             <div id="receiptsCardSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
@@ -978,7 +1116,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Material Issues (FIFO Queue)</h1>
-          <div class="workspace-subtitle">Spares &amp; Consumables Issue Workflow (Entry &rarr; Edit &rarr; Validation &rarr; Approval &rarr; Posting)</div>
+          <div class="workspace-subtitle">Spares &amp; Consumables Issue Workflow (Entry &rarr; Edit &rarr; Validation
+            &rarr; Approval &rarr; Posting)</div>
         </div>
         <div class="header-action-btns">
           <button class="desk-btn desk-btn-default" onclick="Desk.loadIssues()">
@@ -990,10 +1129,10 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
       <!-- In-Body Material Issue Entry Form (Modern Frappe/ERPNext Desk Design System) -->
-            <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
+      <!-- In-Body Real Frappe / ERPNext Stock Entry Form (Replaces legacy card) -->
       <div id="bodyIssueEntryCard" class="frappe-form-page" style="display: none; margin-bottom: 24px;">
         <form id="formStockEntry_issue" onsubmit="event.preventDefault(); Desk.submitStockEntryForm('issue');">
-          
+
           <!-- TOP BREADCRUMB & HEADER BAR -->
           <div class="frappe-top-bar">
             <div class="frappe-breadcrumbs">
@@ -1009,19 +1148,25 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn has-selection" id="issueCreateBtn" onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
-                  <span id="issueCreateBtnText">Create: <strong>MRA</strong></span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn has-selection" id="issueCreateBtn"
+                  onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
+                  <span id="issueCreateBtnText">Create: <strong>MRA</strong></span> <span
+                    style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
-                <div id="issueCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRN" onclick="Desk.createDocType('issue', 'GRN')">
+                <div id="issueCreateDropdown" class="frappe-dropdown-menu"
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRN"
+                    onclick="Desk.createDocType('issue', 'GRN')">
                     <span>GRN</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP" onclick="Desk.createDocType('issue', 'GRSP')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP"
+                    onclick="Desk.createDocType('issue', 'GRSP')">
                     <span>GRSP</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="MRA" onclick="Desk.createDocType('issue', 'MRA')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="MRA"
+                    onclick="Desk.createDocType('issue', 'MRA')">
                     <span>MRA</span>
                     <span class="dropdown-check">✓</span>
                   </a>
@@ -1029,68 +1174,79 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
 
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn" id="issueGetItemsBtn" onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
-                  <span id="issueGetItemsBtnText">Get Items From</span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn" id="issueGetItemsBtn"
+                  onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
+                  <span id="issueGetItemsBtnText">Get Items From</span> <span
+                    style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
-                <div id="issueGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order" onclick="Desk.openPoSelectionModal('issue')">
+                <div id="issueGetItemsDropdown" class="frappe-dropdown-menu"
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order"
+                    onclick="Desk.openPoSelectionModal('issue')">
                     <span>Purchase Order</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center" onclick="Desk.openCostCenterSelectionModal('issue')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center"
+                    onclick="Desk.openCostCenterSelectionModal('issue')">
                     <span>Cost Center</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section" onclick="Desk.openSectionSelectionModal('issue')">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section"
+                    onclick="Desk.openSectionSelectionModal('issue')">
                     <span>Section</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                 </div>
               </div>
-
-              <button type="submit" class="frappe-btn frappe-btn-primary" id="issueSaveBtn">
-                Save
-              </button>
             </div>
           </div>
 
           <!-- TABS -->
           <div class="frappe-tabs">
-            <button type="button" class="frappe-tab-btn active" id="tabBtn-issue-details" onclick="Desk.switchStockEntryTab('issue', 'details')">Details</button>
+            <button type="button" class="frappe-tab-btn active" id="tabBtn-issue-details"
+              onclick="Desk.switchStockEntryTab('issue', 'details')">Details</button>
           </div>
 
           <!-- TAB CONTENT: DETAILS -->
           <div id="tabContent-issue-details" class="frappe-tab-content">
-            
+
             <input type="hidden" name="series" id="issueSeries" value="MRA-.YYYY.-">
             <input type="hidden" name="stock_entry_type" id="issueStockEntryType" value="Material Issue">
 
             <!-- Delivery Date & Acc Date Section -->
-            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
+            <div
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 18px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 12px;">
                 Delivery &amp; Accounting Dates
               </div>
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
                 <div>
                   <label class="frappe-label">Delivery Date <span style="color: #e02424;">*</span></label>
-                  <input type="date" name="delivery_date" id="issueDeliveryDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
+                  <input type="date" name="delivery_date" id="issueDeliveryDate" class="frappe-control"
+                    value="<?= date('Y-m-d') ?>">
                 </div>
                 <div>
                   <label class="frappe-label">Acc Date <span style="color: #e02424;">*</span></label>
-                  <input type="date" name="acc_date" id="issueAccDate" class="frappe-control" value="<?= date('Y-m-d') ?>">
+                  <input type="date" name="acc_date" id="issueAccDate" class="frappe-control"
+                    value="<?= date('Y-m-d') ?>">
                 </div>
               </div>
             </div>
 
             <!-- Cost Center Selection (Displayed only when selected from Get Items From) -->
-            <div id="issueCostCenterSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
-              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div id="issueCostCenterSection"
+              style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+              <div
+                style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Cost Center &amp; Purpose Selection</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openCostCenterSelectionModal('issue')">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;"
+                    onclick="Desk.openCostCenterSelectionModal('issue')">
                     Select Cost Center &rarr;
                   </button>
-                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('issue')">
+                  <button type="button" class="frappe-table-btn"
+                    style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection"
+                    onclick="Desk.clearSourceSelection('issue')">
                     &times;
                   </button>
                 </div>
@@ -1098,13 +1254,15 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label class="frappe-label">Cost Center</label>
-                  <select name="cost_center" id="issueCostCenterSelect" class="frappe-control frappe-select" onchange="Desk.onCostCenterSelectChange('issue', this.value)">
+                  <select name="cost_center" id="issueCostCenterSelect" class="frappe-control frappe-select"
+                    onchange="Desk.onCostCenterSelectChange('issue', this.value)">
                     <option value="">-- Select Cost Center --</option>
                   </select>
                 </div>
                 <div>
                   <label class="frappe-label">Section (Destination Code)</label>
-                  <select name="section_code" id="issueSectionSelect" class="frappe-control frappe-select" onchange="Desk.onSectionSelectChange('issue', this.value)">
+                  <select name="section_code" id="issueSectionSelect" class="frappe-control frappe-select"
+                    onchange="Desk.onSectionSelectChange('issue', this.value)">
                     <option value="">-- Select Section Code --</option>
                   </select>
                 </div>
@@ -1118,14 +1276,19 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <!-- Purchase Order & Supplier Information (Displayed only when selected from Get Items From) -->
-            <div id="issuePurchaseSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
-              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <div id="issuePurchaseSection"
+              style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+              <div
+                style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
                 <span>Purchase &amp; Predefined Supplier Selection</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;" onclick="Desk.openPoSelectionModal('issue')">
+                  <button type="button" class="frappe-table-btn" style="font-size: 11px; height: 26px;"
+                    onclick="Desk.openPoSelectionModal('issue')">
                     Select Purchase Order &rarr;
                   </button>
-                  <button type="button" class="frappe-table-btn" style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection" onclick="Desk.clearSourceSelection('issue')">
+                  <button type="button" class="frappe-table-btn"
+                    style="font-size: 13px; height: 26px; padding: 0 8px; color: #64748b;" title="Clear Selection"
+                    onclick="Desk.clearSourceSelection('issue')">
                     &times;
                   </button>
                 </div>
@@ -1133,11 +1296,13 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-831-2026)" oninput="Desk.syncPoRefInput('issue', this.value)">
+                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control"
+                    placeholder="Enter PO Number (e.g. PO-831-2026)" oninput="Desk.syncPoRefInput('issue', this.value)">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
-                  <select name="supplier_selection" id="issueSupplierSelect" class="frappe-control frappe-select" onchange="Desk.onSupplierSelectChange('issue', this.value)">
+                  <select name="supplier_selection" id="issueSupplierSelect" class="frappe-control frappe-select"
+                    onchange="Desk.onSupplierSelectChange('issue', this.value)">
                     <option value="">-- Select Supplier --</option>
                   </select>
                 </div>
@@ -1149,20 +1314,24 @@ require_once __DIR__ . '/views/layouts/header.php';
             <!-- Default Warehouse (Collapsible, OPEN by default) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
               <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('issueWhSection', this)">
-                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default Warehouse
+                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default
+                Warehouse
               </div>
               <div id="issueWhSection" style="display: block; padding: 12px 0 6px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
+                <div
+                  style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
                   <div id="issueSourceWhGroup" style="display: block;">
                     <label class="frappe-label">Default Source Warehouse</label>
-                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('issue')">
+                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select"
+                      onchange="Desk.applyDefaultWarehouse('issue')">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
                   </div>
                   <div id="issueTargetWhGroup" style="display: none;">
                     <label class="frappe-label">Default Target Warehouse</label>
-                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control frappe-select" onchange="Desk.applyDefaultWarehouse('issue')">
+                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control frappe-select"
+                      onchange="Desk.applyDefaultWarehouse('issue')">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
                     <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
@@ -1181,7 +1350,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <table class="frappe-table" id="issueItemsTable">
                   <thead>
                     <tr>
-                      <th style="width: 38px; text-align: center;"><input type="checkbox" id="issueCheckAll" onchange="Desk.toggleSelectAllRows('issue', this.checked)"></th>
+                      <th style="width: 38px; text-align: center;"><input type="checkbox" id="issueCheckAll"
+                          onchange="Desk.toggleSelectAllRows('issue', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
                       <th id="issueColWhHeader" style="width: 240px;">Source Warehouse</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
@@ -1199,59 +1369,81 @@ require_once __DIR__ . '/views/layouts/header.php';
               <!-- Buttons Under Table -->
               <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 24px;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.addStockEntryRow('issue')">Add row</button>
-                <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('issue')">Add multiple</button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openAddMultipleModal('issue')">Add
+                  multiple</button>
               </div>
             </div>
 
             <!-- Reference and Remarks -->
-            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px; margin-bottom: 18px;">
+            <div
+              style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px; margin-bottom: 18px;">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
                 <div>
                   <div style="margin-bottom: 16px;">
                     <label class="frappe-label">Destination / Cost Center</label>
-                    <input type="text" name="party_name" id="issuePartyName" class="frappe-control" placeholder="Select or type Destination / Cost Center...">
+                    <input type="text" name="party_name" id="issuePartyName" class="frappe-control"
+                      placeholder="Select or type Destination / Cost Center...">
                   </div>
                   <div style="margin-bottom: 16px;">
                     <label class="frappe-label">Requisition / Work Order Ref</label>
-                    <input type="text" name="po_reference" id="issuePoRef" class="frappe-control" placeholder="REQ-XXXXX">
+                    <input type="text" name="po_reference" id="issuePoRef" class="frappe-control"
+                      placeholder="REQ-XXXXX">
                   </div>
                   <div style="margin-bottom: 16px;">
                     <label class="frappe-label">Department / Section</label>
-                    <input type="text" name="invoice_no" id="issueInvoiceNo" class="frappe-control" placeholder="Department Code">
+                    <input type="text" name="invoice_no" id="issueInvoiceNo" class="frappe-control"
+                      placeholder="Department Code">
                   </div>
                 </div>
                 <div>
                   <div style="margin-bottom: 16px;">
                     <label class="frappe-label">Issued To / Employee</label>
-                    <input type="text" name="transporter_info" id="issueTransporterInfo" class="frappe-control" placeholder="Receiver Name / Staff ID">
+                    <input type="text" name="transporter_info" id="issueTransporterInfo" class="frappe-control"
+                      placeholder="Receiver Name / Staff ID">
                   </div>
                   <div style="margin-bottom: 16px;">
                     <label class="frappe-label">Remarks / Note</label>
-                    <textarea name="remarks" id="issueRemarks" class="frappe-control" style="height: 72px; padding: 6px 10px; resize: vertical;" placeholder="Add internal remarks..."></textarea>
+                    <textarea name="remarks" id="issueRemarks" class="frappe-control"
+                      style="height: 72px; padding: 6px 10px; resize: vertical;"
+                      placeholder="Add internal remarks..."></textarea>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- BOTTOM APPLICATION ACTIONS (SAVE AT END OF FORM) -->
-            <div style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div
+              style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
               <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('issue', true)" style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('issue', true)"
+                  style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                    <polyline points="17 21 17 13 7 13 7 21" />
+                    <polyline points="7 3 7 8 15 8" />
+                  </svg>
                   Save Draft
                 </button>
-                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('issue')" style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('issue')"
+                  style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
                   Request &amp; Add Code
                 </button>
               </div>
               <div style="display: flex; gap: 10px; align-items: center;">
-                <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('issue')" style="background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('issue')"
+                  style="background: #ffffff; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 18px; border-radius: 6px; cursor: pointer;">
                   Cancel
                 </button>
-                <button type="submit" class="frappe-btn frappe-btn-primary" style="background: #18181b; color: #ffffff; font-weight: 600; padding: 9px 24px; border-radius: 6px; font-size: 13.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  Save Stock Entry
+                <button type="submit" class="frappe-btn frappe-btn-primary"
+                  style="background: #18181b; color: #ffffff; font-weight: 600; padding: 9px 24px; border-radius: 6px; font-size: 13.5px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Save
                 </button>
               </div>
             </div>
@@ -1262,11 +1454,13 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <div class="desk-card">
-        <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div class="desk-card-header"
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
           <div>
             <div class="desk-card-title" id="issuesCardTitle">Material Issue Requisitions (FIFO Queue)</div>
             <div id="issuesCardSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
-              Material requisitions queue from staff draft to storekeeper validation, authorization and FIFO batch consumption
+              Material requisitions queue from staff draft to storekeeper validation, authorization and FIFO batch
+              consumption
             </div>
           </div>
           <div id="issuesHeaderAction"></div>
@@ -1308,33 +1502,42 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- Workflow Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
-      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
+      <div class="desk-card"
+        style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
         <div id="pvWorkflowPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-pv-btn="pv-sub-freeze" onclick="Desk.switchPvSubTab('pv-sub-freeze')">
+          <button type="button" class="pv-pill-btn active" data-pv-btn="pv-sub-freeze"
+            onclick="Desk.switchPvSubTab('pv-sub-freeze')">
             <?= Icon::get('lock', 12) ?> Freeze Batches
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-generate" onclick="Desk.switchPvSubTab('pv-sub-generate')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-generate"
+            onclick="Desk.switchPvSubTab('pv-sub-generate')">
             <?= Icon::get('file-plus', 12) ?> Generate Sheet
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-entry" onclick="Desk.switchPvSubTab('pv-sub-entry')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-entry"
+            onclick="Desk.switchPvSubTab('pv-sub-entry')">
             <?= Icon::get('edit', 12) ?> Count Entry
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-edit" onclick="Desk.switchPvSubTab('pv-sub-edit')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-edit"
+            onclick="Desk.switchPvSubTab('pv-sub-edit')">
             <?= Icon::get('edit-3', 12) ?> Verification Edit
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-validation" onclick="Desk.switchPvSubTab('pv-sub-validation')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-validation"
+            onclick="Desk.switchPvSubTab('pv-sub-validation')">
             <?= Icon::get('check-circle', 12) ?> Validation
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-approval" onclick="Desk.switchPvSubTab('pv-sub-approval')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-approval"
+            onclick="Desk.switchPvSubTab('pv-sub-approval')">
             <?= Icon::get('award', 12) ?> Approval
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-posting" onclick="Desk.switchPvSubTab('pv-sub-posting')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-posting"
+            onclick="Desk.switchPvSubTab('pv-sub-posting')">
             <?= Icon::get('send', 12) ?> Posting
           </button>
           <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-gl" onclick="Desk.switchPvSubTab('pv-sub-gl')">
             <?= Icon::get('database', 12) ?> GL Posting
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-unfreeze" onclick="Desk.switchPvSubTab('pv-sub-unfreeze')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-unfreeze"
+            onclick="Desk.switchPvSubTab('pv-sub-unfreeze')">
             <?= Icon::get('unlock', 12) ?> Unfreeze Batches
           </button>
         </div>
@@ -1345,12 +1548,15 @@ require_once __DIR__ . '/views/layouts/header.php';
         <div class="desk-card" style="margin-bottom: 20px;">
           <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;">
             <div>
-              <div style="font-weight: 700; font-size: 14px; color: var(--text-dark);">Store Transaction Lock Status</div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">When frozen, all Receipts (GRN) and Material Issues are blocked across the station.</div>
+              <div style="font-weight: 700; font-size: 14px; color: var(--text-dark);">Store Transaction Lock Status
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">When frozen, all Receipts (GRN)
+                and Material Issues are blocked across the station.</div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
               <div id="freezeStatusBadge">
-                <span class="badge badge-success" style="font-size: 13px; padding: 6px 14px;">Store Status: NORMAL / ACTIVE</span>
+                <span class="badge badge-success" style="font-size: 13px; padding: 6px 14px;">Store Status: NORMAL /
+                  ACTIVE</span>
               </div>
               <button class="desk-btn desk-btn-primary" onclick="Desk.freezeAllBatches(true)">
                 <?= Icon::get('lock', 13) ?> Freeze All Batches Now
@@ -1391,7 +1597,8 @@ require_once __DIR__ . '/views/layouts/header.php';
         <!-- Filter and Generate Parameters -->
         <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
           <form id="formGenerateSheet" onsubmit="event.preventDefault(); Desk.generateCountSheet();">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
               <div class="desk-form-group" style="margin: 0;">
                 <label class="desk-form-label">Power Station / Facility</label>
                 <select id="sheetStation" class="desk-form-control">
@@ -1427,7 +1634,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <label class="desk-form-label">Verification Year</label>
                 <input type="number" id="sheetYear" class="desk-form-control" value="<?= date('Y') ?>">
               </div>
-              <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+              <button type="submit" class="desk-btn desk-btn-primary"
+                style="height: 38px; justify-content: center; font-weight: 600;">
                 <?= Icon::get('file-plus', 13) ?> Generate Sheets
               </button>
             </div>
@@ -1438,11 +1646,15 @@ require_once __DIR__ . '/views/layouts/header.php';
         <div class="desk-card" style="margin-bottom: 20px; padding: 18px 24px;">
           <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
             <div>
-              <div style="font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+              <div
+                style="font-size: 15px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
                 <span>Statutory Stock Count Sheets</span>
-                <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">21 Items / Sheet Standard</span>
+                <span class="badge"
+                  style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11px; padding: 3px 8px; border-radius: 4px;">21
+                  Items / Sheet Standard</span>
               </div>
-              <div style="font-size: 12px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 14px;">
+              <div
+                style="font-size: 12px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 14px;">
                 <span>Total Items: <strong id="genSheetTotalItemsBadge" style="color: #0f172a;">-</strong></span>
                 <span>•</span>
                 <span>Total Sheets: <strong id="genSheetTotalSheetsBadge" style="color: #0f172a;">-</strong> PDFs</span>
@@ -1453,7 +1665,9 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <!-- Download Action Buttons -->
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
-              <button type="button" class="desk-btn desk-btn-primary" style="background: #0284c7; border-color: #0284c7; font-weight: 600;" onclick="Desk.downloadAllSheetsZip()">
+              <button type="button" class="desk-btn desk-btn-primary"
+                style="background: #0284c7; border-color: #0284c7; font-weight: 600;"
+                onclick="Desk.downloadAllSheetsZip()">
                 <?= Icon::get('archive', 13) ?> Download All Sheets as ZIP
               </button>
               <button type="button" class="desk-btn desk-btn-default" onclick="Desk.downloadCurrentSheetPdf()">
@@ -1466,10 +1680,13 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
 
           <!-- Pagination & Sheet Switcher -->
-          <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div
+            style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 12px; font-weight: 600; color: #475569;">Select Sheet:</span>
-              <select id="genSheetPageSelect" class="desk-form-control" style="width: auto; height: 32px; font-size: 12px; font-weight: 600; padding: 2px 8px;" onchange="Desk.loadGeneratedSheet(this.value)">
+              <select id="genSheetPageSelect" class="desk-form-control"
+                style="width: auto; height: 32px; font-size: 12px; font-weight: 600; padding: 2px 8px;"
+                onchange="Desk.loadGeneratedSheet(this.value)">
                 <option value="1">Sheet 1</option>
               </select>
             </div>
@@ -1477,7 +1694,8 @@ require_once __DIR__ . '/views/layouts/header.php';
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.prevSheetPage()">
                 &larr; Prev Sheet
               </button>
-              <span id="genSheetCurrentBadge" style="font-size: 12px; font-weight: 700; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; color: #334155;">
+              <span id="genSheetCurrentBadge"
+                style="font-size: 12px; font-weight: 700; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; color: #334155;">
                 Sheet 1
               </span>
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.nextSheetPage()">
@@ -1490,9 +1708,11 @@ require_once __DIR__ . '/views/layouts/header.php';
         <!-- The 21-Row Count Sheet View -->
         <div id="printSheetSection" class="desk-card" style="padding: 20px;">
           <!-- Printable Header Banner (visible on print and screen) -->
-          <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px 18px; margin-bottom: 16px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+          <div
+            style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px 18px; margin-bottom: 16px; background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <div style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
+              <div
+                style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
                 Electricity Generation Lanka — Board of Survey Physical Count Sheet
               </div>
               <div style="font-size: 11px; color: #475569; margin-top: 3px;">
@@ -1500,7 +1720,8 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
             <div style="text-align: right;">
-              <div style="display: inline-block; background: #0f766e; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px;">
+              <div
+                style="display: inline-block; background: #0f766e; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px;">
                 EXACTLY 21 ITEMS / SHEET
               </div>
             </div>
@@ -1526,8 +1747,10 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
 
           <!-- Bottom Tri-Party Signatures Block -->
-          <div style="margin-top: 24px; padding: 18px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fcfcfd;">
-            <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+          <div
+            style="margin-top: 24px; padding: 18px; border: 1px solid #e2e8f0; border-radius: 6px; background: #fcfcfd;">
+            <div
+              style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
               Statutory Tri-Party Stock Verification Endorsements:
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
@@ -1556,7 +1779,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 3: VERIFICATION ENTRY -->
       <div id="pv-sub-entry" class="pv-sub-pane">
-        <div class="desk-card" style="margin-bottom: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="desk-card"
+          style="margin-bottom: 16px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div style="font-weight: 700; font-size: 14px;">Physical Count Input Table</div>
             <div style="font-size: 12px; color: var(--text-muted);">Variance updates automatically upon entry</div>
@@ -1589,10 +1813,12 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 4: VERIFICATION EDIT -->
       <div id="pv-sub-edit" class="pv-sub-pane">
-        <div class="filter-pills-bar" style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="filter-pills-bar"
+          style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; gap: 6px;">
             <button class="filter-pill active" onclick="Desk.filterPvEdit('all')">All Items</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('discrepancy')">Discrepancies Only (Variance &ne; 0)</button>
+            <button class="filter-pill" onclick="Desk.filterPvEdit('discrepancy')">Discrepancies Only (Variance &ne;
+              0)</button>
             <button class="filter-pill" onclick="Desk.filterPvEdit('surplus')">Surplus Items (+)</button>
             <button class="filter-pill" onclick="Desk.filterPvEdit('deficit')">Deficit Items (-)</button>
           </div>
@@ -1624,7 +1850,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 5: VERIFICATION VALIDATION -->
       <div id="pv-sub-validation" class="pv-sub-pane">
-        <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="desk-card"
+          style="padding: 20px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <h4 style="font-size: 1.05rem; font-weight: 700; color: var(--text-dark); margin: 0 0 6px 0;">
               Following Documents are pending for your validation
@@ -1664,11 +1891,13 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 6: VERIFICATION APPROVAL -->
       <div id="pv-sub-approval" class="pv-sub-pane">
-        <div class="workspace-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 20px;">
+        <div class="workspace-cards-grid"
+          style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 20px;">
           <div class="desk-stat-card">
             <div class="stat-card-title">Validation Sign-off</div>
             <div class="stat-card-value" style="color: #059669; font-size: 1.2rem;">VALIDATED</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Verified by Internal Audit Unit</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Verified by Internal Audit Unit
+            </div>
           </div>
           <div class="desk-stat-card">
             <div class="stat-card-title">Discrepancy Items Count</div>
@@ -1708,13 +1937,15 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 7: VERIFICATION POSTING -->
       <div id="pv-sub-posting" class="pv-sub-pane">
-        <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="desk-card"
+          style="padding: 20px 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-dark); margin-bottom: 4px;">
               Pending Inventory Adjustments Ready for Posting
             </div>
             <div style="font-size: 13px; color: var(--text-muted);">
-              Updates live FIFO batch remaining quantities to match audited counts and writes reconciliation ledger entries.
+              Updates live FIFO batch remaining quantities to match audited counts and writes reconciliation ledger
+              entries.
             </div>
           </div>
           <button class="desk-btn desk-btn-primary" onclick="Desk.postVerification()">
@@ -1751,7 +1982,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div id="pv-sub-gl" class="pv-sub-pane">
         <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
           <form id="pvGlPostingForm" onsubmit="event.preventDefault(); Desk.loadGlPreview();">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+            <div
+              style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
               <div style="display: flex; align-items: center; gap: 14px;">
                 <label style="font-weight: 700; font-size: 14px; white-space: nowrap;">Warehouse:</label>
                 <select id="glWarehouse" class="desk-form-control" style="width: 280px;">
@@ -1801,9 +2033,12 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
           <h3 style="margin: 0 0 10px 0; font-size: 1.25rem;">Ready to Re-Open Stores for Normal Operations?</h3>
           <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 24px;">
-            Unfreezing will remove transaction locks on all batches across Victoria Hydro Station. Engineering departments will be able to submit and receive Material Issues again.
+            Unfreezing will remove transaction locks on all batches across Victoria Hydro Station. Engineering
+            departments will be able to submit and receive Material Issues again.
           </p>
-          <button class="desk-btn desk-btn-primary" style="padding: 10px 28px; font-size: 14px; font-weight: 700; margin: 0 auto;" onclick="Desk.freezeAllBatches(false)">
+          <button class="desk-btn desk-btn-primary"
+            style="padding: 10px 28px; font-size: 14px; font-weight: 700; margin: 0 auto;"
+            onclick="Desk.freezeAllBatches(false)">
             <?= Icon::get('unlock', 14) ?> Confirm &amp; Unfreeze Batches
           </button>
         </div>
@@ -1827,21 +2062,27 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- Reports Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
-      <div class="desk-card" style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
+      <div class="desk-card"
+        style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
         <div id="pvReportsPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-pv-btn="pv-sub-avg" onclick="Desk.switchPvReportSubTab('pv-sub-avg')">
+          <button type="button" class="pv-pill-btn active" data-pv-btn="pv-sub-avg"
+            onclick="Desk.switchPvReportSubTab('pv-sub-avg')">
             <?= Icon::get('trending-up', 12) ?> Avg Consumption
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-final" onclick="Desk.switchPvReportSubTab('pv-sub-final')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-final"
+            onclick="Desk.switchPvReportSubTab('pv-sub-final')">
             <?= Icon::get('file-text', 12) ?> Final Report
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-other" onclick="Desk.switchPvReportSubTab('pv-sub-other')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-other"
+            onclick="Desk.switchPvReportSubTab('pv-sub-other')">
             <?= Icon::get('layers', 12) ?> Other Reports
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-summary" onclick="Desk.switchPvReportSubTab('pv-sub-summary')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-summary"
+            onclick="Desk.switchPvReportSubTab('pv-sub-summary')">
             <?= Icon::get('clipboard', 12) ?> PHV Sheet Summary
           </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-av7" onclick="Desk.switchPvReportSubTab('pv-sub-av7')">
+          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-av7"
+            onclick="Desk.switchPvReportSubTab('pv-sub-av7')">
             <?= Icon::get('file-check', 12) ?> Form AV 7 Summary
           </button>
         </div>
@@ -1851,7 +2092,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div id="pv-sub-avg" class="pv-sub-pane active">
         <div class="desk-card" style="padding: 24px; margin-bottom: 20px;">
           <form id="pvAvgConsumptionForm" onsubmit="event.preventDefault(); Desk.loadAvgConsumption();">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
               <div class="desk-form-group" style="margin: 0;">
                 <label class="desk-form-label">Cost Center</label>
                 <select id="avgCostCenter" class="desk-form-control">
@@ -1918,7 +2160,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 11: FINAL REPORT -->
       <div id="pv-sub-final" class="pv-sub-pane">
-        <div class="workspace-cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
+        <div class="workspace-cards-grid"
+          style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
           <div class="desk-stat-card">
             <div class="stat-card-title">Total Verified Lines</div>
             <div class="stat-card-value" id="finalTotalLines">0</div>
@@ -1973,7 +2216,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <!-- SUB-PANE 12: OTHER REPORTS -->
       <div id="pv-sub-other" class="pv-sub-pane">
         <div class="desk-card" style="padding: 24px; margin-bottom: 20px;">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label">Select Warehouse</label>
               <select id="otherWarehouse" class="desk-form-control">
@@ -1992,7 +2236,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <option value="high_value">High-Value Critical Hydro Parts</option>
               </select>
             </div>
-            <button class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center;" onclick="Desk.loadOtherReport()">
+            <button class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center;"
+              onclick="Desk.loadOtherReport()">
               <?= Icon::get('layers', 13) ?> View Report
             </button>
           </div>
@@ -2026,7 +2271,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div id="pv-sub-summary" class="pv-sub-pane">
         <div class="desk-card" style="padding: 24px; margin-bottom: 20px;">
           <form id="pvSheetSummaryForm" onsubmit="event.preventDefault(); Desk.loadSheetSummary();">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
+            <div
+              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
               <div class="desk-form-group" style="margin: 0;">
                 <label class="desk-form-label">Select Cost Center</label>
                 <select id="summaryCostCenter" class="desk-form-control">
@@ -2161,15 +2407,19 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body Cash Book Voucher Entry Form -->
-      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+      <div class="desk-card"
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
           <?= Icon::get('dollar-sign', 16) ?> Enter Cash Book Voucher
         </h3>
         <form id="bodyCashVoucherForm" onsubmit="event.preventDefault(); Desk.submitBodyCashVoucher(this);">
-          <div style="display: grid; grid-template-columns: 180px 1fr 1fr 180px; gap: 14px; margin-bottom: 14px; align-items: flex-end;">
+          <div
+            style="display: grid; grid-template-columns: 180px 1fr 1fr 180px; gap: 14px; margin-bottom: 14px; align-items: flex-end;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Voucher Type *</label>
-              <select name="entry_type" class="desk-form-control" style="border: 1px solid #71717a; border-radius: 2px;">
+              <select name="entry_type" class="desk-form-control"
+                style="border: 1px solid #71717a; border-radius: 2px;">
                 <option value="Payment">Payment Voucher</option>
                 <option value="Receipt">Receipt Voucher</option>
                 <option value="Petty Cash">Petty Cash Voucher</option>
@@ -2177,20 +2427,27 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Account Title *</label>
-              <input type="text" name="account_title" class="desk-form-control" placeholder="e.g. Fuel Emergency / Spares Petty Cash" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="account_title" class="desk-form-control"
+                placeholder="e.g. Fuel Emergency / Spares Petty Cash" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Payee / Source *</label>
-              <input type="text" name="payee_or_source" class="desk-form-control" placeholder="e.g. CEB / CPC / Station Cashier" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="payee_or_source" class="desk-form-control"
+                placeholder="e.g. CEB / CPC / Station Cashier" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Amount (Rs.) *</label>
-              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00"
+                required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
           </div>
           <div class="desk-form-group" style="margin-bottom: 16px;">
             <label class="desk-form-label" style="font-weight: 700; color: #000000;">Description / Remarks</label>
-            <input type="text" name="description" class="desk-form-control" placeholder="Details and authorization reference..." style="border: 1px solid #71717a; border-radius: 2px;">
+            <input type="text" name="description" class="desk-form-control"
+              placeholder="Details and authorization reference..."
+              style="border: 1px solid #71717a; border-radius: 2px;">
           </div>
           <div style="display: flex; justify-content: flex-end;">
             <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
@@ -2243,36 +2500,46 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body Payslip Cancellation Form -->
-      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+      <div class="desk-card"
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
           <?= Icon::get('alert-triangle', 16) ?> Enter Payslip Cancellation Requisition
         </h3>
         <form id="bodyPayslipCancelForm" onsubmit="event.preventDefault(); Desk.submitBodyPayslipCancel(this);">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Payslip No *</label>
-              <input type="text" name="payslip_no" class="desk-form-control" placeholder="e.g. PS-2026-11-831-042" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="payslip_no" class="desk-form-control" placeholder="e.g. PS-2026-11-831-042"
+                required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Employee Name *</label>
-              <input type="text" name="employee_name" class="desk-form-control" placeholder="e.g. K. L. Bandara" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="employee_name" class="desk-form-control" placeholder="e.g. K. L. Bandara"
+                required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">EPF Number</label>
-              <input type="text" name="epf_no" class="desk-form-control" placeholder="e.g. EPF-55829" style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="epf_no" class="desk-form-control" placeholder="e.g. EPF-55829"
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Pay Period *</label>
-              <input type="text" name="pay_period" class="desk-form-control" value="<?= date('F Y') ?>" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="pay_period" class="desk-form-control" value="<?= date('F Y') ?>" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Amount (Rs.) *</label>
-              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00"
+                required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
           </div>
           <div class="desk-form-group" style="margin-bottom: 16px;">
             <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason for Cancellation *</label>
-            <input type="text" name="reason" class="desk-form-control" placeholder="e.g. Disputed shift overtime calculation / Salary adjustment recalculation" required style="border: 1px solid #71717a; border-radius: 2px;">
+            <input type="text" name="reason" class="desk-form-control"
+              placeholder="e.g. Disputed shift overtime calculation / Salary adjustment recalculation" required
+              style="border: 1px solid #71717a; border-radius: 2px;">
           </div>
           <div style="display: flex; justify-content: flex-end;">
             <button type="submit" class="desk-btn desk-btn-danger" style="padding: 7px 22px; font-weight: 600;">
@@ -2328,15 +2595,19 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body CPC Fuel Consignment Entry Form -->
-      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+      <div class="desk-card"
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
           <?= Icon::get('droplet', 16) ?> Enter CPC Fuel Procurement Order
         </h3>
         <form id="bodyCpcOrderForm" onsubmit="event.preventDefault(); Desk.submitBodyCpcOrder(this);">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">CPC Order / Bowzer No *</label>
-              <input type="text" name="order_no" class="desk-form-control" placeholder="e.g. CPC-BWZ-2026-88" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="order_no" class="desk-form-control" placeholder="e.g. CPC-BWZ-2026-88" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Fuel Type *</label>
@@ -2348,24 +2619,30 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Storage Tank ID *</label>
-              <input type="text" name="tank_id" class="desk-form-control" value="Main Tank T-01" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="tank_id" class="desk-form-control" value="Main Tank T-01" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Quantity (Litres) *</label>
-              <input type="number" name="quantity_litres" class="desk-form-control" min="1" placeholder="e.g. 13200" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="quantity_litres" class="desk-form-control" min="1" placeholder="e.g. 13200"
+                required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Unit Price LKR / Litre *</label>
-              <input type="number" name="unit_price_lkr" class="desk-form-control" step="0.01" min="1" placeholder="e.g. 348.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="unit_price_lkr" class="desk-form-control" step="0.01" min="1"
+                placeholder="e.g. 348.00" required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Consignment Date *</label>
-              <input type="date" name="consignment_date" class="desk-form-control" value="<?= date('Y-m-d') ?>" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="date" name="consignment_date" class="desk-form-control" value="<?= date('Y-m-d') ?>" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
           </div>
           <div class="desk-form-group" style="margin-bottom: 16px;">
-            <label class="desk-form-label" style="font-weight: 700; color: #000000;">CPC Invoice / Delivery Note Ref</label>
-            <input type="text" name="delivery_ref" class="desk-form-control" placeholder="e.g. CPC-INV-KOLONNAWA-4412" style="border: 1px solid #71717a; border-radius: 2px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">CPC Invoice / Delivery Note
+              Ref</label>
+            <input type="text" name="delivery_ref" class="desk-form-control" placeholder="e.g. CPC-INV-KOLONNAWA-4412"
+              style="border: 1px solid #71717a; border-radius: 2px;">
           </div>
           <div style="display: flex; justify-content: flex-end;">
             <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
@@ -2414,15 +2691,19 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body Diesel Price Log Form -->
-      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+      <div class="desk-card"
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
           <?= Icon::get('trending-up', 16) ?> Enter Monthly Diesel Price Log
         </h3>
         <form id="bodyDieselPriceForm" onsubmit="event.preventDefault(); Desk.submitBodyDieselPrice(this);">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Effective Month *</label>
-              <input type="month" name="effective_month" class="desk-form-control" value="<?= date('Y-m') ?>" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="month" name="effective_month" class="desk-form-control" value="<?= date('Y-m') ?>" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Fuel Type *</label>
@@ -2433,12 +2714,15 @@ require_once __DIR__ . '/views/layouts/header.php';
               </select>
             </div>
             <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Average Price / Litre (LKR) *</label>
-              <input type="number" name="avg_price_per_litre" class="desk-form-control" step="0.01" min="1" placeholder="e.g. 348.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Average Price / Litre (LKR)
+                *</label>
+              <input type="number" name="avg_price_per_litre" class="desk-form-control" step="0.01" min="1"
+                placeholder="e.g. 348.00" required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Total Procured Litres</label>
-              <input type="number" name="total_procured_litres" class="desk-form-control" min="0" placeholder="e.g. 45000" style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="total_procured_litres" class="desk-form-control" min="0"
+                placeholder="e.g. 45000" style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
           </div>
           <div style="display: flex; justify-content: flex-end;">
@@ -2552,7 +2836,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <!-- Filter Form -->
       <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
         <form id="formInventoryInquiry" onsubmit="event.preventDefault(); Desk.loadInventoryInquiry();">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label">Search SKU / Item Name</label>
               <input type="text" id="inquirySku" class="desk-form-control" placeholder="e.g. 01-01-01 or Turbine">
@@ -2575,7 +2860,8 @@ require_once __DIR__ . '/views/layouts/header.php';
               <label class="desk-form-label">To Date</label>
               <input type="date" id="inquiryToDate" class="desk-form-control">
             </div>
-            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+            <button type="submit" class="desk-btn desk-btn-primary"
+              style="height: 38px; justify-content: center; font-weight: 600;">
               <?= Icon::get('search', 13) ?> Filter Inquiry
             </button>
           </div>
@@ -2616,7 +2902,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Monthly Transactions Report</h1>
-          <div class="workspace-subtitle">Detailed Audit Log of Receipts (GRN), Issues (GIN), Transfers &amp; Adjustments</div>
+          <div class="workspace-subtitle">Detailed Audit Log of Receipts (GRN), Issues (GIN), Transfers &amp;
+            Adjustments</div>
         </div>
         <div class="header-action-btns">
           <button class="desk-btn desk-btn-default" onclick="Desk.loadMonthlyTx()">
@@ -2630,7 +2917,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
         <form id="formMonthlyTx" onsubmit="event.preventDefault(); Desk.loadMonthlyTx();">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label">Document Type</label>
               <select id="monthlyTxDocType" class="desk-form-control">
@@ -2650,7 +2938,8 @@ require_once __DIR__ . '/views/layouts/header.php';
               <select id="monthlyTxMonth" class="desk-form-control">
                 <option value="">All Months</option>
                 <?php for ($m = 1; $m <= 12; $m++): ?>
-                  <option value="<?= $m ?>" <?= ($m == date('n')) ? 'selected' : '' ?>><?= date('F', mktime(0, 0, 0, $m, 10)) ?></option>
+                  <option value="<?= $m ?>" <?= ($m == date('n')) ? 'selected' : '' ?>>
+                    <?= date('F', mktime(0, 0, 0, $m, 10)) ?></option>
                 <?php endfor; ?>
               </select>
             </div>
@@ -2663,7 +2952,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <option value="Electrical Spares Bay">Electrical Spares Bay</option>
               </select>
             </div>
-            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+            <button type="submit" class="desk-btn desk-btn-primary"
+              style="height: 38px; justify-content: center; font-weight: 600;">
               <?= Icon::get('file-text', 13) ?> Filter Logs
             </button>
           </div>
@@ -2718,7 +3008,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
         <form id="formGrnIssueSummary" onsubmit="event.preventDefault(); Desk.loadGrnIssueSummary();">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label">Cost Center / Department</label>
               <select id="grnSumCostCenter" class="desk-form-control">
@@ -2736,7 +3027,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <option value="Electrical Spares Warehouse">Electrical Spares Warehouse</option>
               </select>
             </div>
-            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+            <button type="submit" class="desk-btn desk-btn-primary"
+              style="height: 38px; justify-content: center; font-weight: 600;">
               <?= Icon::get('clipboard', 13) ?> Generate Summary
             </button>
           </div>
@@ -2775,7 +3067,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Material Flow Report</h1>
-          <div class="workspace-subtitle">Stock Movement Cycle: Opening Balance + Receipts - Issues = Closing Balance</div>
+          <div class="workspace-subtitle">Stock Movement Cycle: Opening Balance + Receipts - Issues = Closing Balance
+          </div>
         </div>
         <div class="header-action-btns">
           <button class="desk-btn desk-btn-default" onclick="Desk.loadMaterialFlow()">
@@ -2789,7 +3082,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
         <form id="formMaterialFlow" onsubmit="event.preventDefault(); Desk.loadMaterialFlow();">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 140px; gap: 16px; align-items: flex-end;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label">Material SKU Filter</label>
               <input type="text" id="matFlowSku" class="desk-form-control" placeholder="All materials or enter code">
@@ -2810,7 +3104,8 @@ require_once __DIR__ . '/views/layouts/header.php';
               <label class="desk-form-label">To Date</label>
               <input type="date" id="matFlowToDate" class="desk-form-control" value="<?= date('Y-m-d') ?>">
             </div>
-            <button type="submit" class="desk-btn desk-btn-primary" style="height: 38px; justify-content: center; font-weight: 600;">
+            <button type="submit" class="desk-btn desk-btn-primary"
+              style="height: 38px; justify-content: center; font-weight: 600;">
               <?= Icon::get('repeat', 13) ?> View Flow
             </button>
           </div>
@@ -2858,30 +3153,42 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body Cost Adjustment Form -->
-      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+      <div class="desk-card"
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
           <?= Icon::get('sliders', 16) ?> Enter Cost &amp; Valuation Adjustment
         </h3>
         <form id="bodyCostAdjustForm" onsubmit="event.preventDefault(); Desk.submitBodyCostAdjust(this);">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
             <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select FIFO Batch to Adjust *</label>
-              <select name="batch_id" id="bodyCostAdjustBatch" class="desk-form-control" onchange="Desk.onCostAdjustBatchChange(this)" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select FIFO Batch to Adjust
+                *</label>
+              <select name="batch_id" id="bodyCostAdjustBatch" class="desk-form-control"
+                onchange="Desk.onCostAdjustBatchChange(this)" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
                 <option value="">-- Loading active inventory batches... --</option>
               </select>
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Current Unit Cost</label>
-              <input type="text" id="bodyCostAdjustCurrentCost" class="desk-form-control" readonly placeholder="Select a batch..." style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 2px;">
+              <input type="text" id="bodyCostAdjustCurrentCost" class="desk-form-control" readonly
+                placeholder="Select a batch..."
+                style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">New Unit Cost (Rs.) *</label>
-              <input type="number" name="new_unit_cost" id="bodyCostAdjustNewCost" class="desk-form-control" step="0.01" min="0" placeholder="e.g. 95000.00" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="new_unit_cost" id="bodyCostAdjustNewCost" class="desk-form-control" step="0.01"
+                min="0" placeholder="e.g. 95000.00" required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
           </div>
           <div class="desk-form-group" style="margin-bottom: 16px;">
-            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason / Valuation Adjustment Justification *</label>
-            <input type="text" name="reason" class="desk-form-control" placeholder="e.g. Additional freight/customs cess surcharge allocation" required style="border: 1px solid #71717a; border-radius: 2px;">
+            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason / Valuation Adjustment
+              Justification *</label>
+            <input type="text" name="reason" class="desk-form-control"
+              placeholder="e.g. Additional freight/customs cess surcharge allocation" required
+              style="border: 1px solid #71717a; border-radius: 2px;">
           </div>
           <div style="display: flex; justify-content: flex-end;">
             <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
@@ -2932,34 +3239,44 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
 
       <!-- In-Body Allocated Qty Correction Form -->
-      <div class="desk-card" style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
-        <h3 style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
+      <div class="desk-card"
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        <h3
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
           <?= Icon::get('check-square', 16) ?> Enter Allocated Quantity Correction &amp; Stock Release
         </h3>
         <form id="bodyQtyCorrectForm" onsubmit="event.preventDefault(); Desk.submitBodyQtyCorrect(this);">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px;">
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Select FIFO Batch *</label>
-              <select name="batch_id" id="bodyQtyCorrectBatch" class="desk-form-control" onchange="Desk.onQtyCorrectBatchChange(this)" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <select name="batch_id" id="bodyQtyCorrectBatch" class="desk-form-control"
+                onchange="Desk.onQtyCorrectBatchChange(this)" required
+                style="border: 1px solid #71717a; border-radius: 2px;">
                 <option value="">-- Loading active inventory batches... --</option>
               </select>
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Allocated Qty Before</label>
-              <input type="number" name="allocated_qty_before" id="bodyQtyAllocBefore" class="desk-form-control" min="0" value="0" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="allocated_qty_before" id="bodyQtyAllocBefore" class="desk-form-control" min="0"
+                value="0" required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Corrected Allocated Qty</label>
-              <input type="number" name="corrected_allocated_qty" id="bodyQtyAllocAfter" class="desk-form-control" min="0" value="0" required style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="number" name="corrected_allocated_qty" id="bodyQtyAllocAfter" class="desk-form-control"
+                min="0" value="0" required style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
             <div class="desk-form-group" style="margin: 0;">
               <label class="desk-form-label" style="font-weight: 700; color: #000000;">Work Order / Task Ref</label>
-              <input type="text" name="work_order_ref" class="desk-form-control" placeholder="e.g. WO-2026-TURB-01" style="border: 1px solid #71717a; border-radius: 2px;">
+              <input type="text" name="work_order_ref" class="desk-form-control" placeholder="e.g. WO-2026-TURB-01"
+                style="border: 1px solid #71717a; border-radius: 2px;">
             </div>
           </div>
           <div class="desk-form-group" style="margin-bottom: 16px;">
             <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason for Correction *</label>
-            <input type="text" name="reason" class="desk-form-control" placeholder="e.g. Released stuck reservation from cancelled maintenance work order" required style="border: 1px solid #71717a; border-radius: 2px;">
+            <input type="text" name="reason" class="desk-form-control"
+              placeholder="e.g. Released stuck reservation from cancelled maintenance work order" required
+              style="border: 1px solid #71717a; border-radius: 2px;">
           </div>
           <div style="display: flex; justify-content: flex-end;">
             <button type="submit" class="desk-btn desk-btn-primary" style="padding: 7px 22px; font-weight: 600;">
@@ -3023,448 +3340,501 @@ require_once __DIR__ . '/views/layouts/header.php';
     </div>
 
     <?php if ($isAdmin): ?>
-    <!-- ============================================================
+      <!-- ============================================================
          PANE 16: Administration & Governance
          ============================================================ -->
-    <div id="tab-admin" class="tab-pane" style="display: block;">
-      <div class="workspace-header">
-        <div class="workspace-title-box">
-          <h1>Administration &amp; Governance Console</h1>
-          <div class="workspace-subtitle">Power Stations, Operational Departments, User Accounts, Roles &amp; Permissions Matrix</div>
-        </div>
-      </div>
-
-      <!-- SUB-PANE 1: POWER STATIONS & LOCATIONS -->
-      <div id="admin-sub-locations" class="admin-sub-pane active">
-        <div class="desk-card" style="margin-bottom: 24px;">
-          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Power Stations &amp; Operational Locations</h2>
-              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Hydroelectric &amp; Thermal Power Generation Complex Stations</div>
-            </div>
-            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createLocationModal')">
-              + Add Location
-            </button>
+      <div id="tab-admin" class="tab-pane" style="display: block;">
+        <div class="workspace-header">
+          <div class="workspace-title-box">
+            <h1>Administration &amp; Governance Console</h1>
+            <div class="workspace-subtitle">Power Stations, Operational Departments, User Accounts, Roles &amp;
+              Permissions Matrix</div>
           </div>
+        </div>
 
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Station / Location Name</th>
-                  <th>Code</th>
-                  <th>Assigned Depts</th>
-                  <th>Staff</th>
-                  <th>Status</th>
-                  <th style="text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="locationsTableBody">
-                <?php if (empty($locations)): ?>
+        <!-- SUB-PANE 1: POWER STATIONS & LOCATIONS -->
+        <div id="admin-sub-locations" class="admin-sub-pane active">
+          <div class="desk-card" style="margin-bottom: 24px;">
+            <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Power Stations &amp; Operational
+                  Locations</h2>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Hydroelectric &amp; Thermal Power
+                  Generation Complex Stations</div>
+              </div>
+              <button type="button" class="desk-btn desk-btn-primary desk-btn-sm"
+                onclick="Desk.openModal('createLocationModal')">
+                + Add Location
+              </button>
+            </div>
+
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
                   <tr>
-                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No power stations found.</td>
+                    <th>Station / Location Name</th>
+                    <th>Code</th>
+                    <th>Assigned Depts</th>
+                    <th>Staff</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
                   </tr>
-                <?php else: ?>
-                  <?php foreach ($locations as $loc): ?>
-                    <tr id="loc-row-<?= $loc['id'] ?>">
-                      <td><strong style="color: #0f172a;"><?= htmlspecialchars($loc['name']) ?></strong></td>
-                      <td><span class="desk-badge badge-draft" style="font-family: monospace; font-weight: 700;"><?= htmlspecialchars($loc['code']) ?></span></td>
-                      <td><strong style="color: #650b2b;"><?= (int)($loc['department_count'] ?? 0) ?></strong> Depts</td>
-                      <td><span><?= (int)($loc['staff_count'] ?? 0) ?></span> Users</td>
-                      <td>
-                        <span class="desk-badge <?= ($loc['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
-                          <?= ucfirst(htmlspecialchars($loc['status'])) ?>
-                        </span>
-                      </td>
-                      <td style="text-align: right; white-space: nowrap;">
-                        <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditLocationModal(<?= $loc['id'] ?>, '<?= addslashes(htmlspecialchars($loc['name'])) ?>', '<?= addslashes(htmlspecialchars($loc['code'])) ?>', '<?= htmlspecialchars($loc['status']) ?>')">
-                          Edit
-                        </button>
-                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteLocation(<?= $loc['id'] ?>, '<?= addslashes(htmlspecialchars($loc['name'])) ?>')">
-                          Delete
-                        </button>
+                </thead>
+                <tbody id="locationsTableBody">
+                  <?php if (empty($locations)): ?>
+                    <tr>
+                      <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No power stations found.
                       </td>
                     </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUB-PANE 2: DEPARTMENTS & STORES -->
-      <div id="admin-sub-departments" class="admin-sub-pane">
-        <div class="desk-card" style="margin-bottom: 24px;">
-          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Operational Departments &amp; Warehouses</h2>
-              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Station divisions, mechanical, electrical &amp; central stores</div>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <select id="filterDeptLocation" class="desk-form-control" style="width: auto; padding: 5px 10px; font-size: 0.82rem;" onchange="Desk.filterDepartmentsByLocation(this.value)">
-                <option value="">All Stations &amp; Locations</option>
-                <?php foreach ($locations as $loc): ?>
-                  <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
-                <?php endforeach; ?>
-              </select>
-              <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createDepartmentModal')">
-                + Add Department
-              </button>
-            </div>
-          </div>
-
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Power Station / Location</th>
-                  <th>Department Name</th>
-                  <th>Code</th>
-                  <th>Assigned Staff</th>
-                  <th>Status</th>
-                  <th style="text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="departmentsTableBody">
-                <?php if (empty($departments)): ?>
-                  <tr>
-                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No departments found.</td>
-                  </tr>
-                <?php else: ?>
-                  <?php foreach ($departments as $dept): ?>
-                    <tr id="dept-row-<?= $dept['id'] ?>" data-location-id="<?= $dept['location_id'] ?>">
-                      <td>
-                        <span class="desk-badge badge-draft" style="font-size: 0.75rem; font-weight: 700;">
-                          <?= htmlspecialchars($dept['location_name'] ?? 'General') ?>
-                        </span>
-                      </td>
-                      <td><strong style="color: #0f172a;"><?= htmlspecialchars($dept['name']) ?></strong></td>
-                      <td><code><?= htmlspecialchars($dept['code']) ?></code></td>
-                      <td style="font-weight: 600; color: #650b2b;"><?= (int)($dept['user_count'] ?? 0) ?> Members</td>
-                      <td>
-                        <span class="desk-badge <?= ($dept['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
-                          <?= ucfirst(htmlspecialchars($dept['status'])) ?>
-                        </span>
-                      </td>
-                      <td style="text-align: right; white-space: nowrap;">
-                        <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditDepartmentModal(<?= $dept['id'] ?>, <?= (int)$dept['location_id'] ?>, '<?= addslashes(htmlspecialchars($dept['name'])) ?>', '<?= addslashes(htmlspecialchars($dept['code'])) ?>', '<?= htmlspecialchars($dept['status']) ?>')">
-                          Edit
-                        </button>
-                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteDepartment(<?= $dept['id'] ?>, '<?= addslashes(htmlspecialchars($dept['name'])) ?>')">
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUB-PANE 3: USER ACCOUNTS -->
-      <div id="admin-sub-users" class="admin-sub-pane">
-        <div class="desk-card" style="margin-bottom: 24px;">
-          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">User Accounts &amp; Operational Access</h2>
-              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Station engineers, storekeepers, accountants &amp; operators</div>
-            </div>
-            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createUserModal')">
-              + Add User
-            </button>
-          </div>
-
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Assigned Station &amp; Dept</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Created Date</th>
-                  <th style="text-align: right;">Action</th>
-                </tr>
-              </thead>
-              <tbody id="usersTableBody">
-                <?php foreach ($allUsers as $u): ?>
-                  <tr id="user-row-<?= $u['id'] ?>">
-                    <td>
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 32px; height: 32px; border-radius: 50%; background: <?= htmlspecialchars($u['avatar_color'] ?? '#650b2b') ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem;">
-                          <?= strtoupper(substr($u['username'], 0, 1)) ?>
-                        </div>
-                        <div>
-                          <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;"><?= htmlspecialchars($u['username']) ?></div>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div style="font-size: 0.84rem; font-weight: 600; color: #1e293b;"><?= htmlspecialchars($u['location_name'] ?? 'Victoria Station') ?></div>
-                      <div style="font-size: 0.74rem; color: #64748b;"><?= htmlspecialchars($u['department'] ?? 'General') ?></div>
-                    </td>
-                    <td>
-                      <?php if ($u['role_name'] === 'super_admin'): ?>
-                        <span class="badge-super-admin" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700;"><?= htmlspecialchars($u['role_display_name']) ?></span>
-                      <?php else: ?>
-                        <span class="desk-badge badge-draft" style="font-size: 0.72rem; font-weight: 700;"><?= htmlspecialchars($u['role_display_name']) ?></span>
-                      <?php endif; ?>
-                    </td>
-                    <td>
-                      <span class="desk-badge <?= ($u['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
-                        <?= ucfirst(htmlspecialchars($u['status'])) ?>
-                      </span>
-                    </td>
-                    <td style="color: #64748b; font-size: 0.82rem;"><?= substr($u['created_at'], 0, 10) ?></td>
-                    <td style="text-align: right; white-space: nowrap;">
-                      <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditUserModal(<?= htmlspecialchars(json_encode([
-                        'id' => $u['id'],
-                        'full_name' => $u['full_name'],
-                        'username' => $u['username'],
-                        'email' => $u['email'],
-                        'role_id' => $u['role_id'],
-                        'location_id' => $u['location_id'] ?? 1,
-                        'department' => $u['department'] ?? '',
-                        'status' => $u['status']
-                      ])) ?>)">
-                        Edit
-                      </button>
-                      <?php if ((int)$u['id'] !== (int)Auth::id()): ?>
-                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteUser(<?= $u['id'] ?>, '<?= addslashes(htmlspecialchars($u['full_name'])) ?>')">
-                          Delete
-                        </button>
-                      <?php endif; ?>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUB-PANE 4: USER ROLES & CODES -->
-      <div id="admin-sub-roles" class="admin-sub-pane">
-        <div class="desk-card" style="margin-bottom: 24px;">
-          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Defined User Roles &amp; Operational Designations</h2>
-              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Manage designations, role codes, tab access scopes and assigned staff</div>
-            </div>
-            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openModal('createRoleModal')">
-              + Add Role
-            </button>
-          </div>
-
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Role Title / Name</th>
-                  <th>Role Code</th>
-                  <th>Role Identifier</th>
-                  <th>Assigned Station / Dept</th>
-                  <th>Tab Access</th>
-                  <th>Assigned Staff</th>
-                  <th style="text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="rolesTableBody">
-                <?php
-                $allPermKeys = \App\Models\Permission::getAllPermissionKeys();
-                $totalPerms = count($allPermKeys);
-                foreach ($allRoles as $r):
-                  $roleId = (int)$r['id'];
-                  $enabledCount = 0;
-                  foreach ($allPermKeys as $k) {
-                    if (isset($permissionsMatrix[$k][$roleId])) {
-                      if ((int)$permissionsMatrix[$k][$roleId] === 1) $enabledCount++;
-                    } else {
-                      $enabledCount++;
-                    }
-                  }
-                  $roleCodeVal = !empty($r['code']) ? $r['code'] : strtoupper($r['name']);
-                ?>
-                  <tr id="role-row-<?= $r['id'] ?>">
-                    <td>
-                      <strong style="color: #0f172a; font-size: 0.92rem;"><?= htmlspecialchars($r['display_name']) ?></strong>
-                      <?php if (!empty($r['description'])): ?>
-                        <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;"><?= htmlspecialchars($r['description']) ?></div>
-                      <?php endif; ?>
-                    </td>
-                    <td>
-                      <span class="desk-badge" style="font-family: monospace; font-size: 0.82rem; font-weight: 700; background: #650b2b; color: #ffffff; padding: 3px 8px; border-radius: 4px;">
-                        <?= htmlspecialchars($roleCodeVal) ?>
-                      </span>
-                    </td>
-                    <td><code><?= htmlspecialchars($r['name']) ?></code></td>
-                    <td><span style="font-size: 0.82rem; color: #475569;"><?= htmlspecialchars($r['location_name'] ?? 'All Stations (Global)') ?></span></td>
-                    <td>
-                      <button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="font-size: 0.76rem; font-weight: 600;" onclick="Desk.openEditRoleModal(<?= htmlspecialchars(json_encode([
-                        'id' => $r['id'],
-                        'name' => $r['name'],
-                        'code' => $roleCodeVal,
-                        'display_name' => $r['display_name'],
-                        'description' => $r['description'] ?? '',
-                        'location_id' => $r['location_id'] ?? '',
-                        'department_id' => $r['department_id'] ?? ''
-                      ])) ?>)">
-                        <span style="color: #650b2b; font-weight: 700;"><?= $enabledCount ?>/<?= $totalPerms ?></span> Tabs &bull; Configure
-                      </button>
-                    </td>
-                    <td><strong style="color: #650b2b;"><?= (int)($r['user_count'] ?? 0) ?></strong> Members</td>
-                    <td style="text-align: right; white-space: nowrap;">
-                      <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditRoleModal(<?= htmlspecialchars(json_encode([
-                        'id' => $r['id'],
-                        'name' => $r['name'],
-                        'code' => $roleCodeVal,
-                        'display_name' => $r['display_name'],
-                        'description' => $r['description'] ?? '',
-                        'location_id' => $r['location_id'] ?? '',
-                        'department_id' => $r['department_id'] ?? ''
-                      ])) ?>)">
-                        Edit
-                      </button>
-                      <?php if ($r['id'] != 1 && (int)($r['user_count'] ?? 0) === 0): ?>
-                        <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteRole(<?= $r['id'] ?>, '<?= addslashes(htmlspecialchars($r['display_name'])) ?>')">
-                          Delete
-                        </button>
-                      <?php endif; ?>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUB-PANE 5: PERMISSIONS MATRIX -->
-      <div id="admin-sub-matrix" class="admin-sub-pane">
-        <div class="desk-card" style="margin-bottom: 24px;">
-          <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">User Permissions &amp; Access Matrix</h2>
-              <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Interactive ON/OFF access control across all ERP workspaces, workflow tabs and reports</div>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Horizontal Scroll:</span>
-              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" id="btnScrollMatrixLeft" title="Scroll Matrix Left">
-                &larr; Left
-              </button>
-              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" id="btnScrollMatrixRight" title="Scroll Matrix Right">
-                Right &rarr;
-              </button>
-            </div>
-          </div>
-
-          <!-- Permissions Matrix Table -->
-          <div id="usersMatrixWrap" class="matrix-table-wrap">
-            <table class="matrix-table">
-              <thead>
-                <!-- Tier 1: Station / Location Colspan Headers -->
-                <tr>
-                  <th rowspan="2" class="matrix-nav-col" style="vertical-align: middle; background: #f8fafc; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; font-weight: 700; color: #1e293b;">
-                    System Navigation Tab / Sub-Tab
-                  </th>
-                  <?php if (empty($groupedUsersByStation)): ?>
-                    <th style="text-align: center; color: #94a3b8; padding: 16px 20px; font-weight: normal; font-size: 0.82rem;">
-                      No operational user accounts created yet. Use the <strong>User Accounts</strong> tab above to create users and configure their tab access matrix.
-                    </th>
                   <?php else: ?>
-                    <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
-                      <th colspan="<?= count($stUsers) ?>" style="text-align: center; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.74rem; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; border-left: 2px solid #cbd5e1; padding: 6px 8px; white-space: nowrap;">
-                        <?= htmlspecialchars($stationName ?: 'All Stations (Global)') ?>
-                      </th>
+                    <?php foreach ($locations as $loc): ?>
+                      <tr id="loc-row-<?= $loc['id'] ?>">
+                        <td><strong style="color: #0f172a;"><?= htmlspecialchars($loc['name']) ?></strong></td>
+                        <td><span class="desk-badge badge-draft"
+                            style="font-family: monospace; font-weight: 700;"><?= htmlspecialchars($loc['code']) ?></span>
+                        </td>
+                        <td><strong style="color: #650b2b;"><?= (int) ($loc['department_count'] ?? 0) ?></strong> Depts</td>
+                        <td><span><?= (int) ($loc['staff_count'] ?? 0) ?></span> Users</td>
+                        <td>
+                          <span class="desk-badge <?= ($loc['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
+                            <?= ucfirst(htmlspecialchars($loc['status'])) ?>
+                          </span>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                          <button class="desk-btn desk-btn-default desk-btn-sm"
+                            onclick="Desk.openEditLocationModal(<?= $loc['id'] ?>, '<?= addslashes(htmlspecialchars($loc['name'])) ?>', '<?= addslashes(htmlspecialchars($loc['code'])) ?>', '<?= htmlspecialchars($loc['status']) ?>')">
+                            Edit
+                          </button>
+                          <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;"
+                            onclick="Desk.deleteLocation(<?= $loc['id'] ?>, '<?= addslashes(htmlspecialchars($loc['name'])) ?>')">
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
                     <?php endforeach; ?>
                   <?php endif; ?>
-                </tr>
-                <!-- Tier 2: User Account Headers -->
-                <tr>
-                  <?php if (empty($groupedUsersByStation)): ?>
-                    <th style="display: none;"></th>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANE 2: DEPARTMENTS & STORES -->
+        <div id="admin-sub-departments" class="admin-sub-pane">
+          <div class="desk-card" style="margin-bottom: 24px;">
+            <div class="desk-card-header"
+              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Operational Departments &amp;
+                  Warehouses</h2>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Station divisions, mechanical, electrical
+                  &amp; central stores</div>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="filterDeptLocation" class="desk-form-control"
+                  style="width: auto; padding: 5px 10px; font-size: 0.82rem;"
+                  onchange="Desk.filterDepartmentsByLocation(this.value)">
+                  <option value="">All Stations &amp; Locations</option>
+                  <?php foreach ($locations as $loc): ?>
+                    <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <button type="button" class="desk-btn desk-btn-primary desk-btn-sm"
+                  onclick="Desk.openModal('createDepartmentModal')">
+                  + Add Department
+                </button>
+              </div>
+            </div>
+
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
+                  <tr>
+                    <th>Power Station / Location</th>
+                    <th>Department Name</th>
+                    <th>Code</th>
+                    <th>Assigned Staff</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="departmentsTableBody">
+                  <?php if (empty($departments)): ?>
+                    <tr>
+                      <td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">No departments found.</td>
+                    </tr>
                   <?php else: ?>
-                    <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
-                      <?php foreach ($stUsers as $idx => $u): ?>
-                        <th class="matrix-user-col" style="text-align: center; background: #ffffff; padding: 6px 4px; white-space: nowrap; border-bottom: 1px solid #cbd5e1; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : '' ?>">
-                          <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; text-transform: uppercase;">
-                            <?= htmlspecialchars($u['username']) ?>
+                    <?php foreach ($departments as $dept): ?>
+                      <tr id="dept-row-<?= $dept['id'] ?>" data-location-id="<?= $dept['location_id'] ?>">
+                        <td>
+                          <span class="desk-badge badge-draft" style="font-size: 0.75rem; font-weight: 700;">
+                            <?= htmlspecialchars($dept['location_name'] ?? 'General') ?>
+                          </span>
+                        </td>
+                        <td><strong style="color: #0f172a;"><?= htmlspecialchars($dept['name']) ?></strong></td>
+                        <td><code><?= htmlspecialchars($dept['code']) ?></code></td>
+                        <td style="font-weight: 600; color: #650b2b;"><?= (int) ($dept['user_count'] ?? 0) ?> Members</td>
+                        <td>
+                          <span class="desk-badge <?= ($dept['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
+                            <?= ucfirst(htmlspecialchars($dept['status'])) ?>
+                          </span>
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                          <button class="desk-btn desk-btn-default desk-btn-sm"
+                            onclick="Desk.openEditDepartmentModal(<?= $dept['id'] ?>, <?= (int) $dept['location_id'] ?>, '<?= addslashes(htmlspecialchars($dept['name'])) ?>', '<?= addslashes(htmlspecialchars($dept['code'])) ?>', '<?= htmlspecialchars($dept['status']) ?>')">
+                            Edit
+                          </button>
+                          <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;"
+                            onclick="Desk.deleteDepartment(<?= $dept['id'] ?>, '<?= addslashes(htmlspecialchars($dept['name'])) ?>')">
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANE 3: USER ACCOUNTS -->
+        <div id="admin-sub-users" class="admin-sub-pane">
+          <div class="desk-card" style="margin-bottom: 24px;">
+            <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">User Accounts &amp; Operational
+                  Access</h2>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Station engineers, storekeepers,
+                  accountants &amp; operators</div>
+              </div>
+              <button type="button" class="desk-btn desk-btn-primary desk-btn-sm"
+                onclick="Desk.openModal('createUserModal')">
+                + Add User
+              </button>
+            </div>
+
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Assigned Station &amp; Dept</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <?php foreach ($allUsers as $u): ?>
+                    <tr id="user-row-<?= $u['id'] ?>">
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                          <div
+                            style="width: 32px; height: 32px; border-radius: 50%; background: <?= htmlspecialchars($u['avatar_color'] ?? '#650b2b') ?>; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem;">
+                            <?= strtoupper(substr($u['username'], 0, 1)) ?>
                           </div>
                           <div>
-                            <span class="desk-badge badge-draft" style="font-size: 0.62rem; padding: 1px 4px;">
-                              <?= htmlspecialchars($u['role_display_name'] ?? 'User') ?>
-                            </span>
+                            <div style="font-weight: 700; color: #0f172a; font-size: 0.88rem;">
+                              <?= htmlspecialchars($u['username']) ?></div>
                           </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style="font-size: 0.84rem; font-weight: 600; color: #1e293b;">
+                          <?= htmlspecialchars($u['location_name'] ?? 'Victoria Station') ?></div>
+                        <div style="font-size: 0.74rem; color: #64748b;">
+                          <?= htmlspecialchars($u['department'] ?? 'General') ?></div>
+                      </td>
+                      <td>
+                        <?php if ($u['role_name'] === 'super_admin'): ?>
+                          <span class="badge-super-admin"
+                            style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700;"><?= htmlspecialchars($u['role_display_name']) ?></span>
+                        <?php else: ?>
+                          <span class="desk-badge badge-draft"
+                            style="font-size: 0.72rem; font-weight: 700;"><?= htmlspecialchars($u['role_display_name']) ?></span>
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <span class="desk-badge <?= ($u['status'] === 'active') ? 'badge-approved' : 'badge-danger' ?>">
+                          <?= ucfirst(htmlspecialchars($u['status'])) ?>
+                        </span>
+                      </td>
+                      <td style="color: #64748b; font-size: 0.82rem;"><?= substr($u['created_at'], 0, 10) ?></td>
+                      <td style="text-align: right; white-space: nowrap;">
+                        <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditUserModal(<?= htmlspecialchars(json_encode([
+                          'id' => $u['id'],
+                          'full_name' => $u['full_name'],
+                          'username' => $u['username'],
+                          'email' => $u['email'],
+                          'role_id' => $u['role_id'],
+                          'location_id' => $u['location_id'] ?? 1,
+                          'department' => $u['department'] ?? '',
+                          'status' => $u['status']
+                        ])) ?>)">
+                          Edit
+                        </button>
+                        <?php if ((int) $u['id'] !== (int) Auth::id()): ?>
+                          <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;"
+                            onclick="Desk.deleteUser(<?= $u['id'] ?>, '<?= addslashes(htmlspecialchars($u['full_name'])) ?>')">
+                            Delete
+                          </button>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANE 4: USER ROLES & CODES -->
+        <div id="admin-sub-roles" class="admin-sub-pane">
+          <div class="desk-card" style="margin-bottom: 24px;">
+            <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Defined User Roles &amp;
+                  Operational Designations</h2>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Manage designations, role codes, tab
+                  access scopes and assigned staff</div>
+              </div>
+              <button type="button" class="desk-btn desk-btn-primary desk-btn-sm"
+                onclick="Desk.openModal('createRoleModal')">
+                + Add Role
+              </button>
+            </div>
+
+            <div class="desk-table-wrapper">
+              <table class="desk-table">
+                <thead>
+                  <tr>
+                    <th>Role Title / Name</th>
+                    <th>Role Code</th>
+                    <th>Role Identifier</th>
+                    <th>Assigned Station / Dept</th>
+                    <th>Tab Access</th>
+                    <th>Assigned Staff</th>
+                    <th style="text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="rolesTableBody">
+                  <?php
+                  $allPermKeys = \App\Models\Permission::getAllPermissionKeys();
+                  $totalPerms = count($allPermKeys);
+                  foreach ($allRoles as $r):
+                    $roleId = (int) $r['id'];
+                    $enabledCount = 0;
+                    foreach ($allPermKeys as $k) {
+                      if (isset($permissionsMatrix[$k][$roleId])) {
+                        if ((int) $permissionsMatrix[$k][$roleId] === 1)
+                          $enabledCount++;
+                      } else {
+                        $enabledCount++;
+                      }
+                    }
+                    $roleCodeVal = !empty($r['code']) ? $r['code'] : strtoupper($r['name']);
+                    ?>
+                    <tr id="role-row-<?= $r['id'] ?>">
+                      <td>
+                        <strong
+                          style="color: #0f172a; font-size: 0.92rem;"><?= htmlspecialchars($r['display_name']) ?></strong>
+                        <?php if (!empty($r['description'])): ?>
+                          <div style="font-size: 0.76rem; color: #64748b; margin-top: 2px;">
+                            <?= htmlspecialchars($r['description']) ?></div>
+                        <?php endif; ?>
+                      </td>
+                      <td>
+                        <span class="desk-badge"
+                          style="font-family: monospace; font-size: 0.82rem; font-weight: 700; background: #650b2b; color: #ffffff; padding: 3px 8px; border-radius: 4px;">
+                          <?= htmlspecialchars($roleCodeVal) ?>
+                        </span>
+                      </td>
+                      <td><code><?= htmlspecialchars($r['name']) ?></code></td>
+                      <td><span
+                          style="font-size: 0.82rem; color: #475569;"><?= htmlspecialchars($r['location_name'] ?? 'All Stations (Global)') ?></span>
+                      </td>
+                      <td>
+                        <button type="button" class="desk-btn desk-btn-default desk-btn-sm"
+                          style="font-size: 0.76rem; font-weight: 600;" onclick="Desk.openEditRoleModal(<?= htmlspecialchars(json_encode([
+                            'id' => $r['id'],
+                            'name' => $r['name'],
+                            'code' => $roleCodeVal,
+                            'display_name' => $r['display_name'],
+                            'description' => $r['description'] ?? '',
+                            'location_id' => $r['location_id'] ?? '',
+                            'department_id' => $r['department_id'] ?? ''
+                          ])) ?>)">
+                          <span style="color: #650b2b; font-weight: 700;"><?= $enabledCount ?>/<?= $totalPerms ?></span>
+                          Tabs &bull; Configure
+                        </button>
+                      </td>
+                      <td><strong style="color: #650b2b;"><?= (int) ($r['user_count'] ?? 0) ?></strong> Members</td>
+                      <td style="text-align: right; white-space: nowrap;">
+                        <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openEditRoleModal(<?= htmlspecialchars(json_encode([
+                          'id' => $r['id'],
+                          'name' => $r['name'],
+                          'code' => $roleCodeVal,
+                          'display_name' => $r['display_name'],
+                          'description' => $r['description'] ?? '',
+                          'location_id' => $r['location_id'] ?? '',
+                          'department_id' => $r['department_id'] ?? ''
+                        ])) ?>)">
+                          Edit
+                        </button>
+                        <?php if ($r['id'] != 1 && (int) ($r['user_count'] ?? 0) === 0): ?>
+                          <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;"
+                            onclick="Desk.deleteRole(<?= $r['id'] ?>, '<?= addslashes(htmlspecialchars($r['display_name'])) ?>')">
+                            Delete
+                          </button>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-PANE 5: PERMISSIONS MATRIX -->
+        <div id="admin-sub-matrix" class="admin-sub-pane">
+          <div class="desk-card" style="margin-bottom: 24px;">
+            <div class="desk-card-header"
+              style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">User Permissions &amp; Access
+                  Matrix</h2>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Interactive ON/OFF access control across
+                  all ERP workspaces, workflow tabs and reports</div>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Horizontal Scroll:</span>
+                <button type="button" class="desk-btn desk-btn-default desk-btn-sm" id="btnScrollMatrixLeft"
+                  title="Scroll Matrix Left">
+                  &larr; Left
+                </button>
+                <button type="button" class="desk-btn desk-btn-default desk-btn-sm" id="btnScrollMatrixRight"
+                  title="Scroll Matrix Right">
+                  Right &rarr;
+                </button>
+              </div>
+            </div>
+
+            <!-- Permissions Matrix Table -->
+            <div id="usersMatrixWrap" class="matrix-table-wrap">
+              <table class="matrix-table">
+                <thead>
+                  <!-- Tier 1: Station / Location Colspan Headers -->
+                  <tr>
+                    <th rowspan="2" class="matrix-nav-col"
+                      style="vertical-align: middle; background: #f8fafc; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; font-weight: 700; color: #1e293b;">
+                      System Navigation Tab / Sub-Tab
+                    </th>
+                    <?php if (empty($groupedUsersByStation)): ?>
+                      <th
+                        style="text-align: center; color: #94a3b8; padding: 16px 20px; font-weight: normal; font-size: 0.82rem;">
+                        No operational user accounts created yet. Use the <strong>User Accounts</strong> tab above to create
+                        users and configure their tab access matrix.
+                      </th>
+                    <?php else: ?>
+                      <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                        <th colspan="<?= count($stUsers) ?>"
+                          style="text-align: center; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.74rem; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; border-left: 2px solid #cbd5e1; padding: 6px 8px; white-space: nowrap;">
+                          <?= htmlspecialchars($stationName ?: 'All Stations (Global)') ?>
                         </th>
                       <?php endforeach; ?>
-                    <?php endforeach; ?>
-                  <?php endif; ?>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($permissionCategories as $categoryName => $perms): ?>
-                  <tr class="matrix-category-row">
-                    <td class="matrix-nav-col" style="background: #fdf2f5 !important; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                      <strong style="color: #650b2b;"><?= htmlspecialchars($categoryName) ?></strong>
-                    </td>
+                    <?php endif; ?>
+                  </tr>
+                  <!-- Tier 2: User Account Headers -->
+                  <tr>
                     <?php if (empty($groupedUsersByStation)): ?>
-                      <td style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0;"></td>
+                      <th style="display: none;"></th>
                     <?php else: ?>
                       <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
                         <?php foreach ($stUsers as $idx => $u): ?>
-                          <td class="matrix-user-col" style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : 'border-left: 1px solid #f1f5f9;' ?>"></td>
+                          <th class="matrix-user-col"
+                            style="text-align: center; background: #ffffff; padding: 6px 4px; white-space: nowrap; border-bottom: 1px solid #cbd5e1; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : '' ?>">
+                            <div
+                              style="font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; text-transform: uppercase;">
+                              <?= htmlspecialchars($u['username']) ?>
+                            </div>
+                            <div>
+                              <span class="desk-badge badge-draft" style="font-size: 0.62rem; padding: 1px 4px;">
+                                <?= htmlspecialchars($u['role_display_name'] ?? 'User') ?>
+                              </span>
+                            </div>
+                          </th>
                         <?php endforeach; ?>
                       <?php endforeach; ?>
                     <?php endif; ?>
                   </tr>
-
-                  <?php foreach ($perms as $permKey => $permMeta):
-                    $level = $permMeta['level'] ?? 1;
-                    $levelClass = 'matrix-level-' . $level;
-                  ?>
-                    <tr>
-                      <td class="<?= $levelClass ?> matrix-nav-col" style="border-right: 1px solid #e2e8f0;">
-                        <span class="matrix-perm-title"><?= htmlspecialchars($permMeta['label']) ?></span>
+                </thead>
+                <tbody>
+                  <?php foreach ($permissionCategories as $categoryName => $perms): ?>
+                    <tr class="matrix-category-row">
+                      <td class="matrix-nav-col"
+                        style="background: #fdf2f5 !important; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+                        <strong style="color: #650b2b;"><?= htmlspecialchars($categoryName) ?></strong>
                       </td>
                       <?php if (empty($groupedUsersByStation)): ?>
-                        <td style="text-align: center; color: #cbd5e1; font-size: 0.8rem; padding: 4px;">—</td>
+                        <td style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0;"></td>
                       <?php else: ?>
                         <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
-                          <?php foreach ($stUsers as $idx => $u):
-                            if (isset($userPermissionsMatrix[$permKey][$u['id']])) {
-                              $isGranted = ((int)$userPermissionsMatrix[$permKey][$u['id']] === 1);
-                            } elseif (isset($permissionsMatrix[$permKey][$u['role_id']])) {
-                              $isGranted = ((int)$permissionsMatrix[$permKey][$u['role_id']] === 1);
-                            } else {
-                              $isGranted = true;
-                            }
-                          ?>
-                            <td class="matrix-user-col" style="text-align: center; padding: 4px 3px; <?= ($idx === 0) ? 'border-left: 2px solid #f1f5f9;' : '' ?>">
-                              <label class="matrix-switch" title="Toggle <?= htmlspecialchars($permMeta['label']) ?> for <?= htmlspecialchars($u['username']) ?>">
-                                <input type="checkbox" class="matrix-perm-toggle"
-                                  data-user-id="<?= $u['id'] ?>"
-                                  data-permission-key="<?= htmlspecialchars($permKey) ?>"
-                                  data-target-name="<?= htmlspecialchars($u['username']) ?>"
-                                  data-perm-label="<?= htmlspecialchars($permMeta['label']) ?>"
-                                  <?= $isGranted ? 'checked' : '' ?>>
-                                <span class="matrix-slider"></span>
-                              </label>
+                          <?php foreach ($stUsers as $idx => $u): ?>
+                            <td class="matrix-user-col"
+                              style="background: #fdf2f5 !important; border-bottom: 1px solid #e2e8f0; <?= ($idx === 0) ? 'border-left: 2px solid #cbd5e1;' : 'border-left: 1px solid #f1f5f9;' ?>">
                             </td>
                           <?php endforeach; ?>
                         <?php endforeach; ?>
                       <?php endif; ?>
                     </tr>
+
+                    <?php foreach ($perms as $permKey => $permMeta):
+                      $level = $permMeta['level'] ?? 1;
+                      $levelClass = 'matrix-level-' . $level;
+                      ?>
+                      <tr>
+                        <td class="<?= $levelClass ?> matrix-nav-col" style="border-right: 1px solid #e2e8f0;">
+                          <span class="matrix-perm-title"><?= htmlspecialchars($permMeta['label']) ?></span>
+                        </td>
+                        <?php if (empty($groupedUsersByStation)): ?>
+                          <td style="text-align: center; color: #cbd5e1; font-size: 0.8rem; padding: 4px;">—</td>
+                        <?php else: ?>
+                          <?php foreach ($groupedUsersByStation as $stationName => $stUsers): ?>
+                            <?php foreach ($stUsers as $idx => $u):
+                              if (isset($userPermissionsMatrix[$permKey][$u['id']])) {
+                                $isGranted = ((int) $userPermissionsMatrix[$permKey][$u['id']] === 1);
+                              } elseif (isset($permissionsMatrix[$permKey][$u['role_id']])) {
+                                $isGranted = ((int) $permissionsMatrix[$permKey][$u['role_id']] === 1);
+                              } else {
+                                $isGranted = true;
+                              }
+                              ?>
+                              <td class="matrix-user-col"
+                                style="text-align: center; padding: 4px 3px; <?= ($idx === 0) ? 'border-left: 2px solid #f1f5f9;' : '' ?>">
+                                <label class="matrix-switch"
+                                  title="Toggle <?= htmlspecialchars($permMeta['label']) ?> for <?= htmlspecialchars($u['username']) ?>">
+                                  <input type="checkbox" class="matrix-perm-toggle" data-user-id="<?= $u['id'] ?>"
+                                    data-permission-key="<?= htmlspecialchars($permKey) ?>"
+                                    data-target-name="<?= htmlspecialchars($u['username']) ?>"
+                                    data-perm-label="<?= htmlspecialchars($permMeta['label']) ?>" <?= $isGranted ? 'checked' : '' ?>>
+                                  <span class="matrix-slider"></span>
+                                </label>
+                              </td>
+                            <?php endforeach; ?>
+                          <?php endforeach; ?>
+                        <?php endif; ?>
+                      </tr>
+                    <?php endforeach; ?>
                   <?php endforeach; ?>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     <?php endif; ?>
 
   </main>
@@ -3478,19 +3848,22 @@ require_once __DIR__ . '/views/layouts/header.php';
 <!-- Modal 1: Add Multiple Items -->
 <div id="modalStockEntryAddMultiple" class="desk-modal-backdrop" style="display: none;">
   <div class="desk-modal" style="max-width: 680px; width: 90%; border-radius: 8px; background: #fff;">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div class="desk-modal-header"
+      style="border-bottom: 1px solid #e2e8f0; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;">
       <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Add Multiple Items</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeAddMultipleModal()">&times;</button>
     </div>
     <div class="desk-modal-body" style="padding: 16px 20px;">
       <div style="margin-bottom: 12px;">
-        <input type="text" id="seAddMultipleSearch" class="frappe-control" placeholder="Filter items by SKU, Part No, Description..." oninput="Desk.filterAddMultipleList(this.value)">
+        <input type="text" id="seAddMultipleSearch" class="frappe-control"
+          placeholder="Filter items by SKU, Part No, Description..." oninput="Desk.filterAddMultipleList(this.value)">
       </div>
       <div style="max-height: 320px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
         <table class="frappe-table" id="seAddMultipleTable">
           <thead>
             <tr>
-              <th style="width: 36px; text-align: center;"><input type="checkbox" id="seAddMultipleCheckAll" onchange="Desk.toggleAddMultipleAll(this.checked)"></th>
+              <th style="width: 36px; text-align: center;"><input type="checkbox" id="seAddMultipleCheckAll"
+                  onchange="Desk.toggleAddMultipleAll(this.checked)"></th>
               <th>Item Code / Description</th>
               <th style="width: 80px; text-align: center;">UOM</th>
               <th style="width: 110px; text-align: right;">Unit Rate</th>
@@ -3500,9 +3873,11 @@ require_once __DIR__ . '/views/layouts/header.php';
         </table>
       </div>
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer"
+      style="border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closeAddMultipleModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmAddMultiple()">Add Selected Items</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmAddMultiple()">Add Selected
+        Items</button>
     </div>
   </div>
 </div>
@@ -3511,16 +3886,20 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 <!-- Modal: Select Purchase Order with Predefined Suppliers -->
 <div id="modalGetItemsFromPO" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 660px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
-      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Purchase Order &amp; Supplier</h3>
+  <div class="desk-modal"
+    style="max-width: 660px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+    <div class="desk-modal-header"
+      style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Purchase Order &amp; Supplier
+      </h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closePoSelectionModal()">&times;</button>
     </div>
     <div class="desk-modal-body" style="padding: 22px 26px;">
-      
+
       <div style="margin-bottom: 16px;">
         <label class="frappe-label">Predefined Supplier <span style="color: #e02424;">*</span></label>
-        <select id="modalPoSupplierSelect" class="frappe-control frappe-select" style="font-weight: 500;" onchange="Desk.onModalSupplierChanged(this.value)">
+        <select id="modalPoSupplierSelect" class="frappe-control frappe-select" style="font-weight: 500;"
+          onchange="Desk.onModalSupplierChanged(this.value)">
           <option value="">-- Select Predefined Supplier --</option>
         </select>
       </div>
@@ -3538,33 +3917,40 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <div style="margin-bottom: 8px;">
         <label class="frappe-label">Purchase Order Ref <span style="color: #e02424;">*</span></label>
-        <input type="text" id="modalPoRefInput" class="frappe-control" placeholder="e.g. PO-2026-081" value="PO-2026-081">
+        <input type="text" id="modalPoRefInput" class="frappe-control" placeholder="e.g. PO-2026-081"
+          value="PO-2026-081">
       </div>
 
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer"
+      style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closePoSelectionModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromPO()">Apply to Stock Entry</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromPO()">Apply to Stock
+        Entry</button>
     </div>
   </div>
 </div>
 
 <div id="modalGetItemsFromCostCenter" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 540px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+  <div class="desk-modal"
+    style="max-width: 540px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+    <div class="desk-modal-header"
+      style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
       <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Cost Center</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeCostCenterSelectionModal()">&times;</button>
     </div>
     <div class="desk-modal-body" style="padding: 22px 26px;">
       <div style="margin-bottom: 16px;">
         <label class="frappe-label">Cost Center <span style="color: #e02424;">*</span></label>
-        <select id="modalCostCenterSelector" class="frappe-control frappe-select" style="font-weight: 500; width: 100%;">
+        <select id="modalCostCenterSelector" class="frappe-control frappe-select"
+          style="font-weight: 500; width: 100%;">
           <option value="">-- Select Cost Center --</option>
         </select>
       </div>
       <div>
         <label class="frappe-label">Target Warehouse</label>
-        <select id="modalCostCenterWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
+        <select id="modalCostCenterWarehouseSelect" class="frappe-control frappe-select"
+          style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
           <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
           <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
@@ -3573,17 +3959,21 @@ require_once __DIR__ . '/views/layouts/header.php';
         </select>
       </div>
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer"
+      style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closeCostCenterSelectionModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromCostCenter()">Apply Cost Center</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromCostCenter()">Apply
+        Cost Center</button>
     </div>
   </div>
 </div>
 
 <!-- Modal 4: Get Items From Section -->
 <div id="modalGetItemsFromSection" class="desk-modal-backdrop" style="display: none;">
-  <div class="desk-modal" style="max-width: 540px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+  <div class="desk-modal"
+    style="max-width: 540px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+    <div class="desk-modal-header"
+      style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
       <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Select Section</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeSectionSelectionModal()">&times;</button>
     </div>
@@ -3596,7 +3986,8 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
       <div>
         <label class="frappe-label">Target Warehouse</label>
-        <select id="modalSectionWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
+        <select id="modalSectionWarehouseSelect" class="frappe-control frappe-select"
+          style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
           <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
           <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
@@ -3605,39 +3996,50 @@ require_once __DIR__ . '/views/layouts/header.php';
         </select>
       </div>
     </div>
-    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
+    <div class="desk-modal-footer"
+      style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 8px;">
       <button type="button" class="frappe-btn" onclick="Desk.closeSectionSelectionModal()">Cancel</button>
-      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromSection()">Apply Section</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.confirmGetItemsFromSection()">Apply
+        Section</button>
     </div>
   </div>
 </div>
 
 <!-- Modal 5: Request & Add New Item Code -->
-<div id="modalRequestItemCode" class="desk-modal-backdrop" style="display: none; align-items: center; justify-content: center; z-index: 1050;">
-  <div class="desk-modal" style="max-width: 600px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 16px 36px rgba(0,0,0,0.22); overflow: hidden;">
-    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #fafbfc;">
+<div id="modalRequestItemCode" class="desk-modal-backdrop"
+  style="display: none; align-items: center; justify-content: center; z-index: 1050;">
+  <div class="desk-modal"
+    style="max-width: 600px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 16px 36px rgba(0,0,0,0.22); overflow: hidden;">
+    <div class="desk-modal-header"
+      style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; background: #fafbfc;">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #eef2ff; color: #4338ca; border-radius: 6px; font-weight: 700; font-size: 15px;">➕</span>
+        <span
+          style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #eef2ff; color: #4338ca; border-radius: 6px; font-weight: 700; font-size: 15px;">➕</span>
         <div>
           <h3 style="font-size: 15px; font-weight: 700; margin: 0; color: #0f172a;">Request &amp; Add New Item Code</h3>
-          <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Register an unlisted material so you can continue this Stock Entry immediately.</div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Register an unlisted material so you can
+            continue this Stock Entry immediately.</div>
         </div>
       </div>
-      <button type="button" class="desk-modal-close" onclick="Desk.closeRequestItemCodeModal()" style="font-size: 20px; line-height: 1;">&times;</button>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeRequestItemCodeModal()"
+        style="font-size: 20px; line-height: 1;">&times;</button>
     </div>
     <form id="formRequestItemCode" onsubmit="event.preventDefault(); Desk.submitRequestItemCode();">
       <div class="desk-modal-body" style="padding: 22px 26px; max-height: calc(85vh - 130px); overflow-y: auto;">
-        
+
         <div style="margin-bottom: 16px;">
           <label class="frappe-label">Material / Item Name <span style="color: #e02424;">*</span></label>
-          <input type="text" id="reqItemName" class="frappe-control" placeholder="e.g. Centrifugal Pump Impeller 125mm" required style="width: 100%;">
+          <input type="text" id="reqItemName" class="frappe-control" placeholder="e.g. Centrifugal Pump Impeller 125mm"
+            required style="width: 100%;">
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
           <div>
             <label class="frappe-label">Suggested Code / SKU (Optional)</label>
-            <input type="text" id="reqItemCode" class="frappe-control" placeholder="Auto-generated if empty" style="width: 100%;">
-            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">Leave blank to auto-generate CEB tier code.</div>
+            <input type="text" id="reqItemCode" class="frappe-control" placeholder="Auto-generated if empty"
+              style="width: 100%;">
+            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">Leave blank to auto-generate CEB tier code.
+            </div>
           </div>
           <div>
             <label class="frappe-label">Category / Classification <span style="color: #e02424;">*</span></label>
@@ -3670,24 +4072,35 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
           <div>
             <label class="frappe-label">Estimated Unit Cost (LKR)</label>
-            <input type="number" step="0.01" min="0" id="reqItemPrice" class="frappe-control" placeholder="0.00" style="width: 100%;">
+            <input type="number" step="0.01" min="0" id="reqItemPrice" class="frappe-control" placeholder="0.00"
+              style="width: 100%;">
           </div>
         </div>
 
         <div style="margin-bottom: 12px;">
           <label class="frappe-label">Technical Specification / Notes (Optional)</label>
-          <textarea id="reqItemSpecs" class="frappe-control" style="width: 100%; height: 60px; padding: 6px 10px; resize: vertical;" placeholder="Part number, model, brand, or justification..."></textarea>
+          <textarea id="reqItemSpecs" class="frappe-control"
+            style="width: 100%; height: 60px; padding: 6px 10px; resize: vertical;"
+            placeholder="Part number, model, brand, or justification..."></textarea>
         </div>
 
-        <div style="background: #f1f5f9; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; color: #475569; display: flex; align-items: center; gap: 8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          <span>This code will be added to the material database and immediately inserted into your active items table row.</span>
+        <div
+          style="background: #f1f5f9; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; color: #475569; display: flex; align-items: center; gap: 8px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          <span>This code will be added to the material database and immediately inserted into your active items table
+            row.</span>
         </div>
 
       </div>
-      <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 10px; background: #fafbfc;">
+      <div class="desk-modal-footer"
+        style="border-top: 1px solid #e2e8f0; padding: 14px 26px; display: flex; justify-content: flex-end; gap: 10px; background: #fafbfc;">
         <button type="button" class="frappe-btn" onclick="Desk.closeRequestItemCodeModal()">Cancel</button>
-        <button type="submit" class="frappe-btn frappe-btn-primary" id="reqItemSubmitBtn" style="background: #18181b; color: #fff; font-weight: 600; padding: 8px 20px;">
+        <button type="submit" class="frappe-btn frappe-btn-primary" id="reqItemSubmitBtn"
+          style="background: #18181b; color: #fff; font-weight: 600; padding: 8px 20px;">
           Save &amp; Add to Table
         </button>
       </div>

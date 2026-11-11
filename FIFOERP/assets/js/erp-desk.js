@@ -5350,18 +5350,81 @@ const Desk = {
   },
 
   cancelStockEntryForm(context) {
+    // 1. Reset standard HTML form
+    const form = document.getElementById(context === 'grn' ? 'formStockEntry_grn' : 'formStockEntry_issue');
+    if (form) form.reset();
+
+    // 2. Reset stockEntryState
+    const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
+    this.stockEntryState[context] = {
+      docType: defaultDoc,
+      items: [],
+      nextId: 1,
+      docTitle: 'New Stock Entry',
+      status: 'Not Saved'
+    };
+
+    // 3. Reset 1 empty initial row and re-render
+    this.addStockEntryRow(context, false);
+    this.renderStockEntryRows(context);
+
+    // 4. Reset badge and title
+    const badge = document.getElementById(`${context}StatusBadge`);
+    if (badge) {
+      badge.className = 'frappe-badge-not-saved';
+      badge.textContent = 'Not Saved';
+    }
+    const titleEl = document.getElementById(`${context}DocTitle`);
+    if (titleEl) {
+      titleEl.textContent = 'New Stock Entry';
+    }
+
+    // 5. Reset Dropdown Headers
+    this.setSelectedCreateDoc(context, defaultDoc);
+    this.setSelectedGetItemsFrom(context, '');
+
+    // 6. Reset dynamic cards (PO card, Cost Center card)
+    const poCard = document.getElementById(`${context}PurchaseSection`);
+    const ccCard = document.getElementById(`${context}CostCenterSection`);
+    if (poCard) poCard.style.display = 'none';
+    if (ccCard) ccCard.style.display = 'none';
+
+    // 7. Clear all explicit fields
+    const fieldsToClear = [
+      `${context}PoRefInput`, `${context}PoRef`, `${context}PartyName`,
+      `${context}InvoiceDate`, `${context}InvoiceNo`, `${context}SupplierRef`, `${context}Remarks`,
+      'grnValNbt', 'grnValVat', 'grnValTransport', 'grnValOther',
+      'grnInvoiceTotalWithoutTax', 'grnDiscountForAll',
+      'issueTransporterInfo'
+    ];
+    fieldsToClear.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    // Reset selects
+    const selectsToReset = [
+      `${context}SupplierSelect`, `${context}CostCenterSelect`, `${context}SectionSelect`,
+      'grnDiscountType'
+    ];
+    selectsToReset.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.selectedIndex = 0;
+    });
+
+    // Uncheck checkboxes
+    ['grnNbtExclude', 'grnVatExclude', 'grnTransportExclude', 'grnOtherExclude', 'grnSingleMaterial', 'grnDiscountPercentage'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = false;
+    });
+
+    // Scroll to top of form
     const card = document.getElementById(context === 'grn' ? 'bodyGrnEntryCard' : 'bodyIssueEntryCard');
     if (card) {
-      card.style.display = 'none';
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    if (context === 'grn') {
-      this.setTab('receipts');
-      this.loadReceipts();
-    } else {
-      this.setTab('issues');
-      this.loadIssues();
-    }
-    this.showToast('Stock Entry cancelled.');
+
+    this.showToast('Form cleared.');
   },
 
   getItemsFromMaterialRequest(context) {
