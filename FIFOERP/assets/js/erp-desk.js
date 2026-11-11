@@ -4189,6 +4189,16 @@ const Desk = {
       }
     }
 
+    // Attach global outside-click listener for searchable comboboxes once
+    if (!window._stockComboClickAttached) {
+      window._stockComboClickAttached = true;
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.frappe-searchable-select')) {
+          document.querySelectorAll('.desk-combo-menu').forEach(el => el.style.display = 'none');
+        }
+      });
+    }
+
     // Initialize 1 default row if table empty
     const state = this.stockEntryState[context];
     const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
@@ -4236,17 +4246,6 @@ const Desk = {
         whOptions += `<option value="${w}" ${row.warehouse === w ? 'selected' : ''}>${w}</option>`;
       });
 
-      let matOptions = '<option value="">-- Select Item Code --</option>';
-      let foundInList = false;
-      materials.forEach(m => {
-        const isSel = (row.item_code === m.sku);
-        if (isSel) foundInList = true;
-        matOptions += `<option value="${m.sku}" ${isSel ? 'selected' : ''}>${m.sku} - ${m.item_name}</option>`;
-      });
-      if (row.item_code && !foundInList) {
-        matOptions += `<option value="${Desk.escapeHtml(row.item_code)}" selected>${Desk.escapeHtml(row.item_code)} - ${Desk.escapeHtml(row.item_name || 'Selected Item')}</option>`;
-      }
-
       html += `
         <tr data-row-id="${row.id}" style="${isChecked ? 'background: #f8fafc;' : ''}">
           <td style="text-align: center;">
@@ -4261,49 +4260,45 @@ const Desk = {
             </select>
           </td>
           <td style="position: relative;">
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <!-- Dropdown Select -->
-              <div style="flex: 1; min-width: 0;">
-                <select class="frappe-control frappe-select" 
-                        id="itemSelect_${context}_${row.id}"
-                        style="height: 30px; font-size: 12px; font-weight: 500; width: 100%;" 
-                        onchange="Desk.onStockEntryItemSelect('${context}', ${row.id}, this.value)">
-                  ${matOptions}
-                </select>
-              </div>
+            <div class="frappe-searchable-select" style="position: relative; width: 100%;">
+              <input type="text"
+                     class="frappe-control item-code-combo-input"
+                     id="itemComboInput_${context}_${row.id}"
+                     style="height: 30px; font-size: 12px; font-weight: 600; width: 100%; padding-left: 26px; padding-right: 48px; cursor: text; background: #fff;"
+                     placeholder="Select or type Item Code / Name..."
+                     value="${Desk.escapeHtml(row.item_code ? `${row.item_code}${row.item_name ? ' - ' + row.item_name : ''}` : '')}"
+                     autocomplete="off"
+                     onfocus="this.select(); Desk.toggleItemComboDropdown('${context}', ${row.id}, true)"
+                     onclick="Desk.toggleItemComboDropdown('${context}', ${row.id}, true)"
+                     oninput="Desk.onItemComboInput('${context}', ${row.id}, this.value)"
+                     onkeydown="Desk.handleItemComboKeydown(event, '${context}', ${row.id})">
+              
+              <!-- Left Search Icon -->
+              <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none;">🔍</span>
 
-              <!-- Search Input Box -->
-              <div style="position: relative; width: 155px; flex-shrink: 0;">
-                <input type="text"
-                       class="frappe-control item-code-search-input"
-                       id="itemCodeInput_${context}_${row.id}"
-                       style="height: 30px; font-size: 11.5px; font-weight: 600; font-family: monospace; width: 100%; padding-left: 22px; padding-right: ${row.item_code ? '20px' : '6px'};"
-                       placeholder="Search code..."
-                       value="${Desk.escapeHtml(row.item_code || '')}"
-                       autocomplete="off"
-                       onfocus="Desk.searchStockEntryItem('${context}', ${row.id}, this.value)"
-                       oninput="Desk.searchStockEntryItem('${context}', ${row.id}, this.value)"
-                       onkeydown="Desk.handleItemSearchKeydown(event, '${context}', ${row.id})"
-                       onblur="setTimeout(() => Desk.closeItemSearchDropdown('${context}', ${row.id}), 250)">
-                <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none;">🔍</span>
+              <!-- Right Clear + Dropdown Chevron Arrow -->
+              <div style="position: absolute; right: 0; top: 0; height: 100%; display: flex; align-items: center; gap: 2px; padding-right: 6px;">
                 ${row.item_code ? `
                   <button type="button" 
-                          onclick="Desk.clearStockEntryItem('${context}', ${row.id})"
-                          style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 13px; line-height: 1; padding: 2px;"
+                          onclick="event.stopPropagation(); Desk.clearStockEntryItem('${context}', ${row.id})"
+                          style="border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 14px; line-height: 1; padding: 2px;"
                           title="Clear Item">&times;</button>
                 ` : ''}
-                <div id="itemSearchDropdown_${context}_${row.id}" 
-                     class="desk-item-search-dropdown" 
-                     style="display: none; position: absolute; right: 0; top: 34px; width: 380px; max-height: 260px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 1050; text-align: left;">
-                </div>
+                <button type="button"
+                        onclick="event.stopPropagation(); Desk.toggleItemComboDropdown('${context}', ${row.id})"
+                        style="border: none; background: transparent; color: #64748b; cursor: pointer; font-size: 9px; padding: 4px;"
+                        title="Toggle Dropdown List">
+                  ▼
+                </button>
               </div>
 
-              <!-- Full Master Catalog Search Modal Button -->
-              <button type="button" class="frappe-table-btn" style="height: 30px; width: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; color: #475569; flex-shrink: 0;" title="Search All Master Items Catalog" onclick="Desk.openItemCodeSearchModal('${context}', ${row.id})">
-                🔍
-              </button>
+              <!-- Dropdown Menu (Opens on click/type, shows all items with search filter) -->
+              <div id="itemComboMenu_${context}_${row.id}" 
+                   class="desk-combo-menu" 
+                   style="display: none; position: absolute; left: 0; top: 34px; width: 100%; min-width: 420px; max-height: 280px; overflow-y: auto; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 1050; text-align: left;">
+              </div>
             </div>
-            ${row.item_name ? `<div id="itemSubtitle_${context}_${row.id}" style="font-size: 11px; color: #64748b; margin-top: 2px; line-height: 1.3;">${Desk.escapeHtml(row.item_name)} ${row.uom ? `<span style="color: #94a3b8;">(${Desk.escapeHtml(row.uom)})</span>` : ''}</div>` : ''}
+            ${row.item_name && row.item_code ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px; line-height: 1.3;">${Desk.escapeHtml(row.item_name)} ${row.uom ? `<span style="color: #94a3b8;">(${Desk.escapeHtml(row.uom)})</span>` : ''}</div>` : ''}
           </td>
           <td>
             <input type="number" step="0.001" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${parseFloat(row.qty || 0).toFixed(3)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)">
@@ -4403,23 +4398,49 @@ const Desk = {
   searchItemTargetContext: 'grn',
   searchItemTargetRowId: null,
 
-  searchStockEntryItem(context, rowId, query) {
-    const dropdown = document.getElementById(`itemSearchDropdown_${context}_${rowId}`);
-    if (!dropdown) return;
+  toggleItemComboDropdown(context, rowId, forceOpen = false) {
+    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
+    if (!menu) return;
+
+    if (forceOpen) {
+      this.renderItemComboMenu(context, rowId, '');
+    } else {
+      if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+      } else {
+        this.renderItemComboMenu(context, rowId, '');
+      }
+    }
+  },
+
+  onItemComboInput(context, rowId, value) {
+    this.renderItemComboMenu(context, rowId, value);
+    const state = this.stockEntryState[context];
+    const row = state?.items?.find(r => r.id === rowId);
+    if (row) {
+      row.item_code = value;
+    }
+  },
+
+  renderItemComboMenu(context, rowId, query) {
+    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
+    if (!menu) return;
+
+    // Close any other open combo menus
+    document.querySelectorAll('.desk-combo-menu').forEach(el => {
+      if (el !== menu) el.style.display = 'none';
+    });
 
     const q = (query || '').trim().toLowerCase();
     const state = this.stockEntryState[context];
     const row = state?.items?.find(r => r.id === rowId);
-    if (row) {
-      row.item_code = query;
-    }
 
     const lookups = this.cachedStockLookups || { materials: [] };
     const allMaterials = lookups.materials || [];
 
-    const renderDropdown = (items) => {
+    const renderList = (items) => {
       if (items.length === 0) {
-        dropdown.innerHTML = `
+        menu.innerHTML = `
           <div style="padding: 14px; font-size: 12px; color: #64748b; text-align: center;">
             No material item matches "<strong>${Desk.escapeHtml(q)}</strong>"<br>
             <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 8px; font-size: 11px;" onmousedown="Desk.openRequestItemCodeModal('${context}', '${Desk.escapeHtml(q)}')">
@@ -4430,15 +4451,16 @@ const Desk = {
       } else {
         let listHtml = `<div style="padding: 4px 0;">`;
         items.forEach((m, i) => {
+          const isSelected = row && (row.item_code === m.sku);
           const rateFormatted = m.unit_price ? `Rs. ${parseFloat(m.unit_price).toFixed(2)}` : '';
           const uomBadge = m.uom ? `<span style="display:inline-block; font-size: 10px; background: #e2e8f0; color: #475569; padding: 1px 5px; border-radius: 3px; margin-left: 4px;">${Desk.escapeHtml(m.uom)}</span>` : '';
           listHtml += `
-            <div class="search-result-item" 
+            <div class="combo-menu-item ${isSelected ? 'active-combo-item' : ''}" 
                  data-idx="${i}"
-                 style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s;"
+                 style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; background: ${isSelected ? '#f0fdf4' : 'transparent'};"
                  onmouseenter="this.style.background='#f1f5f9'"
-                 onmouseleave="this.style.background='transparent'"
-                 onmousedown="Desk.selectStockEntryItem('${context}', ${rowId}, '${m.sku}')">
+                 onmouseleave="this.style.background='${isSelected ? '#f0fdf4' : 'transparent'}'"
+                 onmousedown="Desk.selectItemCombo('${context}', ${rowId}, '${Desk.escapeHtml(m.sku)}')">
               <div style="min-width: 0; flex: 1;">
                 <div style="font-weight: 700; color: #1e293b; font-size: 12px; font-family: monospace;">${Desk.escapeHtml(m.sku)} ${uomBadge}</div>
                 <div style="font-size: 11.5px; color: #475569; margin-top: 2px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${Desk.escapeHtml(m.item_name || '')}</div>
@@ -4448,22 +4470,22 @@ const Desk = {
           `;
         });
         listHtml += `</div>`;
-        dropdown.innerHTML = listHtml;
+        menu.innerHTML = listHtml;
       }
-      dropdown.style.display = 'block';
+      menu.style.display = 'block';
     };
 
-    // Filter local materials first
+    // Filter materials
     let matches = allMaterials.filter(m => {
       if (!q) return true;
       const sku = (m.sku || '').toLowerCase();
       const name = (m.item_name || '').toLowerCase();
       return sku.includes(q) || name.includes(q);
-    }).slice(0, 30);
+    }).slice(0, 50);
 
-    renderDropdown(matches);
+    renderList(matches);
 
-    // If query has 2+ characters, also do background fetch to search server master items
+    // If query has 2+ characters, search server
     if (q.length >= 2) {
       clearTimeout(this.itemSearchDebounce);
       this.itemSearchDebounce = setTimeout(() => {
@@ -4476,7 +4498,7 @@ const Desk = {
                   allMaterials.push(rm);
                 }
               });
-              renderDropdown(res.data.slice(0, 30));
+              renderList(res.data.slice(0, 50));
             }
           })
           .catch(() => {});
@@ -4484,7 +4506,7 @@ const Desk = {
     }
   },
 
-  selectStockEntryItem(context, rowId, sku) {
+  selectItemCombo(context, rowId, sku) {
     const state = this.stockEntryState[context];
     const row = state?.items?.find(r => r.id === rowId);
     if (!row) return;
@@ -4500,7 +4522,9 @@ const Desk = {
       }
     }
 
-    this.closeItemSearchDropdown(context, rowId);
+    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
+    if (menu) menu.style.display = 'none';
+
     this.renderStockEntryRows(context);
     this.calculateStockEntryTotals(context);
   },
@@ -4518,22 +4542,17 @@ const Desk = {
     this.calculateStockEntryTotals(context);
   },
 
-  closeItemSearchDropdown(context, rowId) {
-    const dropdown = document.getElementById(`itemSearchDropdown_${context}_${rowId}`);
-    if (dropdown) dropdown.style.display = 'none';
-  },
-
-  handleItemSearchKeydown(event, context, rowId) {
-    const dropdown = document.getElementById(`itemSearchDropdown_${context}_${rowId}`);
-    if (!dropdown || dropdown.style.display === 'none') {
+  handleItemComboKeydown(event, context, rowId) {
+    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
+    if (!menu || menu.style.display === 'none') {
       if (event.key === 'ArrowDown') {
-        this.searchStockEntryItem(context, rowId, event.target.value);
+        this.toggleItemComboDropdown(context, rowId, true);
         event.preventDefault();
       }
       return;
     }
 
-    const items = dropdown.querySelectorAll('.search-result-item');
+    const items = menu.querySelectorAll('.combo-menu-item');
     if (items.length === 0) return;
 
     let activeIdx = -1;
@@ -4569,8 +4588,26 @@ const Desk = {
         items[0].dispatchEvent(new MouseEvent('mousedown'));
       }
     } else if (event.key === 'Escape') {
-      this.closeItemSearchDropdown(context, rowId);
+      menu.style.display = 'none';
     }
+  },
+
+  // Aliases for compatibility
+  searchStockEntryItem(context, rowId, query) {
+    this.renderItemComboMenu(context, rowId, query);
+  },
+
+  selectStockEntryItem(context, rowId, sku) {
+    this.selectItemCombo(context, rowId, sku);
+  },
+
+  closeItemSearchDropdown(context, rowId) {
+    const menu = document.getElementById(`itemComboMenu_${context}_${rowId}`);
+    if (menu) menu.style.display = 'none';
+  },
+
+  handleItemSearchKeydown(event, context, rowId) {
+    this.handleItemComboKeydown(event, context, rowId);
   },
 
   openItemCodeSearchModal(context, rowId) {
