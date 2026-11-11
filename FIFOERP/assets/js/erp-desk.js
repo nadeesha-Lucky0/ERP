@@ -5065,15 +5065,10 @@ const Desk = {
       });
     }
 
-    const secSel = document.getElementById('modalCostCenterSectionSelector');
-    if (secSel && secSel.children.length <= 1) {
-      const lookups = this.cachedStockLookups || { sections: [] };
-      (lookups.sections || []).forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.code;
-        opt.textContent = s.display_label || `${s.code} - ${s.title}`;
-        secSel.appendChild(opt);
-      });
+    const whSel = document.getElementById('modalCostCenterWarehouseSelect');
+    if (whSel) {
+      const curWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value);
+      if (curWh) whSel.value = curWh;
     }
 
     modal.style.display = 'flex';
@@ -5089,6 +5084,7 @@ const Desk = {
     const selEl = document.getElementById('modalCostCenterSelector');
     const selCode = selEl?.value || '';
     const selText = selEl?.selectedOptions[0]?.textContent || selCode;
+    const targetWh = document.getElementById('modalCostCenterWarehouseSelect')?.value || '';
 
     if (!selCode) {
       this.showToast('Please select a Cost Center.', true);
@@ -5098,12 +5094,19 @@ const Desk = {
     const ccSel = document.getElementById(`${ctx}CostCenterSelect`);
     if (ccSel) ccSel.value = selCode;
 
-    const modalSec = document.getElementById('modalCostCenterSectionSelector')?.value;
-    const secSel = document.getElementById(`${ctx}SectionSelect`);
-    if (secSel && modalSec) secSel.value = modalSec;
-
     const partyInput = document.getElementById(`${ctx}PartyName`);
     if (partyInput) partyInput.value = selText;
+
+    if (targetWh) {
+      const whTarget = (ctx === 'grn' ? document.getElementById(`${ctx}DefTargetWh`) : document.getElementById(`${ctx}DefSourceWh`));
+      if (whTarget) whTarget.value = targetWh;
+
+      const state = this.stockEntryState[ctx];
+      if (state && Array.isArray(state.items)) {
+        state.items.forEach(r => { r.warehouse = targetWh; });
+        this.renderStockEntryRows(ctx);
+      }
+    }
 
     // Reveal the Cost Center card in that spot and hide Purchase card
     const ccCard = document.getElementById(`${ctx}CostCenterSection`);
@@ -5113,7 +5116,7 @@ const Desk = {
 
     this.setSelectedGetItemsFrom(ctx, 'Cost Center');
     this.closeCostCenterSelectionModal();
-    this.showToast(`Applied Cost Center: ${selText}.`);
+    this.showToast(`Applied Cost Center: ${selText}${targetWh ? ' (' + targetWh.split(' ')[0] + ')' : ''}.`);
   },
 
   onCostCenterSelectChange(context, val) {
@@ -5126,7 +5129,6 @@ const Desk = {
   // Section Selection Dialog
   openSectionSelectionModal(context) {
     this.activeSectionContext = context;
-    this.setSelectedGetItemsFrom(context, 'Section');
     document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
     const modal = document.getElementById('modalGetItemsFromSection');
     if (!modal) return;
@@ -5142,9 +5144,10 @@ const Desk = {
       });
     }
 
-    if (sel && sel.options.length > 1) {
-      sel.selectedIndex = 1;
-      this.onModalSectionSelected(sel.value);
+    const whSel = document.getElementById('modalSectionWarehouseSelect');
+    if (whSel) {
+      const curWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value);
+      if (curWh) whSel.value = curWh;
     }
 
     modal.style.display = 'flex';
@@ -5155,100 +5158,44 @@ const Desk = {
     if (modal) modal.style.display = 'none';
   },
 
-  onModalSectionSelected(code) {
-    const tbody = document.getElementById('modalSectionItemsBody');
-    if (!tbody) return;
-
-    const lookups = this.cachedStockLookups || { materials: [] };
-    const materials = (lookups.materials || []).slice(0, 15);
-
-    if (materials.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #8d99a6; padding: 20px;">No items configured for this Section.</td></tr>';
-      return;
-    }
-
-    let html = '';
-    materials.forEach(m => {
-      html += `
-        <tr class="sec-modal-item-row" data-sku="${m.sku}" data-name="${(m.item_name||'').toLowerCase()}">
-          <td style="text-align: center;">
-            <input type="checkbox" class="sec-item-chk" value="${m.sku}" data-name="${m.item_name}" data-uom="${m.uom||'Nos'}" data-rate="${m.unit_price||0}" checked style="accent-color: #18181b; cursor: pointer;">
-          </td>
-          <td>
-            <div style="font-weight: 600; font-size: 12.5px;">${m.sku}</div>
-            <div style="font-size: 11.5px; color: #6c7680;">${m.item_name}</div>
-          </td>
-          <td style="text-align: center; font-size: 12px; color: #6c7680;">${m.uom || 'Nos'}</td>
-          <td style="text-align: right; font-size: 12px;">Rs. ${parseFloat(m.unit_price||0).toFixed(2)}</td>
-          <td style="text-align: right;">
-            <input type="number" step="0.001" min="0" class="frappe-control sec-req-qty" style="height: 28px; width: 85px; text-align: right; font-size: 12px; font-weight: 600;" value="1.000">
-          </td>
-        </tr>
-      `;
-    });
-    tbody.innerHTML = html;
-  },
-
-  filterSectionItems(query) {
-    const q = (query || '').toLowerCase().trim();
-    document.querySelectorAll('.sec-modal-item-row').forEach(tr => {
-      const sku = (tr.getAttribute('data-sku') || '').toLowerCase();
-      const name = (tr.getAttribute('data-name') || '').toLowerCase();
-      tr.style.display = (!q || sku.includes(q) || name.includes(q)) ? '' : 'none';
-    });
-  },
-
-  toggleModalSectionCheckAll(checked) {
-    document.querySelectorAll('.sec-item-chk').forEach(c => c.checked = checked);
-  },
-
   confirmGetItemsFromSection() {
     const ctx = this.activeSectionContext || 'issue';
-    const selCode = document.getElementById('modalSectionSelector')?.value || '';
-    const state = this.stockEntryState[ctx];
-    const defWh = document.getElementById(`${ctx}DefSourceWh`)?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
+    const selEl = document.getElementById('modalSectionSelector');
+    const selCode = selEl?.value || '';
+    const selText = selEl?.selectedOptions[0]?.textContent || selCode;
+    const targetWh = document.getElementById('modalSectionWarehouseSelect')?.value || '';
 
-    let count = 0;
-    document.querySelectorAll('#modalSectionItemsBody tr').forEach(tr => {
-      const chk = tr.querySelector('.sec-item-chk');
-      if (chk && chk.checked) {
-        const sku = chk.value;
-        const name = chk.getAttribute('data-name');
-        const uom = chk.getAttribute('data-uom');
-        const rate = parseFloat(chk.getAttribute('data-rate') || 0);
-        const qty = parseFloat(tr.querySelector('.sec-req-qty')?.value || 1);
-
-        if (state.items.length === 1 && !state.items[0].item_code) {
-          state.items[0].item_code = sku;
-          state.items[0].item_name = name;
-          state.items[0].uom = uom;
-          state.items[0].basic_rate = rate;
-          state.items[0].qty = qty;
-          state.items[0].warehouse = defWh;
-        } else {
-          state.items.push({
-            id: state.nextId++,
-            warehouse: defWh,
-            item_code: sku,
-            item_name: name,
-            uom: uom,
-            qty: qty,
-            basic_rate: rate
-          });
-        }
-        count++;
-      }
-    });
+    if (!selCode) {
+      this.showToast('Please select a Section.', true);
+      return;
+    }
 
     const secSel = document.getElementById(`${ctx}SectionSelect`);
     if (secSel) secSel.value = selCode;
 
     const partyInput = document.getElementById(`${ctx}PartyName`);
-    if (partyInput && selCode) partyInput.value = `Section: ${selCode}`;
+    if (partyInput) partyInput.value = selText;
 
+    if (targetWh) {
+      const whTarget = (ctx === 'grn' ? document.getElementById(`${ctx}DefTargetWh`) : document.getElementById(`${ctx}DefSourceWh`));
+      if (whTarget) whTarget.value = targetWh;
+
+      const state = this.stockEntryState[ctx];
+      if (state && Array.isArray(state.items)) {
+        state.items.forEach(r => { r.warehouse = targetWh; });
+        this.renderStockEntryRows(ctx);
+      }
+    }
+
+    // Reveal the Cost Center & Section card on the form body and hide Purchase card
+    const ccCard = document.getElementById(`${ctx}CostCenterSection`);
+    const poCard = document.getElementById(`${ctx}PurchaseSection`);
+    if (ccCard) ccCard.style.display = 'block';
+    if (poCard) poCard.style.display = 'none';
+
+    this.setSelectedGetItemsFrom(ctx, 'Section');
     this.closeSectionSelectionModal();
-    this.renderStockEntryRows(ctx);
-    this.showToast(`Loaded ${count} items for Section ${selCode}.`);
+    this.showToast(`Applied Section: ${selText}${targetWh ? ' (' + targetWh.split(' ')[0] + ')' : ''}.`);
   },
 
   onSectionSelectChange(context, val) {
