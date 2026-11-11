@@ -670,7 +670,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="Desk.syncPoRefInput('grn', this.value)">
+                  <input type="text" name="po_reference_input" id="grnPoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-831-2026)" oninput="Desk.syncPoRefInput('grn', this.value)">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
@@ -1123,7 +1123,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                 <div>
                   <label class="frappe-label">Purchase Order Ref</label>
-                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-832-2026)" oninput="Desk.syncPoRefInput('issue', this.value)">
+                  <input type="text" name="po_reference_input" id="issuePoRefInput" class="frappe-control" placeholder="Enter PO Number (e.g. PO-831-2026)" oninput="Desk.syncPoRefInput('issue', this.value)">
                 </div>
                 <div>
                   <label class="frappe-label">Supplier</label>
@@ -3509,10 +3509,10 @@ require_once __DIR__ . '/views/layouts/header.php';
         <label class="frappe-label">Target Warehouse</label>
         <select id="modalPoWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
-          <option value="WH 832.00 --KOTMALE WAREHOUSE">WH 832.00 --KOTMALE WAREHOUSE</option>
-          <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
-          <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
-          <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
+          <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
+          <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
+          <option value="WH_DMG_VIC --DAMAGES - VICTORIA PS">WH_DMG_VIC --DAMAGES - VICTORIA PS</option>
+          <option value="WH_SP_VIC --SPARE WAREHOUSE - VICTORIA">WH_SP_VIC --SPARE WAREHOUSE - VICTORIA</option>
         </select>
       </div>
 
@@ -3546,10 +3546,10 @@ require_once __DIR__ . '/views/layouts/header.php';
         <label class="frappe-label">Target Warehouse</label>
         <select id="modalCostCenterWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
-          <option value="WH 832.00 --KOTMALE WAREHOUSE">WH 832.00 --KOTMALE WAREHOUSE</option>
-          <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
-          <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
-          <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
+          <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
+          <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
+          <option value="WH_DMG_VIC --DAMAGES - VICTORIA PS">WH_DMG_VIC --DAMAGES - VICTORIA PS</option>
+          <option value="WH_SP_VIC --SPARE WAREHOUSE - VICTORIA">WH_SP_VIC --SPARE WAREHOUSE - VICTORIA</option>
         </select>
       </div>
     </div>
@@ -3578,10 +3578,10 @@ require_once __DIR__ . '/views/layouts/header.php';
         <label class="frappe-label">Target Warehouse</label>
         <select id="modalSectionWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
-          <option value="WH 832.00 --KOTMALE WAREHOUSE">WH 832.00 --KOTMALE WAREHOUSE</option>
-          <option value="WH_CON_KOT --CONSUMABLES - KOTMALE PS">WH_CON_KOT --CONSUMABLES - KOTMALE PS</option>
-          <option value="WH_DMG_KOT --DAMAGES - KOTMALE PS">WH_DMG_KOT --DAMAGES - KOTMALE PS</option>
-          <option value="WH_SP_KOT --SPARE WAREHOUSE - KOTMALE">WH_SP_KOT --SPARE WAREHOUSE - KOTMALE</option>
+          <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
+          <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
+          <option value="WH_DMG_VIC --DAMAGES - VICTORIA PS">WH_DMG_VIC --DAMAGES - VICTORIA PS</option>
+          <option value="WH_SP_VIC --SPARE WAREHOUSE - VICTORIA">WH_SP_VIC --SPARE WAREHOUSE - VICTORIA</option>
         </select>
       </div>
     </div>

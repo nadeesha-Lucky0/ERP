@@ -679,7 +679,7 @@
         <div class="desk-form-row">
           <div class="desk-form-group">
             <label>Username *</label>
-            <input type="text" id="createUserUsername" name="username" class="desk-form-control" placeholder="e.g. 832sk" required>
+            <input type="text" id="createUserUsername" name="username" class="desk-form-control" placeholder="e.g. 831sk" required>
           </div>
           <div class="desk-form-group">
             <label>Initial Password *</label>

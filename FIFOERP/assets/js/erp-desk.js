@@ -614,7 +614,7 @@ const Desk = {
           <td><strong>${d.doc_no}</strong></td>
           <td>${d.doc_date}</td>
           <td><strong>${d.receipt_from || '-'}</strong></td>
-          <td>${d.warehouse || 'WH 832.00 --KOTMALE WAREHOUSE'}</td>
+          <td>${d.warehouse || 'WH 831.00 --VICTORIA WAREHOUSE'}</td>
           <td>Rs. ${parseFloat(d.invoice_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
           <td><span class="desk-badge ${badgeClass}">${d.status}</span></td>
           <td>
@@ -2756,8 +2756,8 @@ const Desk = {
     formData.append('doc_profile', document.getElementById('grnDocProfile')?.value || 'Goods Received Note');
     formData.append('receipt_from', receiptFrom);
     formData.append('receipt_details', receiptDetails);
-    formData.append('source_dept', document.getElementById('grnSourceDept')?.value || '832.00');
-    formData.append('warehouse', document.getElementById('grnWarehouse')?.value || 'WH 832.00 --KOTMALE WAREHOUSE');
+    formData.append('source_dept', document.getElementById('grnSourceDept')?.value || '831.00');
+    formData.append('warehouse', document.getElementById('grnWarehouse')?.value || 'WH 831.00 --VICTORIA WAREHOUSE');
     formData.append('base_on', document.getElementById('grnBaseOn')?.value || 'PO');
     formData.append('delivery_date', document.getElementById('grnDeliveryDate')?.value || '');
     formData.append('acc_date', document.getElementById('grnAccDate')?.value || '');
@@ -3199,7 +3199,7 @@ const Desk = {
     }
 
     let destDetails = '';
-    let deptCode = '832.00';
+    let deptCode = '831.00';
 
     if (issueTo === 'Project') {
       const projDept = document.getElementById('issueProjectDestDept')?.value || '';
@@ -3979,10 +3979,10 @@ const Desk = {
       const defSource = document.getElementById(`${context}DefSourceWh`);
       const defTarget = document.getElementById(`${context}DefTargetWh`);
       const warehouses = lookups.warehouses || [
-        'WH 832.00 --KOTMALE WAREHOUSE',
-        'WH_CON_KOT --CONSUMABLES - KOTMALE PS',
-        'WH_DMG_KOT --DAMAGES - KOTMALE PS',
-        'WH_SP_KOT --SPARE WAREHOUSE - KOTMALE'
+        'WH 831.00 --VICTORIA WAREHOUSE',
+        'WH_CON_VIC --CONSUMABLES - VICTORIA PS',
+        'WH_DMG_VIC --DAMAGES - VICTORIA PS',
+        'WH_SP_VIC --SPARE WAREHOUSE - VICTORIA'
       ];
 
       const populateWh = (sel, defaultVal) => {
@@ -4065,10 +4065,10 @@ const Desk = {
     const state = this.stockEntryState[context];
     const lookups = this.cachedStockLookups || { warehouses: [], materials: [] };
     const warehouses = lookups.warehouses || [
-      'WH 832.00 --KOTMALE WAREHOUSE',
-      'WH_CON_KOT --CONSUMABLES - KOTMALE PS',
-      'WH_DMG_KOT --DAMAGES - KOTMALE PS',
-      'WH_SP_KOT --SPARE WAREHOUSE - KOTMALE'
+      'WH 831.00 --VICTORIA WAREHOUSE',
+      'WH_CON_VIC --CONSUMABLES - VICTORIA PS',
+      'WH_DMG_VIC --DAMAGES - VICTORIA PS',
+      'WH_SP_VIC --SPARE WAREHOUSE - VICTORIA'
     ];
     const materials = lookups.materials || [];
 
@@ -4367,7 +4367,7 @@ const Desk = {
         existing.qty = (parseFloat(existing.qty) || 0) + 1;
         this.showToast(`Updated qty for ${mat.sku} (${existing.qty})`);
       } else {
-        const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
+        const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 831.00 --VICTORIA WAREHOUSE';
         state.items.push({
           id: state.nextId++,
           warehouse: defWh,
@@ -4380,7 +4380,7 @@ const Desk = {
         this.showToast(`Scanned: ${mat.sku} - ${mat.item_name}`);
       }
     } else {
-      const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
+      const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 831.00 --VICTORIA WAREHOUSE';
       state.items.push({
         id: state.nextId++,
         warehouse: defWh,
@@ -4463,7 +4463,7 @@ const Desk = {
     const state = this.stockEntryState[ctx];
     const defSource = document.getElementById(`${ctx}DefSourceWh`)?.value || '';
     const defTarget = document.getElementById(`${ctx}DefTargetWh`)?.value || '';
-    const defWh = (ctx === 'grn' ? defTarget : defSource) || 'WH 832.00 --KOTMALE WAREHOUSE';
+    const defWh = (ctx === 'grn' ? defTarget : defSource) || 'WH 831.00 --VICTORIA WAREHOUSE';
 
     let count = 0;
     document.querySelectorAll('.se-multi-chk:checked').forEach(chk => {
@@ -4544,7 +4544,7 @@ const Desk = {
         const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g, ''));
         const sku = parts[0];
         const name = parts[1] || '';
-        const wh = parts[2] || 'WH 832.00 --KOTMALE WAREHOUSE';
+        const wh = parts[2] || 'WH 831.00 --VICTORIA WAREHOUSE';
         const qty = parseFloat(parts[3]) || 1.0;
         const rate = parseFloat(parts[4]) || 0.0;
 
@@ -4605,7 +4605,7 @@ const Desk = {
     const entryType = document.getElementById(`${context}StockEntryType`)?.value || (context === 'grn' ? 'Material Receipt' : 'Material Issue');
     const deliveryDate = document.getElementById(`${context}DeliveryDate`)?.value || todayStr;
     const accDate = document.getElementById(`${context}AccDate`)?.value || todayStr;
-    const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 832.00 --KOTMALE WAREHOUSE';
+    const defWh = (context === 'grn' ? document.getElementById(`${context}DefTargetWh`)?.value : document.getElementById(`${context}DefSourceWh`)?.value) || 'WH 831.00 --VICTORIA WAREHOUSE';
 
     const partyName = document.getElementById(`${context}PartyName`)?.value || '';
     const poRef = document.getElementById(`${context}PoRef`)?.value || '';
@@ -4830,7 +4830,7 @@ const Desk = {
       const whTarget = document.getElementById(`${context}DefaultTargetWarehouse`);
       if (whTarget) {
         Array.from(whTarget.options).forEach(opt => {
-          if (opt.value.includes('WH_SP_KOT') || opt.value.toLowerCase().includes('spare')) {
+          if (opt.value.includes('WH_SP_VIC') || opt.value.toLowerCase().includes('spare')) {
             whTarget.value = opt.value;
           }
         });
@@ -4983,7 +4983,7 @@ const Desk = {
     const ctx = this.activePoContext || 'grn';
     const supplier = document.getElementById('modalPoSupplierSelect')?.value || '';
     const poRef = document.getElementById('modalPoRefInput')?.value || '';
-    const targetWh = document.getElementById('modalPoWarehouseSelect')?.value || 'WH 832.00 --KOTMALE WAREHOUSE';
+    const targetWh = document.getElementById('modalPoWarehouseSelect')?.value || 'WH 831.00 --VICTORIA WAREHOUSE';
 
     if (!supplier && !poRef) {
       this.showToast('Please select a supplier or enter a PO reference.', true);

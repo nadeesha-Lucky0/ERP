@@ -31,23 +31,22 @@ try {
 
             // Cost Centers
             $costCenters = [
-                ['code' => '832.00', 'name' => '832.00 - Capital Expenditure'],
-                ['code' => '831.00', 'name' => '831.00 - Operations & Generation'],
-                ['code' => '832.10', 'name' => '832.10 - Mechanical Maintenance'],
-                ['code' => '832.20', 'name' => '832.20 - Electrical Maintenance'],
-                ['code' => '832.30', 'name' => '832.30 - Civil Engineering & Dam Safety'],
-                ['code' => '832.40', 'name' => '832.40 - Instrumentation & Control System'],
-                ['code' => '832.50', 'name' => '832.50 - Power House Auxiliary Stores'],
-                ['code' => '832.60', 'name' => '832.60 - Chemical & Lubricants Division']
+                ['code' => '831.00', 'name' => '831.00 - Victoria Operations & Capital'],
+                ['code' => '831.10', 'name' => '831.10 - Mechanical Maintenance - Victoria PS'],
+                ['code' => '831.20', 'name' => '831.20 - Electrical Maintenance - Victoria PS'],
+                ['code' => '831.30', 'name' => '831.30 - Civil Engineering & Dam Safety - Victoria'],
+                ['code' => '831.40', 'name' => '831.40 - Instrumentation & Control System - Victoria'],
+                ['code' => '831.50', 'name' => '831.50 - Power House Auxiliary Stores - Victoria'],
+                ['code' => '831.60', 'name' => '831.60 - Chemical & Lubricants Division - Victoria']
             ];
 
             // Projects
             $projects = [
-                'PRJ-832-01 - Turbine Runner Replacement Project',
-                'PRJ-832-02 - Spillway Radial Gate Automation Project',
-                'PRJ-832-03 - 220kV Switchyard Transformer Refurbishment',
-                'PRJ-832-04 - Penstock Ultrasonic Thickness Survey & Recoating',
-                'PRJ-832-05 - Power House Cooling Water System Modernization',
+                'PRJ-831-01 - Turbine Runner Replacement Project - Victoria PS',
+                'PRJ-831-02 - Spillway Radial Gate Automation Project - Victoria',
+                'PRJ-831-03 - 220kV Switchyard Transformer Refurbishment - Victoria',
+                'PRJ-831-04 - Penstock Ultrasonic Thickness Survey & Recoating',
+                'PRJ-831-05 - Power House Cooling Water System Modernization',
                 'PRJ-GEN-CAP - Generation Division Capital Project'
             ];
 
@@ -72,7 +71,7 @@ try {
 
             // Cost Codes
             $costCodes = [
-                ['code' => '832.00', 'label' => '832.00 - Capital Expenditure'],
+                ['code' => '831.00', 'label' => '831.00 - Victoria Operations & Capital'],
                 ['code' => 'A1001', 'label' => 'A1001 - Land & Civil Works'],
                 ['code' => 'A1003', 'label' => 'A1003 - Buildings & Structures'],
                 ['code' => 'A1113', 'label' => 'A1113 - Dams, Tunnels & Spillways'],
@@ -102,10 +101,10 @@ try {
 
             // Warehouses
             $warehouses = [
-                'WH 832.00 --KOTMALE WAREHOUSE',
-                'WH_CON_KOT --CONSUMABLES - KOTMALE PS',
-                'WH_DMG_KOT --DAMAGES - KOTMALE PS',
-                'WH_SP_KOT --SPARE WAREHOUSE - KOTMALE'
+                'WH 831.00 --VICTORIA WAREHOUSE',
+                'WH_CON_VIC --CONSUMABLES - VICTORIA PS',
+                'WH_DMG_VIC --DAMAGES - VICTORIA PS',
+                'WH_SP_VIC --SPARE WAREHOUSE - VICTORIA'
             ];
 
             // Common materials
@@ -326,7 +325,7 @@ try {
 
             $docProfile = trim($_POST['doc_profile'] ?? 'Goods Received Note');
             $docProfileCode = trim($_POST['doc_profile_code'] ?? 'PF-GRN');
-            $sourceDept = trim($_POST['source_dept'] ?? '832.00');
+            $sourceDept = trim($_POST['source_dept'] ?? '831.00');
             $receiptDetails = trim($_POST['receipt_details'] ?? '');
             $deliveryDate = !empty($_POST['delivery_date']) ? date('Y-m-d', strtotime($_POST['delivery_date'])) : date('Y-m-d');
             $accDate = !empty($_POST['acc_date']) ? date('Y-m-d', strtotime($_POST['acc_date'])) : date('Y-m-d');
