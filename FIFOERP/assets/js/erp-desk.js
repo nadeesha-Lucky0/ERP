@@ -4048,6 +4048,11 @@ const Desk = {
 
     // Initialize 1 default row if table empty
     const state = this.stockEntryState[context];
+    const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
+    if (!state.docType) {
+      state.docType = defaultDoc;
+    }
+    this.setSelectedCreateDoc(context, state.docType);
     if (state.items.length === 0) {
       this.addStockEntryRow(context, false);
     }
@@ -4627,12 +4632,56 @@ const Desk = {
     }
   },
 
+  setSelectedCreateDoc(context, type) {
+    const btn = document.getElementById(`${context}CreateBtn`);
+    const btnText = document.getElementById(`${context}CreateBtnText`);
+    if (btnText) {
+      btnText.innerHTML = `Create: <strong>${type}</strong>`;
+    }
+    if (btn) {
+      btn.classList.add('has-selection');
+    }
+    const menu = document.getElementById(`${context}CreateDropdown`);
+    if (menu) {
+      menu.querySelectorAll('.frappe-dropdown-item').forEach(item => {
+        const val = item.getAttribute('data-value');
+        const isMatch = (val === type);
+        item.classList.toggle('selected', isMatch);
+        const check = item.querySelector('.dropdown-check');
+        if (check) check.style.display = isMatch ? 'inline-block' : 'none';
+      });
+    }
+  },
+
+  setSelectedGetItemsFrom(context, source) {
+    const btn = document.getElementById(`${context}GetItemsBtn`);
+    const btnText = document.getElementById(`${context}GetItemsBtnText`);
+    if (btnText) {
+      btnText.innerHTML = source ? `From: <strong>${source}</strong>` : 'Get Items From';
+    }
+    if (btn) {
+      btn.classList.toggle('from-selected', !!source);
+    }
+    const menu = document.getElementById(`${context}GetItemsDropdown`);
+    if (menu) {
+      menu.querySelectorAll('.frappe-dropdown-item').forEach(item => {
+        const val = item.getAttribute('data-value');
+        const isMatch = (val === source);
+        item.classList.toggle('selected', isMatch);
+        const check = item.querySelector('.dropdown-check');
+        if (check) check.style.display = isMatch ? 'inline-block' : 'none';
+      });
+    }
+  },
+
   resetStockEntryForm(context) {
     const state = this.stockEntryState[context];
     state.items = [];
     state.nextId = 1;
     state.selectedIds.clear();
-    state.docTitle = 'New Stock Entry';
+    const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
+    state.docTitle = `New ${defaultDoc}`;
+    state.docType = defaultDoc;
     state.status = 'Not Saved';
 
     const badge = document.getElementById(`${context}StatusBadge`);
@@ -4642,11 +4691,13 @@ const Desk = {
       badge.textContent = 'Not Saved';
     }
     if (titleEl) {
-      titleEl.textContent = 'New Stock Entry';
+      titleEl.textContent = state.docTitle;
     }
 
+    this.setSelectedCreateDoc(context, defaultDoc);
+    this.setSelectedGetItemsFrom(context, '');
     this.initStockEntryForm(context);
-    this.showToast('Ready for New Stock Entry.');
+    this.showToast(`Ready for ${state.docTitle}.`);
   },
 
   createDocType(context, type) {
@@ -4660,6 +4711,8 @@ const Desk = {
     if (titleEl) {
       titleEl.textContent = `New ${type}`;
     }
+
+    this.setSelectedCreateDoc(context, type);
 
     // Update Series
     const seriesEl = document.getElementById(`${context}Series`);
@@ -4715,6 +4768,8 @@ const Desk = {
   // Predefined Supplier & Purchase Order Selection Dialog
   openPoSelectionModal(context) {
     this.activePoContext = context;
+    this.setSelectedGetItemsFrom(context, 'Purchase Order');
+    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
     const modal = document.getElementById('modalGetItemsFromPO');
     if (!modal) return;
 
@@ -4810,6 +4865,8 @@ const Desk = {
   // Cost Center Selection Dialog
   openCostCenterSelectionModal(context) {
     this.activeCostCenterContext = context;
+    this.setSelectedGetItemsFrom(context, 'Cost Center');
+    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
     const modal = document.getElementById('modalGetItemsFromCostCenter');
     if (!modal) return;
 
@@ -4942,6 +4999,8 @@ const Desk = {
   // Section Selection Dialog
   openSectionSelectionModal(context) {
     this.activeSectionContext = context;
+    this.setSelectedGetItemsFrom(context, 'Section');
+    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
     const modal = document.getElementById('modalGetItemsFromSection');
     if (!modal) return;
 

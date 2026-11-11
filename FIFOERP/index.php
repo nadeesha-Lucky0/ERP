@@ -581,24 +581,42 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
-                  Create <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn has-selection" id="grnCreateBtn" onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
+                  <span id="grnCreateBtnText">Create: <strong>GRN</strong></span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="grnCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('grn', 'GRN')">GRN</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('grn', 'GRSP')">GRSP</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('grn', 'MRA')">MRA</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="GRN" onclick="Desk.createDocType('grn', 'GRN')">
+                    <span>GRN</span>
+                    <span class="dropdown-check">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP" onclick="Desk.createDocType('grn', 'GRSP')">
+                    <span>GRSP</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="MRA" onclick="Desk.createDocType('grn', 'MRA')">
+                    <span>MRA</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
                 </div>
               </div>
 
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')">
-                  Get Items From <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn" id="grnGetItemsBtn" onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')">
+                  <span id="grnGetItemsBtnText">Get Items From</span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="grnGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('grn')">Purchase Order</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('grn')">Cost Center</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('grn')">Section</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order" onclick="Desk.openPoSelectionModal('grn')">
+                    <span>Purchase Order</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center" onclick="Desk.openCostCenterSelectionModal('grn')">
+                    <span>Cost Center</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section" onclick="Desk.openSectionSelectionModal('grn')">
+                    <span>Section</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
                 </div>
               </div>
 
@@ -930,24 +948,42 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
-                  Create <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn has-selection" id="issueCreateBtn" onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
+                  <span id="issueCreateBtnText">Create: <strong>MRA</strong></span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueCreateDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('issue', 'GRN')">GRN</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('issue', 'GRSP')">GRSP</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.createDocType('issue', 'MRA')">MRA</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRN" onclick="Desk.createDocType('issue', 'GRN')">
+                    <span>GRN</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP" onclick="Desk.createDocType('issue', 'GRSP')">
+                    <span>GRSP</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="MRA" onclick="Desk.createDocType('issue', 'MRA')">
+                    <span>MRA</span>
+                    <span class="dropdown-check">✓</span>
+                  </a>
                 </div>
               </div>
 
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn" onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
-                  Get Items From <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
+                <button type="button" class="frappe-btn" id="issueGetItemsBtn" onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
+                  <span id="issueGetItemsBtnText">Get Items From</span> <span style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueGetItemsDropdown" class="frappe-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openPoSelectionModal('issue')">Purchase Order</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openCostCenterSelectionModal('issue')">Cost Center</a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" onclick="Desk.openSectionSelectionModal('issue')">Section</a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order" onclick="Desk.openPoSelectionModal('issue')">
+                    <span>Purchase Order</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center" onclick="Desk.openCostCenterSelectionModal('issue')">
+                    <span>Cost Center</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section" onclick="Desk.openSectionSelectionModal('issue')">
+                    <span>Section</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
                 </div>
               </div>
 

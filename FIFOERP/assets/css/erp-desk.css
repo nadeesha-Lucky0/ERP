@@ -1492,7 +1492,9 @@ select.frappe-control option, select.frappe-select option {
   padding: 6px 0;
 }
 .frappe-dropdown-item {
-  display: block !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 16px;
   font-size: 13px;
   color: #1f272e !important;
@@ -1505,6 +1507,35 @@ select.frappe-control option, select.frappe-select option {
 .frappe-dropdown-item:hover {
   background: #f1f3f5;
   color: #0f172a !important;
+}
+.frappe-dropdown-item.selected {
+  background: #f0fdf4 !important;
+  color: #065f46 !important;
+  font-weight: 600;
+}
+.frappe-dropdown-item .dropdown-check {
+  font-size: 13px;
+  color: #10b981;
+  font-weight: 700;
+  margin-left: 12px;
+}
+.frappe-btn.has-selection {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+}
+.frappe-btn.has-selection strong {
+  color: #059669;
+  font-weight: 700;
+}
+.frappe-btn.from-selected {
+  border-color: #0284c7;
+  background: #f0f9ff;
+  color: #0369a1;
+}
+.frappe-btn.from-selected strong {
+  color: #0284c7;
+  font-weight: 700;
 }
 .frappe-dropdown-divider {
   height: 1px;
