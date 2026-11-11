@@ -65,16 +65,74 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
   ?>
     <div class="sidebar-section-title">Inventory - FIFO</div>
     <?php if ($canReceipts): ?>
-      <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-receipts') ?>" data-tab="tab-receipts">
-        <span class="sidebar-icon"><?= Icon::get('file-text') ?></span>
-        <span>Receipts (GRN)</span>
-      </button>
+      <div class="sidebar-nav-group <?= ($getActiveClass('tab-receipts') ? 'open' : '') ?>" id="sidebarGroupReceipts">
+        <button type="button" class="sidebar-nav-item sidebar-parent-item <?= $getActiveClass('tab-receipts') ?>" data-tab="tab-receipts" data-toggle-group="sidebarGroupReceipts">
+          <span class="sidebar-icon"><?= Icon::get('file-text') ?></span>
+          <span class="sidebar-label">Receipts (GRN)</span>
+          <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
+        </button>
+        <div class="sidebar-submenu" id="submenu-receipts">
+          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-receipts" data-workflow-filter="Entry" onclick="Desk.navigateWorkflow('tab-receipts', 'Entry', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
+            <span>Entry</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Validation" onclick="Desk.navigateWorkflow('tab-receipts', 'Validation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
+            <span>Validation</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Approval" onclick="Desk.navigateWorkflow('tab-receipts', 'Approval', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
+            <span>Approval</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Posting" onclick="Desk.navigateWorkflow('tab-receipts', 'Posting', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
+            <span>Posting</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Posted Cancellation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
+            <span>Posted Cancellation</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Unposted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Unposted Cancellation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('x-circle', 12) ?></span>
+            <span>Unposted Cancellation</span>
+          </button>
+        </div>
+      </div>
     <?php endif; ?>
     <?php if ($canIssues): ?>
-      <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-issues') ?>" data-tab="tab-issues">
-        <span class="sidebar-icon"><?= Icon::get('repeat') ?></span>
-        <span>Material Issues (FIFO)</span>
-      </button>
+      <div class="sidebar-nav-group <?= ($getActiveClass('tab-issues') ? 'open' : '') ?>" id="sidebarGroupIssues">
+        <button type="button" class="sidebar-nav-item sidebar-parent-item <?= $getActiveClass('tab-issues') ?>" data-tab="tab-issues" data-toggle-group="sidebarGroupIssues">
+          <span class="sidebar-icon"><?= Icon::get('repeat') ?></span>
+          <span class="sidebar-label">Material Issues (FIFO)</span>
+          <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
+        </button>
+        <div class="sidebar-submenu" id="submenu-issues">
+          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-issues" data-workflow-filter="Entry" onclick="Desk.navigateWorkflow('tab-issues', 'Entry', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
+            <span>Entry</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Validation" onclick="Desk.navigateWorkflow('tab-issues', 'Validation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
+            <span>Validation</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Approval" onclick="Desk.navigateWorkflow('tab-issues', 'Approval', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
+            <span>Approval</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Posting" onclick="Desk.navigateWorkflow('tab-issues', 'Posting', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
+            <span>Posting</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Posted Cancellation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
+            <span>Posted Cancellation</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Unposted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Unposted Cancellation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('x-circle', 12) ?></span>
+            <span>Unposted Cancellation</span>
+          </button>
+        </div>
+      </div>
     <?php endif; ?>
   <?php endif; ?>
 

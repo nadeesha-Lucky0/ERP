@@ -171,9 +171,35 @@ const Desk = {
       const adminNavBtn = document.querySelector(`.sidebar-nav-item[data-admin-sub="${activeAdminSub}"]`) || document.querySelector(`[data-tab="tab-admin"]`);
       if (adminNavBtn) adminNavBtn.classList.add('active');
     } else {
-      const navBtn = document.querySelector(`[data-tab="${tabId}"]`);
+      const navBtn = document.querySelector(`.sidebar-nav-item[data-tab="${tabId}"]`);
       if (navBtn) {
         navBtn.classList.add('active');
+      }
+    }
+
+    // Expand/collapse sidebar accordion submenus based on active tab
+    const grpReceipts = document.getElementById('sidebarGroupReceipts');
+    const grpIssues = document.getElementById('sidebarGroupIssues');
+    if (grpReceipts) {
+      if (tabId === 'tab-receipts') {
+        grpReceipts.classList.add('open');
+        const activeFilter = this.currentReceiptFilter || sessionStorage.getItem('fifoerp_active_receipt_filter') || 'Entry';
+        document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-workflow-filter') === activeFilter);
+        });
+      } else {
+        grpReceipts.classList.remove('open');
+      }
+    }
+    if (grpIssues) {
+      if (tabId === 'tab-issues') {
+        grpIssues.classList.add('open');
+        const activeFilter = this.currentIssueFilter || sessionStorage.getItem('fifoerp_active_issue_filter') || 'Entry';
+        document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-workflow-filter') === activeFilter);
+        });
+      } else {
+        grpIssues.classList.remove('open');
       }
     }
 
@@ -290,6 +316,15 @@ const Desk = {
         e.preventDefault();
         const tab = btn.getAttribute('data-tab');
         const adminSub = btn.getAttribute('data-admin-sub');
+        const toggleGroup = btn.getAttribute('data-toggle-group');
+
+        // If user clicks the already active group header, toggle accordion open/close
+        if (toggleGroup && Desk.currentTab === tab) {
+          const grp = document.getElementById(toggleGroup);
+          if (grp) grp.classList.toggle('open');
+          return;
+        }
+
         if (tab) {
           Desk.switchTab(tab, adminSub || null);
           if (adminSub && tab === 'tab-admin') {
@@ -473,9 +508,28 @@ const Desk = {
             const fn = el.getAttribute('onclick') || '';
             el.classList.toggle('active', fn.includes(`'${this.currentReceiptFilter}'`));
           });
+          document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(el => {
+            el.classList.toggle('active', el.getAttribute('data-workflow-filter') === this.currentReceiptFilter);
+          });
           this.renderReceiptsTable();
         }
       });
+  },
+
+  navigateWorkflow(tabId, filterName, subBtn) {
+    if (this.currentTab !== tabId) {
+      this.switchTab(tabId);
+    }
+    if (tabId === 'tab-receipts') {
+      this.filterReceipts(filterName);
+    } else if (tabId === 'tab-issues') {
+      this.filterIssues(filterName);
+    }
+    if (subBtn) {
+      document.querySelectorAll(`.sidebar-sub-item[data-parent-tab="${tabId}"]`).forEach(el => {
+        el.classList.toggle('active', el === subBtn);
+      });
+    }
   },
 
   filterReceipts(status, btn) {
@@ -490,6 +544,9 @@ const Desk = {
         const fn = el.getAttribute('onclick') || '';
         el.classList.toggle('active', fn.includes(`'${status}'`));
       }
+    });
+    document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-receipts"]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-workflow-filter') === status);
     });
     this.renderReceiptsTable();
   },
@@ -595,6 +652,9 @@ const Desk = {
             const fn = el.getAttribute('onclick') || '';
             el.classList.toggle('active', fn.includes(`'${this.currentIssueFilter}'`));
           });
+          document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
+            el.classList.toggle('active', el.getAttribute('data-workflow-filter') === this.currentIssueFilter);
+          });
           this.renderIssuesTable();
         }
       });
@@ -612,6 +672,9 @@ const Desk = {
         const fn = el.getAttribute('onclick') || '';
         el.classList.toggle('active', fn.includes(`'${status}'`));
       }
+    });
+    document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-workflow-filter') === status);
     });
     this.renderIssuesTable();
   },

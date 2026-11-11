@@ -79,6 +79,10 @@ class Icon {
                 return "<svg {$attrs}><polyline points=\"6 9 12 15 18 9\"/></svg>";
             case 'chevron-right':
                 return "<svg {$attrs}><polyline points=\"9 18 15 12 9 6\"/></svg>";
+            case 'rotate-ccw':
+                return "<svg {$attrs}><polyline points=\"1 4 1 10 7 10\"/><path d=\"M3.51 15a9 9 0 1 0 2.13-9.36L1 10\"/></svg>";
+            case 'x-circle':
+                return "<svg {$attrs}><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"15\" y1=\"9\" x2=\"9\" y2=\"15\"/><line x1=\"9\" y1=\"9\" x2=\"15\" y2=\"15\"/></svg>";
             case 'eye':
                 return "<svg {$attrs}><path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg>";
             case 'eye-off':
