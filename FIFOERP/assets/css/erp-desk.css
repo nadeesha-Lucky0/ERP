@@ -1719,6 +1719,30 @@ select.frappe-control option, select.frappe-select option {
   to { transform: rotate(360deg); }
 }
 
+@keyframes pulseHighlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45);
+    border-color: #2563eb;
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0);
+    border-color: #3b82f6;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+    border-color: #2563eb;
+  }
+}
+
+.frappe-btn.pulse-highlight {
+  animation: pulseHighlight 1.8s infinite !important;
+  border-color: #2563eb !important;
+  color: #1d4ed8 !important;
+  background: #eff6ff !important;
+  font-weight: 600 !important;
+}
+
+
 
 
 

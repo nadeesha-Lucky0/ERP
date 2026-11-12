@@ -4488,6 +4488,8 @@ const Desk = {
   // =========================================================================
   stockEntryState: {
     grn: {
+      docType: '',
+      selectedGetItemsFrom: '',
       items: [],
       nextId: 1,
       docTitle: 'New Stock Entry',
@@ -4495,6 +4497,8 @@ const Desk = {
       selectedIds: new Set()
     },
     issue: {
+      docType: '',
+      selectedGetItemsFrom: '',
       items: [],
       nextId: 1,
       docTitle: 'New Stock Entry',
@@ -4614,15 +4618,13 @@ const Desk = {
 
     // Initialize 1 default row if table empty
     const state = this.stockEntryState[context];
-    const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
-    if (!state.docType) {
-      state.docType = defaultDoc;
-    }
-    this.setSelectedCreateDoc(context, state.docType);
+    this.setSelectedCreateDoc(context, state.docType || '');
+    this.setSelectedGetItemsFrom(context, state.selectedGetItemsFrom || '');
     if (state.items.length === 0) {
       this.addStockEntryRow(context, false);
     }
     this.renderStockEntryRows(context);
+    this.updateFormLockState(context);
   },
 
   renderStockEntryRows(context) {
@@ -5614,6 +5616,19 @@ const Desk = {
 
   async submitStockEntryForm(context, isDraft = false) {
     const state = this.stockEntryState[context];
+    if (!state || !state.docType) {
+      this.showToast('Please select "Create Document Type" at the top before saving.', true);
+      const btn = document.getElementById(`${context}CreateBtn`);
+      if (btn) btn.focus();
+      return;
+    }
+    if (!state.selectedGetItemsFrom) {
+      this.showToast('Please select "Get Items From" at the top before saving.', true);
+      const btn = document.getElementById(`${context}GetItemsBtn`);
+      if (btn) btn.focus();
+      return;
+    }
+
     const docType = context === 'grn' ? 'GRN' : 'ISSUE';
 
     const validItems = state.items.filter(r => (r.item_code || isDraft) && r.qty > 0);
@@ -5758,27 +5773,32 @@ const Desk = {
   },
 
   setSelectedCreateDoc(context, type) {
+    const state = this.stockEntryState[context];
+    if (state) state.docType = type || '';
     const btn = document.getElementById(`${context}CreateBtn`);
     const btnText = document.getElementById(`${context}CreateBtnText`);
     if (btnText) {
-      btnText.innerHTML = `Create: <strong>${type}</strong>`;
+      btnText.innerHTML = type ? `Create: <strong>${type}</strong>` : 'Select Create Type';
     }
     if (btn) {
-      btn.classList.add('has-selection');
+      btn.classList.toggle('has-selection', !!type);
     }
     const menu = document.getElementById(`${context}CreateDropdown`);
     if (menu) {
       menu.querySelectorAll('.frappe-dropdown-item').forEach(item => {
         const val = item.getAttribute('data-value');
-        const isMatch = (val === type);
+        const isMatch = (val === type && !!type);
         item.classList.toggle('selected', isMatch);
         const check = item.querySelector('.dropdown-check');
         if (check) check.style.display = isMatch ? 'inline-block' : 'none';
       });
     }
+    this.updateFormLockState(context);
   },
 
   setSelectedGetItemsFrom(context, source) {
+    const state = this.stockEntryState[context];
+    if (state) state.selectedGetItemsFrom = source || '';
     const btn = document.getElementById(`${context}GetItemsBtn`);
     const btnText = document.getElementById(`${context}GetItemsBtnText`);
     if (btnText) {
@@ -5791,11 +5811,66 @@ const Desk = {
     if (menu) {
       menu.querySelectorAll('.frappe-dropdown-item').forEach(item => {
         const val = item.getAttribute('data-value');
-        const isMatch = (val === source);
+        const isMatch = (val === source && !!source);
         item.classList.toggle('selected', isMatch);
         const check = item.querySelector('.dropdown-check');
         if (check) check.style.display = isMatch ? 'inline-block' : 'none';
       });
+    }
+    this.updateFormLockState(context);
+  },
+
+  updateFormLockState(context) {
+    const state = this.stockEntryState[context];
+    const hasDocType = !!(state && state.docType);
+    const hasGetFrom = !!(state && state.selectedGetItemsFrom);
+    const isUnlocked = hasDocType && hasGetFrom;
+
+    const lockNotice = document.getElementById(`${context}StepLockNotice`);
+    const formFields = document.getElementById(`${context}FormFieldsWrapper`);
+    const createBtn = document.getElementById(`${context}CreateBtn`);
+    const getItemsBtn = document.getElementById(`${context}GetItemsBtn`);
+    const msgEl = document.getElementById(`${context}LockNoticeMsg`);
+
+    if (isUnlocked) {
+      if (lockNotice) lockNotice.style.display = 'none';
+      if (formFields) {
+        formFields.style.opacity = '1';
+        formFields.style.pointerEvents = 'auto';
+        formFields.style.filter = 'none';
+        formFields.removeAttribute('aria-disabled');
+      }
+      if (createBtn) createBtn.classList.remove('pulse-highlight');
+      if (getItemsBtn) getItemsBtn.classList.remove('pulse-highlight');
+    } else {
+      if (lockNotice) {
+        lockNotice.style.display = 'flex';
+        if (msgEl) {
+          if (!hasDocType && !hasGetFrom) {
+            msgEl.innerHTML = '<strong>Selection Required Before Entry:</strong> Please select <strong>Create Document Type</strong> and <strong>Get Items From</strong> above to unlock and fill this form.';
+          } else if (!hasDocType) {
+            msgEl.innerHTML = '<strong>Step 1 Required:</strong> Please select <strong>Create Document Type</strong> (GRN, GRSP, or MRA) above to proceed.';
+          } else if (!hasGetFrom) {
+            msgEl.innerHTML = '<strong>Step 2 Required:</strong> Please select <strong>Get Items From</strong> (Purchase Order, Cost Center, or Section) above to unlock the form.';
+          }
+        }
+      }
+      if (formFields) {
+        formFields.style.opacity = '0.35';
+        formFields.style.pointerEvents = 'none';
+        formFields.style.filter = 'grayscale(0.3)';
+        formFields.setAttribute('aria-disabled', 'true');
+      }
+      if (!hasDocType && createBtn) {
+        createBtn.classList.add('pulse-highlight');
+      } else if (createBtn) {
+        createBtn.classList.remove('pulse-highlight');
+      }
+      if (!hasGetFrom && getItemsBtn) {
+        getItemsBtn.classList.add('pulse-highlight');
+      } else if (getItemsBtn) {
+        getItemsBtn.classList.remove('pulse-highlight');
+      }
     }
   },
 
@@ -5804,9 +5879,9 @@ const Desk = {
     state.items = [];
     state.nextId = 1;
     state.selectedIds.clear();
-    const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
-    state.docTitle = `New ${defaultDoc}`;
-    state.docType = defaultDoc;
+    state.docTitle = 'New Stock Entry';
+    state.docType = '';
+    state.selectedGetItemsFrom = '';
     state.status = 'Not Saved';
 
     const badge = document.getElementById(`${context}StatusBadge`);
@@ -5858,14 +5933,14 @@ const Desk = {
     if (delivEl) delivEl.value = todayStr;
     if (accEl) accEl.value = todayStr;
 
-    this.setSelectedCreateDoc(context, defaultDoc);
+    this.setSelectedCreateDoc(context, '');
     this.setSelectedGetItemsFrom(context, '');
     this.initStockEntryForm(context);
-    this.showToast(`Ready for ${state.docTitle}.`);
+    this.updateFormLockState(context);
+    this.showToast('Stock Entry form reset.');
   },
 
   createDocType(context, type) {
-    this.resetStockEntryForm(context);
     const state = this.stockEntryState[context];
     state.docTitle = `New ${type}`;
     state.docType = type;
@@ -5928,49 +6003,34 @@ const Desk = {
         if (in1) in1.placeholder = 'e.g. Electrical Dept / Power House Workshop';
         if (in2) in2.placeholder = 'e.g. Officer Name / Carrier / Vehicle No';
         if (in3) in3.placeholder = 'e.g. DN-2026-081';
-        if (in4) in4.placeholder = 'e.g. MRA-REF-992';
+        if (in4) in4.placeholder = 'e.g. ADV-00918';
       } else {
         if (lbl1) lbl1.textContent = 'INVOICE DATE :';
         if (lbl2) lbl2.textContent = 'PURCHASE ORDER NO :';
         if (lbl3) lbl3.textContent = 'INVOICE NO / DELIVERY NOTE :';
-        if (lbl4) lbl4.textContent = 'SUPPLIER CONSIGNMENT REF :';
-        if (in1) in1.placeholder = 'YYYY-MM-DD or delivery date';
-        if (in2) in2.placeholder = 'e.g. PO-2026-081';
-        if (in3) in3.placeholder = 'e.g. INV-2026-992';
-        if (in4) in4.placeholder = 'e.g. CON-2026-081';
+        if (lbl4) lbl4.textContent = 'SUPPLIER REFERENCE :';
+        if (in1) in1.placeholder = 'YYYY-MM-DD';
+        if (in2) in2.placeholder = 'e.g. PO-831-2026';
+        if (in3) in3.placeholder = 'e.g. INV-2026-0042';
+        if (in4) in4.placeholder = 'e.g. SUP-REF-8891';
       }
-
-      // Both GRN and MRA retain the Unit Price and Invoice Totals sections
-      const unitPriceSec = document.getElementById('grnUnitPriceValuesSection');
-      const invoiceTotalsSec = document.getElementById('grnInvoiceTotalsSection');
-      if (unitPriceSec) unitPriceSec.style.display = 'block';
-      if (invoiceTotalsSec) invoiceTotalsSec.style.display = 'block';
     }
 
-    // Hide Get Items From selection cards on reset
-    const poCard = document.getElementById(`${context}PurchaseSection`);
-    const ccCard = document.getElementById(`${context}CostCenterSection`);
-    if (poCard) poCard.style.display = 'none';
-    if (ccCard) ccCard.style.display = 'none';
+    // Close Create menu
+    const menu = document.getElementById(`${context}CreateDropdown`);
+    if (menu) menu.style.display = 'none';
 
-    const poInput = document.getElementById(`${context}PoRefInput`);
-    if (poInput) poInput.value = '';
-    const supSel = document.getElementById(`${context}SupplierSelect`);
-    if (supSel) supSel.value = '';
-    const ccSel = document.getElementById(`${context}CostCenterSelect`);
-    if (ccSel) ccSel.value = '';
+    this.updateFormLockState(context);
 
-    const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
-    const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-    const delivEl = document.getElementById(`${context}DeliveryDate`);
-    const accEl = document.getElementById(`${context}AccDate`);
-    if (delivEl) delivEl.value = todayStr;
-    if (accEl) accEl.value = todayStr;
-
-    // Close any open dropdown menu
-    document.querySelectorAll('.frappe-dropdown-menu').forEach(m => m.style.display = 'none');
-    this.showToast(`New ${type} initialized.`);
+    if (!state.selectedGetItemsFrom) {
+      this.showToast(`Selected "${type}". Now select "Get Items From" to unlock form.`);
+      setTimeout(() => {
+        const getMenu = document.getElementById(`${context}GetItemsDropdown`);
+        if (getMenu) getMenu.style.display = 'block';
+      }, 150);
+    } else {
+      this.showToast(`Selected "${type}". Form unlocked!`);
+    }
   },
 
   createSeDuplicate(context) {
@@ -6438,13 +6498,14 @@ const Desk = {
     if (form) form.reset();
 
     // 2. Reset stockEntryState
-    const defaultDoc = (context === 'issue') ? 'MRA' : 'GRN';
     this.stockEntryState[context] = {
-      docType: defaultDoc,
+      docType: '',
+      selectedGetItemsFrom: '',
       items: [],
       nextId: 1,
       docTitle: 'New Stock Entry',
-      status: 'Not Saved'
+      status: 'Not Saved',
+      selectedIds: new Set()
     };
 
     // 3. Reset 1 empty initial row and re-render
@@ -6463,8 +6524,9 @@ const Desk = {
     }
 
     // 5. Reset Dropdown Headers
-    this.setSelectedCreateDoc(context, defaultDoc);
+    this.setSelectedCreateDoc(context, '');
     this.setSelectedGetItemsFrom(context, '');
+    this.updateFormLockState(context);
 
     // 6. Reset dynamic cards (PO card, Cost Center card)
     const poCard = document.getElementById(`${context}PurchaseSection`);

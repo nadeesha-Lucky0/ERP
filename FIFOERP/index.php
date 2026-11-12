@@ -624,17 +624,17 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn has-selection" id="grnCreateBtn"
+                <button type="button" class="frappe-btn pulse-highlight" id="grnCreateBtn"
                   onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
-                  <span id="grnCreateBtnText">Create: <strong>GRN</strong></span> <span
+                  <span id="grnCreateBtnText">Select Create Type</span> <span
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="grnCreateDropdown" class="frappe-dropdown-menu"
                   style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="GRN"
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRN"
                     onclick="Desk.createDocType('grn', 'GRN')">
                     <span>GRN</span>
-                    <span class="dropdown-check">✓</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP"
                     onclick="Desk.createDocType('grn', 'GRSP')">
@@ -688,6 +688,35 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <input type="hidden" name="series" id="grnSeries" value="GRN-.YYYY.-">
             <input type="hidden" name="stock_entry_type" id="grnStockEntryType" value="Material Receipt">
+
+            <!-- STEP LOCK NOTICE (Displayed until both Create Type and Get Items From are chosen) -->
+            <div id="grnStepLockNotice"
+              style="display: flex; background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; margin-bottom: 18px; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 22px; line-height: 1;">🔒</span>
+                <div>
+                  <div id="grnLockNoticeMsg" style="font-size: 13px; color: #92400e; line-height: 1.4;">
+                    <strong>Selection Required Before Entry:</strong> Please select <strong>Create Document Type</strong> and <strong>Get Items From</strong> above to unlock and fill this form.
+                  </div>
+                  <div style="font-size: 11.5px; color: #b45309; margin-top: 2px;">
+                    Both dropdowns at the top right are mandatory before entering dates, materials, or suppliers.
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.toggleSeDropdown('grnCreateDropdown')"
+                  style="background: #ffffff; border: 1px solid #f59e0b; color: #b45309; font-weight: 600; font-size: 12px; padding: 6px 12px;">
+                  1. Create Type &#9662;
+                </button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.toggleSeDropdown('grnGetItemsDropdown')"
+                  style="background: #ffffff; border: 1px solid #f59e0b; color: #b45309; font-weight: 600; font-size: 12px; padding: 6px 12px;">
+                  2. Get Items From &#9662;
+                </button>
+              </div>
+            </div>
+
+            <!-- GATED FORM FIELDS WRAPPER -->
+            <div id="grnFormFieldsWrapper" style="opacity: 0.35; pointer-events: none; filter: grayscale(0.3); transition: opacity 0.25s ease, filter 0.25s ease;">
 
             <!-- Delivery Date & Acc Date Section -->
             <div
@@ -1074,6 +1103,8 @@ require_once __DIR__ . '/views/layouts/header.php';
               </div>
             </div>
 
+            </div><!-- /grnFormFieldsWrapper -->
+
           </div><!-- /tabContent-grn-details -->
 
         </form>
@@ -1148,9 +1179,9 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <div style="display: flex; align-items: center; gap: 8px;">
               <div class="dropdown-wrapper" style="position: relative;">
-                <button type="button" class="frappe-btn has-selection" id="issueCreateBtn"
+                <button type="button" class="frappe-btn pulse-highlight" id="issueCreateBtn"
                   onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
-                  <span id="issueCreateBtnText">Create: <strong>MRA</strong></span> <span
+                  <span id="issueCreateBtnText">Select Create Type</span> <span
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueCreateDropdown" class="frappe-dropdown-menu"
@@ -1165,10 +1196,10 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <span>GRSP</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item selected" data-value="MRA"
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="MRA"
                     onclick="Desk.createDocType('issue', 'MRA')">
                     <span>MRA</span>
-                    <span class="dropdown-check">✓</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                 </div>
               </div>
@@ -1212,6 +1243,35 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <input type="hidden" name="series" id="issueSeries" value="MRA-.YYYY.-">
             <input type="hidden" name="stock_entry_type" id="issueStockEntryType" value="Material Issue">
+
+            <!-- STEP LOCK NOTICE (Displayed until both Create Type and Get Items From are chosen) -->
+            <div id="issueStepLockNotice"
+              style="display: flex; background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; margin-bottom: 18px; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 22px; line-height: 1;">🔒</span>
+                <div>
+                  <div id="issueLockNoticeMsg" style="font-size: 13px; color: #92400e; line-height: 1.4;">
+                    <strong>Selection Required Before Entry:</strong> Please select <strong>Create Document Type</strong> and <strong>Get Items From</strong> above to unlock and fill this form.
+                  </div>
+                  <div style="font-size: 11.5px; color: #b45309; margin-top: 2px;">
+                    Both dropdowns at the top right are mandatory before entering dates, materials, or requisitions.
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                <button type="button" class="frappe-table-btn" onclick="Desk.toggleSeDropdown('issueCreateDropdown')"
+                  style="background: #ffffff; border: 1px solid #f59e0b; color: #b45309; font-weight: 600; font-size: 12px; padding: 6px 12px;">
+                  1. Create Type &#9662;
+                </button>
+                <button type="button" class="frappe-table-btn" onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')"
+                  style="background: #ffffff; border: 1px solid #f59e0b; color: #b45309; font-weight: 600; font-size: 12px; padding: 6px 12px;">
+                  2. Get Items From &#9662;
+                </button>
+              </div>
+            </div>
+
+            <!-- GATED FORM FIELDS WRAPPER -->
+            <div id="issueFormFieldsWrapper" style="opacity: 0.35; pointer-events: none; filter: grayscale(0.3); transition: opacity 0.25s ease, filter 0.25s ease;">
 
             <!-- Delivery Date & Acc Date Section -->
             <div
@@ -1447,6 +1507,8 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </button>
               </div>
             </div>
+
+            </div><!-- /issueFormFieldsWrapper -->
 
           </div><!-- /tabContent-issue-details -->
 
