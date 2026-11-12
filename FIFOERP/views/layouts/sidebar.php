@@ -152,10 +152,51 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
   ?>
     <div class="sidebar-section-title">Physical Verification</div>
     <?php if ($canPvWorkflow): ?>
-      <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-pv-workflow') ?>" data-tab="tab-pv-workflow">
-        <span class="sidebar-icon"><?= Icon::get('check-square') ?></span>
-        <span>Verification Workflow</span>
-      </button>
+      <div class="sidebar-nav-group <?= ($getActiveClass('tab-pv-workflow') ? 'open' : '') ?>" id="sidebarGroupPvWorkflow">
+        <button type="button" class="sidebar-nav-item sidebar-parent-item <?= $getActiveClass('tab-pv-workflow') ?>" data-tab="tab-pv-workflow" data-toggle-group="sidebarGroupPvWorkflow">
+          <span class="sidebar-icon"><?= Icon::get('check-square') ?></span>
+          <span class="sidebar-label">Verification Workflow</span>
+          <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
+        </button>
+        <div class="sidebar-submenu" id="submenu-pv-workflow">
+          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-freeze" onclick="Desk.navigatePvSub('pv-sub-freeze', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('lock', 12) ?></span>
+            <span>Freeze Batches</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-generate" onclick="Desk.navigatePvSub('pv-sub-generate', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('file-plus', 12) ?></span>
+            <span>Generate Sheet</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-entry" onclick="Desk.navigatePvSub('pv-sub-entry', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
+            <span>Count Entry</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-edit" onclick="Desk.navigatePvSub('pv-sub-edit', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
+            <span>Verification Edit</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-validation" onclick="Desk.navigatePvSub('pv-sub-validation', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
+            <span>Validation</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-approval" onclick="Desk.navigatePvSub('pv-sub-approval', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
+            <span>Approval</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-posting" onclick="Desk.navigatePvSub('pv-sub-posting', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
+            <span>Posting</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-gl" onclick="Desk.navigatePvSub('pv-sub-gl', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('database', 12) ?></span>
+            <span>GL Posting</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-unfreeze" onclick="Desk.navigatePvSub('pv-sub-unfreeze', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('unlock', 12) ?></span>
+            <span>Unfreeze Batches</span>
+          </button>
+        </div>
+      </div>
     <?php endif; ?>
     <?php if ($canPvReports): ?>
       <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-pv-reports') ?>" data-tab="tab-pv-reports">

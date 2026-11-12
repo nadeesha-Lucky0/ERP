@@ -187,6 +187,7 @@ const Desk = {
     // Expand/collapse sidebar accordion submenus based on active tab
     const grpReceipts = document.getElementById('sidebarGroupReceipts');
     const grpIssues = document.getElementById('sidebarGroupIssues');
+    const grpPv = document.getElementById('sidebarGroupPvWorkflow');
     if (grpReceipts) {
       if (tabId === 'tab-receipts') {
         grpReceipts.classList.add('open');
@@ -207,6 +208,17 @@ const Desk = {
         });
       } else {
         grpIssues.classList.remove('open');
+      }
+    }
+    if (grpPv) {
+      if (tabId === 'tab-pv-workflow') {
+        grpPv.classList.add('open');
+        const activeSub = pvWorkflowSubToActivate || this.currentPvSubTab || sessionStorage.getItem('fifoerp_active_pv_sub') || 'pv-sub-freeze';
+        document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-workflow"]').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-pv-sub') === activeSub);
+        });
+      } else {
+        grpPv.classList.remove('open');
       }
     }
 
@@ -528,6 +540,19 @@ const Desk = {
     }
     if (subBtn) {
       document.querySelectorAll(`.sidebar-sub-item[data-parent-tab="${tabId}"]`).forEach(el => {
+        el.classList.toggle('active', el === subBtn);
+      });
+    }
+  },
+
+  navigatePvSub(subTabId, subBtn) {
+    if (this.currentTab !== 'tab-pv-workflow') {
+      this.switchTab('tab-pv-workflow', subTabId);
+    } else {
+      this.switchPvSubTab(subTabId);
+    }
+    if (subBtn) {
+      document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-workflow"]').forEach(el => {
         el.classList.toggle('active', el === subBtn);
       });
     }
@@ -1596,6 +1621,10 @@ const Desk = {
 
     document.querySelectorAll('#pvWorkflowPills .pv-pill-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
+    });
+
+    document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-workflow"]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-pv-sub') === subTabId);
     });
 
     document.querySelectorAll('#tab-pv-workflow .pv-sub-pane').forEach(pane => {
