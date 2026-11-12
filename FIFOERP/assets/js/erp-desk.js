@@ -942,12 +942,7 @@ const Desk = {
           <tr class="desk-doc-main-row" id="mainRow_posting_${d.id}">
             <td>${typeBadge}</td>
             <td>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <button type="button" class="desk-acc-arrow-indicator" id="accInd_posting_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'posting')" title="Click down arrow to view items & details">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <strong class="desk-clickable-doc" onclick="Desk.toggleDocAccordion(${d.id}, 'posting')" title="Click to view details">${d.doc_no}</strong>
-              </div>
+              <strong class="desk-clickable-doc" onclick="Desk.toggleDocAccordion(${d.id}, 'posting')" title="Click to view details">${d.doc_no}</strong>
             </td>
             <td>${d.doc_date}</td>
             <td>${party}</td>
@@ -1116,10 +1111,26 @@ const Desk = {
     const dest = isGrn ? (doc.warehouse || 'WH 831.00 --VICTORIA WAREHOUSE') : (doc.destination_code || '-');
     const totalVal = parseFloat(doc.invoice_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
 
+    // Parse tag brackets from remarks if present
+    const rawRemarks = doc.remarks || '';
+    const tagMatches = {};
+    const cleanRemarks = rawRemarks.replace(/\[([^\]:]+):\s*([^\]]+)\]/g, (match, key, val) => {
+      tagMatches[key.trim()] = val.trim();
+      return '';
+    }).replace(/\[Saved as Draft\]/g, '').trim();
+
+    const poRef = doc.order_reference || tagMatches['PO'] || '-';
+    const invNo = doc.invoice_number || tagMatches['Inv/DN'] || '-';
+    const supRef = doc.other_ref_1 || tagMatches['Supplier Ref'] || '-';
+    const invDate = tagMatches['Inv Date'] || '-';
+    const accDate = doc.acc_date || tagMatches['Acc'] || doc.doc_date || '-';
+    const delivDate = doc.delivery_date || tagMatches['Deliv'] || doc.doc_date || '-';
+    const entryType = doc.stock_entry_type || tagMatches['Type'] || (isGrn ? 'Material Receipt' : 'Material Issue');
+
     let totalQty = 0;
     let itemsHtml = '';
     if (items.length === 0) {
-      itemsHtml = `<tr><td colspan="7" style="text-align: center; padding: 18px; color: #94a3b8; font-style: italic;">No line items found for this document.</td></tr>`;
+      itemsHtml = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: #94a3b8; font-style: italic;">No line items found for this document.</td></tr>`;
     } else {
       items.forEach((item, idx) => {
         const qty = parseFloat(item.quantity || 0);
@@ -1128,17 +1139,17 @@ const Desk = {
         totalQty += qty;
 
         itemsHtml += `
-          <tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="color: #64748b; font-weight: 500; text-align: center;">${idx + 1}</td>
-            <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #1e293b; font-size: 11.5px;">${item.sku || '-'}</code></td>
+          <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+            <td style="color: #64748b; font-weight: 600; text-align: center; font-size: 11.5px;">${idx + 1}</td>
+            <td><code style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 3px 7px; border-radius: 4px; font-weight: 700; color: #0f172a; font-size: 11.5px; font-family: monospace;">${item.sku || '-'}</code></td>
             <td>
-              <strong style="color: #1e293b;">${item.item_name || 'Material Item'}</strong>
+              <strong style="color: #0f172a; font-size: 13px;">${item.item_name || 'Material Item'}</strong>
               ${item.specs ? `<div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">${item.specs}</div>` : ''}
             </td>
             <td><span class="desk-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; font-size: 11px;">${item.bin_location || 'Bay-01'}</span></td>
-            <td style="text-align: right; font-weight: 700; color: #0f172a;">${qty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
-            <td style="text-align: right; color: #475569;">Rs. ${unitCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            <td style="text-align: right; font-weight: 700; color: #0f766e;">Rs. ${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            <td style="text-align: right; font-weight: 700; color: #0f172a; font-size: 13px;">${qty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
+            <td style="text-align: right; color: #475569; font-size: 12.5px;">Rs. ${unitCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            <td style="text-align: right; font-weight: 700; color: #059669; font-size: 13px;">Rs. ${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
           </tr>
         `;
       });
@@ -1168,47 +1179,131 @@ const Desk = {
 
     container.innerHTML = `
       <div class="desk-accordion-card">
-        <!-- Top Metadata Grid -->
-        <div class="desk-accordion-meta-grid">
-          <div class="meta-item">
-            <span class="meta-label">Document Reference</span>
-            <span class="meta-val">
-              <strong style="color: #0f172a; font-size: 13.5px;">${doc.doc_no}</strong>
-              <span class="desk-badge" style="background: #e2e8f0; color: #334155; font-size: 10.5px; margin-left: 4px;">${doc.doc_type}</span>
-            </span>
+        <!-- Top Document Header Bar -->
+        <div class="desk-accordion-hero">
+          <div class="hero-left">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span class="hero-icon">
+                ${isGrn ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>`}
+              </span>
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <h3 class="hero-title">${doc.doc_no}</h3>
+                  <span class="desk-badge" style="background: #e2e8f0; color: #1e293b; font-size: 11px; font-weight: 700;">${doc.doc_type || (isGrn ? 'GRN' : 'MRA')}</span>
+                  ${statusBadge}
+                </div>
+                <div class="hero-sub">${entryType} &bull; Created: <strong>${doc.doc_date || '-'}</strong></div>
+              </div>
+            </div>
           </div>
-          <div class="meta-item">
-            <span class="meta-label">Document Date</span>
-            <span class="meta-val"><strong>${doc.doc_date || '-'}</strong></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">${isGrn ? 'Supplier / Source' : 'Requesting Dept'}</span>
-            <span class="meta-val"><strong>${party}</strong></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">${isGrn ? 'Warehouse Bay' : 'Job Destination'}</span>
-            <span class="meta-val"><strong>${dest}</strong></span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Current Stage</span>
-            <span class="meta-val">${statusBadge}</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-label">Total Document Valuation</span>
-            <span class="meta-val" style="color: #0d9488; font-weight: 700; font-size: 14px;">Rs. ${totalVal}</span>
+          <div class="hero-right">
+            <div class="hero-stat-pill">
+              <span class="stat-lbl">Line Items</span>
+              <span class="stat-num">${items.length} ${items.length === 1 ? 'Item' : 'Items'}</span>
+            </div>
+            <div class="hero-stat-pill">
+              <span class="stat-lbl">Total Quantity</span>
+              <span class="stat-num">${totalQty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span>
+            </div>
+            <div class="hero-stat-pill highlight">
+              <span class="stat-lbl">Total Valuation</span>
+              <span class="stat-num val">Rs. ${totalVal}</span>
+            </div>
           </div>
         </div>
 
-        ${doc.remarks ? `
-          <div class="desk-accordion-remarks">
-            <strong>Notes / Remarks:</strong> ${doc.remarks}
+        <!-- 3-Column Structured Information Cards -->
+        <div class="desk-accordion-sections">
+          <!-- Card 1: Logistics & Warehouse -->
+          <div class="desk-info-card">
+            <div class="card-head">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              <span>${isGrn ? 'Supplier & Warehouse' : 'Destination & Storage'}</span>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <span class="lbl">${isGrn ? 'Supplier / Source' : 'Department'}</span>
+                <span class="val"><strong>${party}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">${isGrn ? 'Target Warehouse' : 'Source Warehouse'}</span>
+                <span class="val">${dest}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">Delivery Date</span>
+                <span class="val"><strong>${delivDate}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: References & Invoicing -->
+          <div class="desk-info-card">
+            <div class="card-head">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span>Reference Documents</span>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <span class="lbl">${isGrn ? 'Purchase Order Ref' : 'Requisition Ref'}</span>
+                <span class="val">${poRef !== '-' ? `<code style="font-weight:600;">${poRef}</code>` : '<span style="color:#94a3b8;">None</span>'}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">${isGrn ? 'Invoice / DN No' : 'Delivery Note'}</span>
+                <span class="val">${invNo !== '-' ? `<strong>${invNo}</strong>` : '<span style="color:#94a3b8;">None</span>'}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">Supplier / Consignment Ref</span>
+                <span class="val">${supRef !== '-' ? supRef : '<span style="color:#94a3b8;">None</span>'}</span>
+              </div>
+              ${invDate !== '-' ? `
+                <div class="info-row">
+                  <span class="lbl">Invoice Date</span>
+                  <span class="val"><strong>${invDate}</strong></span>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Card 3: Accounting & Lifecycle -->
+          <div class="desk-info-card">
+            <div class="card-head">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Accounting & Audit</span>
+            </div>
+            <div class="card-body">
+              <div class="info-row">
+                <span class="lbl">Accounting Date</span>
+                <span class="val"><strong>${accDate}</strong></span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">Stock Entry Type</span>
+                <span class="val">${entryType}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">Current Stage</span>
+                <span class="val">${statusBadge}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remarks Section (Clean, without bracket system tags) -->
+        ${cleanRemarks ? `
+          <div class="desk-accordion-clean-remarks">
+            <div class="rem-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div class="rem-text">
+              <span class="rem-label">Notes / Remarks:</span>
+              <span class="rem-val">${cleanRemarks}</span>
+            </div>
           </div>
         ` : ''}
 
         <!-- Line Items Table -->
-        <div style="margin-top: 14px;">
+        <div style="margin-top: 16px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-size: 12.5px; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 6px;">
+            <div style="font-size: 13px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
               <span>Allocated Line Items (${items.length})</span>
             </div>
             <span style="font-size: 11.5px; color: #64748b;">All rates &amp; valuations evaluated against FIFO ledger</span>
@@ -1217,14 +1312,14 @@ const Desk = {
           <div class="desk-table-wrapper" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff;">
             <table class="desk-table" style="font-size: 12.5px; margin: 0; width: 100%;">
               <thead>
-                <tr style="background: #f8fafc;">
-                  <th style="width: 45px; text-align: center;">#</th>
-                  <th style="width: 140px;">Item Code / SKU</th>
-                  <th>Material Description</th>
-                  <th style="width: 130px;">Bin / Location</th>
-                  <th style="width: 90px; text-align: right;">Quantity</th>
-                  <th style="width: 130px; text-align: right;">Unit Rate (LKR)</th>
-                  <th style="width: 140px; text-align: right;">Total Valuation (LKR)</th>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                  <th style="width: 45px; text-align: center; color: #64748b; font-size: 11px; text-transform: uppercase;">#</th>
+                  <th style="width: 140px; color: #64748b; font-size: 11px; text-transform: uppercase;">Item Code / SKU</th>
+                  <th style="color: #64748b; font-size: 11px; text-transform: uppercase;">Material Description</th>
+                  <th style="width: 130px; color: #64748b; font-size: 11px; text-transform: uppercase;">Bin / Location</th>
+                  <th style="width: 100px; text-align: right; color: #64748b; font-size: 11px; text-transform: uppercase;">Quantity</th>
+                  <th style="width: 140px; text-align: right; color: #64748b; font-size: 11px; text-transform: uppercase;">Unit Rate (LKR)</th>
+                  <th style="width: 150px; text-align: right; color: #64748b; font-size: 11px; text-transform: uppercase;">Total Valuation (LKR)</th>
                 </tr>
               </thead>
               <tbody>
@@ -1233,10 +1328,10 @@ const Desk = {
               ${items.length > 0 ? `
                 <tfoot>
                   <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #e2e8f0;">
-                    <td colspan="4" style="text-align: right; color: #475569; padding: 10px 12px;">Total Summary:</td>
-                    <td style="text-align: right; color: #0f172a; padding: 10px 12px;">${totalQty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
+                    <td colspan="4" style="text-align: right; color: #475569; padding: 10px 14px; font-size: 12.5px;">Total Summary:</td>
+                    <td style="text-align: right; color: #0f172a; padding: 10px 14px; font-size: 13.5px;">${totalQty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
                     <td></td>
-                    <td style="text-align: right; color: #0d9488; font-size: 13.5px; padding: 10px 12px;">Rs. ${totalVal}</td>
+                    <td style="text-align: right; color: #059669; font-size: 14px; padding: 10px 14px;">Rs. ${totalVal}</td>
                   </tr>
                 </tfoot>
               ` : ''}
