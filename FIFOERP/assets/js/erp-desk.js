@@ -632,8 +632,15 @@ const Desk = {
       }
 
       html += `
-        <tr>
-          <td><strong>${d.doc_no}</strong></td>
+        <tr class="desk-doc-main-row" id="mainRow_grn_${d.id}">
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" class="desk-acc-arrow-indicator" id="accInd_grn_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'grn')" title="Click down arrow to view items & details">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <strong class="desk-clickable-doc" onclick="Desk.toggleDocAccordion(${d.id}, 'grn')" title="Click to view details">${d.doc_no}</strong>
+            </div>
+          </td>
           <td>${d.doc_date}</td>
           <td><strong>${d.receipt_from || '-'}</strong></td>
           <td>${d.warehouse || 'WH 831.00 --VICTORIA WAREHOUSE'}</td>
@@ -648,7 +655,15 @@ const Desk = {
               ${d.status === 'Approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
               ${d.status === 'Posted' ? `<span style="color: #059669; font-weight: 600; font-size: 11.5px;">✓ Live In FIFO</span>` : ''}
               ${d.status === 'Draft' || d.status === 'Validated' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              <button type="button" class="desk-acc-btn" id="accBtn_grn_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'grn')" title="Click down arrow to show/hide full items breakdown">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
             </div>
+          </td>
+        </tr>
+        <tr id="accRow_grn_${d.id}" class="desk-doc-accordion-row" style="display: none;">
+          <td colspan="7" style="padding: 0; background: #f8fafc; border-top: 1px dashed #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+            <div class="desk-doc-accordion-panel" id="accContent_grn_${d.id}"></div>
           </td>
         </tr>
       `;
@@ -789,8 +804,15 @@ const Desk = {
       const canEdit = (rawStatus !== 'Posted' && rawStatus !== 'Cancelled');
 
       html += `
-        <tr>
-          <td><strong>${d.doc_no}</strong></td>
+        <tr class="desk-doc-main-row" id="mainRow_issue_${d.id}">
+          <td>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" class="desk-acc-arrow-indicator" id="accInd_issue_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'issue')" title="Click down arrow to view items & details">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <strong class="desk-clickable-doc" onclick="Desk.toggleDocAccordion(${d.id}, 'issue')" title="Click to view details">${d.doc_no}</strong>
+            </div>
+          </td>
           <td>${d.doc_date}</td>
           <td><span class="desk-badge badge-draft">${d.destination_code || '-'}</span></td>
           <td><strong>${d.department_code || '-'}</strong></td>
@@ -811,7 +833,15 @@ const Desk = {
               ${rawStatus === 'Approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
               ${rawStatus === 'Posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
               ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              <button type="button" class="desk-acc-btn" id="accBtn_issue_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'issue')" title="Click down arrow to show/hide full items breakdown">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
             </div>
+          </td>
+        </tr>
+        <tr id="accRow_issue_${d.id}" class="desk-doc-accordion-row" style="display: none;">
+          <td colspan="8" style="padding: 0; background: #f8fafc; border-top: 1px dashed #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+            <div class="desk-doc-accordion-panel" id="accContent_issue_${d.id}"></div>
           </td>
         </tr>
       `;
@@ -906,9 +936,16 @@ const Desk = {
         const total = parseFloat(d.invoice_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
 
         html += `
-          <tr>
+          <tr class="desk-doc-main-row" id="mainRow_posting_${d.id}">
             <td>${typeBadge}</td>
-            <td><strong>${d.doc_no}</strong></td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <button type="button" class="desk-acc-arrow-indicator" id="accInd_posting_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'posting')" title="Click down arrow to view items & details">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <strong class="desk-clickable-doc" onclick="Desk.toggleDocAccordion(${d.id}, 'posting')" title="Click to view details">${d.doc_no}</strong>
+              </div>
+            </td>
             <td>${d.doc_date}</td>
             <td>${party}</td>
             <td>${dest}</td>
@@ -921,11 +958,19 @@ const Desk = {
             </td>
             <td>
               <div style="display: flex; gap: 6px; align-items: center;">
-                <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})">Inspect</button>
                 <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id}); setTimeout(() => Desk.loadPostingTab(), 500);">
                   🚀 Post to FIFO
                 </button>
+                <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})">Inspect</button>
+                <button type="button" class="desk-acc-btn" id="accBtn_posting_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'posting')" title="Click down arrow to show/hide full items breakdown">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
               </div>
+            </td>
+          </tr>
+          <tr id="accRow_posting_${d.id}" class="desk-doc-accordion-row" style="display: none;">
+            <td colspan="8" style="padding: 0; background: #f8fafc; border-top: 1px dashed #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+              <div class="desk-doc-accordion-panel" id="accContent_posting_${d.id}"></div>
             </td>
           </tr>
         `;
@@ -1008,6 +1053,214 @@ const Desk = {
       });
   },
 
+  docDetailCache: {},
+
+  toggleDocAccordion(docId, context = 'grn') {
+    const row = document.getElementById(`accRow_${context}_${docId}`);
+    const btn = document.getElementById(`accBtn_${context}_${docId}`);
+    const ind = document.getElementById(`accInd_${context}_${docId}`);
+    const container = document.getElementById(`accContent_${context}_${docId}`);
+    if (!row || !container) return;
+
+    const isOpen = row.style.display !== 'none' && row.style.display !== '';
+    if (isOpen) {
+      row.style.display = 'none';
+      if (btn) btn.classList.remove('open');
+      if (ind) ind.classList.remove('open');
+      return;
+    }
+
+    // Expand
+    row.style.display = 'table-row';
+    if (btn) btn.classList.add('open');
+    if (ind) ind.classList.add('open');
+
+    // If already cached, render immediately
+    if (this.docDetailCache && this.docDetailCache[docId]) {
+      this.renderDocAccordionContent(container, this.docDetailCache[docId], context);
+      return;
+    }
+
+    container.innerHTML = `
+      <div style="padding: 24px; text-align: center; color: #64748b; font-size: 13px;">
+        <span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #cbd5e1; border-top-color: #2563eb; border-radius: 50%; animation: deskSpin 0.8s linear infinite; vertical-align: middle; margin-right: 8px;"></span>
+        Loading document line items and detailed breakdown...
+      </div>
+    `;
+
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`)
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          if (!this.docDetailCache) this.docDetailCache = {};
+          this.docDetailCache[docId] = res.data;
+          this.renderDocAccordionContent(container, res.data, context);
+        } else {
+          container.innerHTML = `<div style="padding: 16px; color: #dc2626; text-align: center; font-size: 13px;">Failed to load items: ${res.message || 'Unknown error'}</div>`;
+        }
+      })
+      .catch(err => {
+        container.innerHTML = `<div style="padding: 16px; color: #dc2626; text-align: center; font-size: 13px;">Network error: ${err.message}</div>`;
+      });
+  },
+
+  renderDocAccordionContent(container, data, context) {
+    const doc = data.document || {};
+    const items = data.items || [];
+    const isGrn = (doc.doc_type || 'GRN').toUpperCase() === 'GRN';
+
+    const party = isGrn ? (doc.receipt_from || 'Central Supplier') : (doc.department_code || '-');
+    const dest = isGrn ? (doc.warehouse || 'WH 831.00 --VICTORIA WAREHOUSE') : (doc.destination_code || '-');
+    const totalVal = parseFloat(doc.invoice_total || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+    let totalQty = 0;
+    let itemsHtml = '';
+    if (items.length === 0) {
+      itemsHtml = `<tr><td colspan="7" style="text-align: center; padding: 18px; color: #94a3b8; font-style: italic;">No line items found for this document.</td></tr>`;
+    } else {
+      items.forEach((item, idx) => {
+        const qty = parseFloat(item.quantity || 0);
+        const unitCost = parseFloat(item.unit_cost || 0);
+        const totalCost = parseFloat(item.total_cost || (qty * unitCost));
+        totalQty += qty;
+
+        itemsHtml += `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="color: #64748b; font-weight: 500; text-align: center;">${idx + 1}</td>
+            <td><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 700; color: #1e293b; font-size: 11.5px;">${item.sku || '-'}</code></td>
+            <td>
+              <strong style="color: #1e293b;">${item.item_name || 'Material Item'}</strong>
+              ${item.specs ? `<div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">${item.specs}</div>` : ''}
+            </td>
+            <td><span class="desk-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; font-size: 11px;">${item.bin_location || 'Bay-01'}</span></td>
+            <td style="text-align: right; font-weight: 700; color: #0f172a;">${qty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
+            <td style="text-align: right; color: #475569;">Rs. ${unitCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            <td style="text-align: right; font-weight: 700; color: #0f766e;">Rs. ${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+          </tr>
+        `;
+      });
+    }
+
+    let statusBadge = `<span class="desk-badge badge-draft">${doc.status}</span>`;
+    const sLower = (doc.status || '').toLowerCase();
+    if (sLower === 'draft') statusBadge = `<span class="desk-badge badge-draft" style="background: #fef3c7; color: #92400e; font-weight: 600;">Pending Validation</span>`;
+    else if (sLower === 'validated') statusBadge = `<span class="desk-badge badge-info" style="background: #e0e7ff; color: #3730a3; font-weight: 600;">Pending Approval</span>`;
+    else if (sLower === 'approved') statusBadge = `<span class="desk-badge badge-success" style="background: #d1fae5; color: #065f46; font-weight: 600;">Ready to Post</span>`;
+    else if (sLower === 'posted') statusBadge = `<span class="desk-badge badge-posted" style="background: #ecfdf5; color: #047857; font-weight: 600;">Posted to FIFO</span>`;
+    else if (sLower === 'cancelled') statusBadge = `<span class="desk-badge badge-cancelled" style="background: #fee2e2; color: #991b1b; font-weight: 600;">Cancelled</span>`;
+
+    let actionsHtml = '';
+    if (sLower === 'draft') {
+      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
+      if (isGrn) {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${doc.id})">✏️ Edit Details</button>`;
+      } else {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${doc.id})">✏️ Edit Details</button>`;
+      }
+      actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
+    } else if (sLower === 'validated') {
+      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #4f46e5; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Approved')">⭐ Approve Document</button>`;
+      if (isGrn) {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${doc.id})">✏️ Edit</button>`;
+      } else {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${doc.id})">✏️ Edit</button>`;
+      }
+    } else if (sLower === 'approved') {
+      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${doc.id}); if(context==='posting') setTimeout(() => Desk.loadPostingTab(), 500);">🚀 Commit &amp; Post to FIFO Ledger</button>`;
+    }
+
+    container.innerHTML = `
+      <div class="desk-accordion-card">
+        <!-- Top Metadata Grid -->
+        <div class="desk-accordion-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Document Reference</span>
+            <span class="meta-val">
+              <strong style="color: #0f172a; font-size: 13.5px;">${doc.doc_no}</strong>
+              <span class="desk-badge" style="background: #e2e8f0; color: #334155; font-size: 10.5px; margin-left: 4px;">${doc.doc_type}</span>
+            </span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Document Date</span>
+            <span class="meta-val"><strong>${doc.doc_date || '-'}</strong></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">${isGrn ? 'Supplier / Source' : 'Requesting Dept'}</span>
+            <span class="meta-val"><strong>${party}</strong></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">${isGrn ? 'Warehouse Bay' : 'Job Destination'}</span>
+            <span class="meta-val"><strong>${dest}</strong></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Current Stage</span>
+            <span class="meta-val">${statusBadge}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Total Document Valuation</span>
+            <span class="meta-val" style="color: #0d9488; font-weight: 700; font-size: 14px;">Rs. ${totalVal}</span>
+          </div>
+        </div>
+
+        ${doc.remarks ? `
+          <div class="desk-accordion-remarks">
+            <strong>Notes / Remarks:</strong> ${doc.remarks}
+          </div>
+        ` : ''}
+
+        <!-- Line Items Table -->
+        <div style="margin-top: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 12.5px; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 6px;">
+              <span>Allocated Line Items (${items.length})</span>
+            </div>
+            <span style="font-size: 11.5px; color: #64748b;">All rates &amp; valuations evaluated against FIFO ledger</span>
+          </div>
+
+          <div class="desk-table-wrapper" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff;">
+            <table class="desk-table" style="font-size: 12.5px; margin: 0; width: 100%;">
+              <thead>
+                <tr style="background: #f8fafc;">
+                  <th style="width: 45px; text-align: center;">#</th>
+                  <th style="width: 140px;">Item Code / SKU</th>
+                  <th>Material Description</th>
+                  <th style="width: 130px;">Bin / Location</th>
+                  <th style="width: 90px; text-align: right;">Quantity</th>
+                  <th style="width: 130px; text-align: right;">Unit Rate (LKR)</th>
+                  <th style="width: 140px; text-align: right;">Total Valuation (LKR)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+              ${items.length > 0 ? `
+                <tfoot>
+                  <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #e2e8f0;">
+                    <td colspan="4" style="text-align: right; color: #475569; padding: 10px 12px;">Total Summary:</td>
+                    <td style="text-align: right; color: #0f172a; padding: 10px 12px;">${totalQty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
+                    <td></td>
+                    <td style="text-align: right; color: #0d9488; font-size: 13.5px; padding: 10px 12px;">Rs. ${totalVal}</td>
+                  </tr>
+                </tfoot>
+              ` : ''}
+            </table>
+          </div>
+        </div>
+
+        <!-- Action & Collapse Bar -->
+        <div class="desk-accordion-footer">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            ${actionsHtml}
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${doc.id})">Full Screen View</button>
+          </div>
+          <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.toggleDocAccordion(${doc.id}, '${context}')" style="color: #64748b; font-weight: 600;">
+            ▲ Close Details
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
   loadDocuments() {
     this.loadReceipts();
     this.loadIssues();
@@ -1024,6 +1277,7 @@ const Desk = {
       .then(res => {
         if (res.success) {
           Desk.showToast(res.message);
+          this.docDetailCache = {};
           Desk.loadReceipts();
           Desk.loadIssues();
         } else {
@@ -1044,6 +1298,7 @@ const Desk = {
       .then(res => {
         if (res.success) {
           Desk.showToast(res.message);
+          this.docDetailCache = {};
           Desk.loadReceipts();
           Desk.loadIssues();
           Desk.loadBatches();

@@ -1576,6 +1576,151 @@ select.frappe-control option, select.frappe-select option {
   margin: 4px 0;
 }
 
+/* ============================================================
+   DOCUMENT ACCORDION DETAIL ROW STYLES (Validation, Approval, Posting)
+   ============================================================ */
+.desk-acc-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  vertical-align: middle;
+}
+.desk-acc-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.desk-acc-btn.open {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+.desk-acc-btn svg {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.desk-acc-btn.open svg {
+  transform: rotate(180deg);
+}
+
+.desk-acc-arrow-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+.desk-acc-arrow-indicator:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.desk-acc-arrow-indicator.open {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.desk-acc-arrow-indicator svg {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.desk-acc-arrow-indicator.open svg {
+  transform: rotate(180deg);
+}
+
+.desk-clickable-doc {
+  cursor: pointer;
+  color: #0f172a;
+  transition: color 0.15s ease;
+}
+.desk-clickable-doc:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.desk-doc-accordion-row {
+  background: #f8fafc;
+}
+.desk-doc-accordion-panel {
+  padding: 12px 16px 16px 16px;
+  background: #f8fafc;
+}
+.desk-accordion-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+.desk-accordion-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 12.5px;
+  margin-bottom: 14px;
+}
+.desk-accordion-meta-grid .meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.desk-accordion-meta-grid .meta-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+.desk-accordion-meta-grid .meta-val {
+  color: #1e293b;
+  font-size: 13px;
+}
+.desk-accordion-remarks {
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  color: #92400e;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 12px;
+  margin-bottom: 14px;
+}
+.desk-accordion-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+@keyframes deskSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+
 
 
 
