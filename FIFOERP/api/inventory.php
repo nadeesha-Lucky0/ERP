@@ -285,7 +285,7 @@ try {
                         WHERE udi.sku = b.sku 
                           AND ud.location_id = b.location_id
                           AND ud.doc_type = 'ISSUE'
-                          AND ud.status IN ('Draft', 'Validated', 'Approved')
+                          AND ud.status IN ('Draft', 'Pending Validation', 'Validated', 'Approved')
                     ), 0) as sku_allocated_quantity
                 FROM fifo_batches b 
                 WHERE b.location_id = :loc 
@@ -435,7 +435,7 @@ try {
                         WHERE udi.sku = :sku 
                           AND ud.location_id = :loc 
                           AND ud.doc_type = 'ISSUE' 
-                          AND ud.status IN ('Draft', 'Validated', 'Approved')
+                          AND ud.status IN ('Draft', 'Pending Validation', 'Validated', 'Approved')
                     ");
                     $sAlloc->execute([':sku' => $itemSku, ':loc' => $locationId]);
                     $alloc = (int)$sAlloc->fetchColumn();
@@ -479,13 +479,15 @@ try {
             $isSingleMaterial = !empty($_POST['is_single_material']) ? 1 : 0;
             $discountForAll = (float)($_POST['discount_for_all'] ?? 0);
             $isPercentage = !empty($_POST['is_percentage']) ? 1 : 0;
+            $isDraft = (!empty($_POST['is_draft']) && (string)$_POST['is_draft'] === '1');
+            $initialStatus = $isDraft ? 'Draft' : 'Pending Validation';
 
             $db->beginTransaction();
             $insDoc = $db->prepare("
                 INSERT INTO unposted_documents
                 (location_id, doc_type, doc_no, doc_date, doc_profile, doc_profile_code, source_dept, receipt_from, receipt_details, delivery_date, acc_date, due_date, department_code, destination_code, warehouse, base_on, status, invoice_total, vat, vat_excluded, transport, transport_excluded, nbt, nbt_excluded, other_cost, other_excluded, invoice_number, order_reference, other_ref_1, other_ref_2, other_ref_3, other_ref_4, is_single_material, discount_for_all, is_percentage, remarks, created_by)
                 VALUES
-                (:loc, :dtype, :dno, :acc_date, :doc_prof, :doc_prof_code, :s_dept, :from, :rec_det, :deliv_date, :acc_date2, :due_date, :dept, :dest, :wh, :base_on, 'Draft', :inv_tot, :vat, :vat_ex, :trans, :trans_ex, :nbt, :nbt_ex, :other, :other_ex, :inv_no, :order_ref, :ref1, :ref2, :ref3, :ref4, :single_mat, :discount, :is_pct, :rem, :uid)
+                (:loc, :dtype, :dno, :acc_date, :doc_prof, :doc_prof_code, :s_dept, :from, :rec_det, :deliv_date, :acc_date2, :due_date, :dept, :dest, :wh, :base_on, :init_status, :inv_tot, :vat, :vat_ex, :trans, :trans_ex, :nbt, :nbt_ex, :other, :other_ex, :inv_no, :order_ref, :ref1, :ref2, :ref3, :ref4, :single_mat, :discount, :is_pct, :rem, :uid)
             ");
             $insDoc->execute([
                 ':loc' => $locationId,
@@ -504,6 +506,7 @@ try {
                 ':dest' => $destCode,
                 ':wh' => $warehouse,
                 ':base_on' => $baseOn,
+                ':init_status' => $initialStatus,
                 ':inv_tot' => $invTotalManual,
                 ':vat' => $vat,
                 ':vat_ex' => $vatExcluded,
@@ -571,7 +574,7 @@ try {
             $docId = (int)($_POST['id'] ?? 0);
             $newStatus = trim($_POST['status'] ?? ''); // Validated, Approved, Cancelled
 
-            $allowed = ['Draft', 'Validated', 'Approved', 'Cancelled'];
+            $allowed = ['Draft', 'Pending Validation', 'Validated', 'Approved', 'Cancelled'];
             if (!in_array($newStatus, $allowed)) {
                 Response::error('Invalid document status: ' . $newStatus);
             }
