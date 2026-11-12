@@ -36,18 +36,8 @@ $roleDisplay = $currentUser['role_display'] ?? $currentUser['role_display_name']
     <img src="<?= BASE_PATH ?>/assets/images/EGL-NEW.png" alt="EGL Logo">
     <div>
       <span class="desk-brand-text">EGL FIFOERP</span>
-      <span class="desk-brand-badge">Desk v16</span>
     </div>
   </a>
-
-  <!-- Awesome Search Bar (Operational Power Stations Only) -->
-  <?php if (!$isSuperAdmin): ?>
-    <div class="desk-search-container">
-      <span class="desk-search-icon"><?= Icon::get('search', 14) ?></span>
-      <input type="text" id="globalSearchInput" class="desk-search-input" placeholder="Search materials, batches, GRN, issues, CPC fuel, reports... (Ctrl+K)" autocomplete="off">
-      <div id="searchDropdown" class="search-dropdown"></div>
-    </div>
-  <?php endif; ?>
 
   <!-- Navbar Actions -->
   <div class="desk-navbar-actions">
