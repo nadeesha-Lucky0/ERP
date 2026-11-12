@@ -1529,47 +1529,6 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Workflow Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
-      <div class="desk-card"
-        style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
-        <div id="pvWorkflowPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-pv-btn="pv-sub-freeze"
-            onclick="Desk.switchPvSubTab('pv-sub-freeze')">
-            <?= Icon::get('lock', 12) ?> Freeze Batches
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-generate"
-            onclick="Desk.switchPvSubTab('pv-sub-generate')">
-            <?= Icon::get('file-plus', 12) ?> Generate Sheet
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-entry"
-            onclick="Desk.switchPvSubTab('pv-sub-entry')">
-            <?= Icon::get('edit', 12) ?> Count Entry
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-edit"
-            onclick="Desk.switchPvSubTab('pv-sub-edit')">
-            <?= Icon::get('edit-3', 12) ?> Verification Edit
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-validation"
-            onclick="Desk.switchPvSubTab('pv-sub-validation')">
-            <?= Icon::get('check-circle', 12) ?> Validation
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-approval"
-            onclick="Desk.switchPvSubTab('pv-sub-approval')">
-            <?= Icon::get('award', 12) ?> Approval
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-posting"
-            onclick="Desk.switchPvSubTab('pv-sub-posting')">
-            <?= Icon::get('send', 12) ?> Posting
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-gl" onclick="Desk.switchPvSubTab('pv-sub-gl')">
-            <?= Icon::get('database', 12) ?> GL Posting
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-unfreeze"
-            onclick="Desk.switchPvSubTab('pv-sub-unfreeze')">
-            <?= Icon::get('unlock', 12) ?> Unfreeze Batches
-          </button>
-        </div>
-      </div>
 
       <!-- SUB-PANE 1: FREEZE BATCHES -->
       <div id="pv-sub-freeze" class="pv-sub-pane active">
@@ -2089,32 +2048,6 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- Reports Sub-tabs Strip (Fixed, Clean Wrap, Zero Side Scroll) -->
-      <div class="desk-card"
-        style="padding: 10px 14px; margin-bottom: 20px; border-radius: 8px; background: #ffffff; border: 1px solid #e2e8f0;">
-        <div id="pvReportsPills" class="pv-pills-wrap">
-          <button type="button" class="pv-pill-btn active" data-pv-btn="pv-sub-avg"
-            onclick="Desk.switchPvReportSubTab('pv-sub-avg')">
-            <?= Icon::get('trending-up', 12) ?> Avg Consumption
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-final"
-            onclick="Desk.switchPvReportSubTab('pv-sub-final')">
-            <?= Icon::get('file-text', 12) ?> Final Report
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-other"
-            onclick="Desk.switchPvReportSubTab('pv-sub-other')">
-            <?= Icon::get('layers', 12) ?> Other Reports
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-summary"
-            onclick="Desk.switchPvReportSubTab('pv-sub-summary')">
-            <?= Icon::get('clipboard', 12) ?> PHV Sheet Summary
-          </button>
-          <button type="button" class="pv-pill-btn" data-pv-btn="pv-sub-av7"
-            onclick="Desk.switchPvReportSubTab('pv-sub-av7')">
-            <?= Icon::get('file-check', 12) ?> Form AV 7 Summary
-          </button>
-        </div>
-      </div>
 
       <!-- SUB-PANE 10: AVG CONSUMPTION REPORT -->
       <div id="pv-sub-avg" class="pv-sub-pane active">
