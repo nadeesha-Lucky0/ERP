@@ -221,6 +221,18 @@ const Desk = {
         grpPv.classList.remove('open');
       }
     }
+    const grpPvReports = document.getElementById('sidebarGroupPvReports');
+    if (grpPvReports) {
+      if (tabId === 'tab-pv-reports') {
+        grpPvReports.classList.add('open');
+        const activeSub = reportSubTabToActivate || this.currentPvReportSubTab || sessionStorage.getItem('fifoerp_active_pv_report_sub') || 'pv-sub-avg';
+        document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-reports"]').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-pv-report-sub') === activeSub);
+        });
+      } else {
+        grpPvReports.classList.remove('open');
+      }
+    }
 
     this.currentTab = tabId;
     try {
@@ -553,6 +565,19 @@ const Desk = {
     }
     if (subBtn) {
       document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-workflow"]').forEach(el => {
+        el.classList.toggle('active', el === subBtn);
+      });
+    }
+  },
+
+  navigatePvReportSub(subTabId, subBtn) {
+    if (this.currentTab !== 'tab-pv-reports') {
+      this.switchTab('tab-pv-reports', subTabId);
+    } else {
+      this.switchPvReportSubTab(subTabId);
+    }
+    if (subBtn) {
+      document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-reports"]').forEach(el => {
         el.classList.toggle('active', el === subBtn);
       });
     }
@@ -1676,6 +1701,10 @@ const Desk = {
 
     document.querySelectorAll('#pvReportsPills .pv-pill-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
+    });
+
+    document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-reports"]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-pv-report-sub') === subTabId);
     });
 
     document.querySelectorAll('#tab-pv-reports .pv-sub-pane').forEach(pane => {

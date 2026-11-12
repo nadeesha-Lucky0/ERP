@@ -199,10 +199,35 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
       </div>
     <?php endif; ?>
     <?php if ($canPvReports): ?>
-      <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-pv-reports') ?>" data-tab="tab-pv-reports">
-        <span class="sidebar-icon"><?= Icon::get('file-check') ?></span>
-        <span>PHV Reports (AV 7)</span>
-      </button>
+      <div class="sidebar-nav-group <?= ($getActiveClass('tab-pv-reports') ? 'open' : '') ?>" id="sidebarGroupPvReports">
+        <button type="button" class="sidebar-nav-item sidebar-parent-item <?= $getActiveClass('tab-pv-reports') ?>" data-tab="tab-pv-reports" data-toggle-group="sidebarGroupPvReports">
+          <span class="sidebar-icon"><?= Icon::get('file-check') ?></span>
+          <span class="sidebar-label">PHV Reports (AV 7)</span>
+          <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
+        </button>
+        <div class="sidebar-submenu" id="submenu-pv-reports">
+          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-avg" onclick="Desk.navigatePvReportSub('pv-sub-avg', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('trending-up', 12) ?></span>
+            <span>Avg Consumption</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-final" onclick="Desk.navigatePvReportSub('pv-sub-final', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('file-text', 12) ?></span>
+            <span>Final Report</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-other" onclick="Desk.navigatePvReportSub('pv-sub-other', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('layers', 12) ?></span>
+            <span>Other Reports</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-summary" onclick="Desk.navigatePvReportSub('pv-sub-summary', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('clipboard', 12) ?></span>
+            <span>PHV Sheet Summary</span>
+          </button>
+          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-av7" onclick="Desk.navigatePvReportSub('pv-sub-av7', this)">
+            <span class="sidebar-sub-icon"><?= Icon::get('file-check', 12) ?></span>
+            <span>Form AV 7 Summary</span>
+          </button>
+        </div>
+      </div>
     <?php endif; ?>
   <?php endif; ?>
 
