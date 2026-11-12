@@ -110,6 +110,13 @@ const Desk = {
     }, 3500);
   },
 
+  setTab(tabId, subTabId = null) {
+    if (tabId && !tabId.startsWith('tab-')) {
+      tabId = 'tab-' + tabId;
+    }
+    return this.switchTab(tabId, subTabId);
+  },
+
   switchTab(tabId, subTabId = null) {
     let reportSubTabToActivate = null;
     let qohSubTabToActivate = null;
@@ -567,10 +574,17 @@ const Desk = {
       if (subEl) subEl.textContent = 'All consignments across lifecycle: Validation → Approval → Posting → Posted';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Total Documents: ${allDocs.length}</span>`;
     } else if (filter === 'Entry') {
-      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'draft');
-      if (titleEl) titleEl.textContent = 'Receipts Entry (Draft Goods Received Notes)';
-      if (subEl) subEl.textContent = 'Newly recorded consignments saved as drafts for editing prior to validation';
-      if (headerAction) headerAction.innerHTML = `<span class="badge badge-secondary" style="font-size: 11px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Drafts: ${docs.length}</span>`;
+      docs = allDocs.filter(d => ['draft', 'pending validation', 'validated', 'approved'].includes((d.status || '').toLowerCase()));
+      if (titleEl) titleEl.textContent = 'Stock Entry Documents & Status Tracking';
+      if (subEl) subEl.textContent = 'Track consignments across lifecycle stages until posted to FIFO ledger';
+      const draftCount = docs.filter(d => (d.status || '').toLowerCase() === 'draft').length;
+      const inProgressCount = docs.length - draftCount;
+      if (headerAction) headerAction.innerHTML = `
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span class="badge badge-secondary" style="font-size: 11px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Drafts: ${draftCount}</span>
+          <span class="badge badge-warning" style="font-size: 11px;">In Progress: ${inProgressCount}</span>
+        </div>
+      `;
     } else if (filter === 'Validation') {
       docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'pending validation');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
@@ -650,11 +664,11 @@ const Desk = {
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
               ${filter === 'Unposted Document Edit' && d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${d.id})" title="Edit unposted consignment details">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.editDraft(${d.id}, 'grn')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Edit draft details in top form">Edit</button>` : ''}
-              ${sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
-              ${sLower === 'validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
-              ${sLower === 'approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
+              ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
+              ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
+              ${(filter === 'Posting' || filter === 'All') && sLower === 'approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
               ${sLower === 'posted' ? `<span style="color: #059669; font-weight: 600; font-size: 11.5px;">✓ Live In FIFO</span>` : ''}
-              ${sLower === 'draft' || sLower === 'pending validation' || sLower === 'validated' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              ${sLower === 'draft' || (filter !== 'Entry' && (sLower === 'pending validation' || sLower === 'validated')) ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
               <button type="button" class="desk-acc-btn" id="accBtn_grn_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'grn')" title="Click down arrow to show/hide full items breakdown">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -739,10 +753,17 @@ const Desk = {
       if (subEl) subEl.textContent = 'All requisitions across lifecycle: Validation → Approval → Posting → Posted';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-info" style="font-size: 11px;">Total Documents: ${allDocs.length}</span>`;
     } else if (filter === 'Entry') {
-      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'draft');
-      if (titleEl) titleEl.textContent = 'Material Issues Entry (Draft Requisitions)';
-      if (subEl) subEl.textContent = 'Draft material requisition notes saved for editing prior to validation';
-      if (headerAction) headerAction.innerHTML = `<span class="badge badge-secondary" style="font-size: 11px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Drafts: ${docs.length}</span>`;
+      docs = allDocs.filter(d => ['draft', 'pending validation', 'validated', 'approved'].includes((d.status || '').toLowerCase()));
+      if (titleEl) titleEl.textContent = 'Material Issues Entry & Status Tracking';
+      if (subEl) subEl.textContent = 'Track requisitions across lifecycle stages until posted to FIFO ledger';
+      const draftCount = docs.filter(d => (d.status || '').toLowerCase() === 'draft').length;
+      const inProgressCount = docs.length - draftCount;
+      if (headerAction) headerAction.innerHTML = `
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span class="badge badge-secondary" style="font-size: 11px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Drafts: ${draftCount}</span>
+          <span class="badge badge-warning" style="font-size: 11px;">In Progress: ${inProgressCount}</span>
+        </div>
+      `;
     } else if (filter === 'Validation') {
       docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'pending validation');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
@@ -831,11 +852,11 @@ const Desk = {
               <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
               ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue')" title="Edit draft details in top form">Edit</button>` : ''}
-              ${sLower === 'pending validation' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
-              ${sLower === 'validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
-              ${sLower === 'approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
+              ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
+              ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
+              ${(filter === 'Posting' || filter === 'All') && sLower === 'approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
               ${sLower === 'posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
-              ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              ${sLower === 'draft' || (filter !== 'Entry' && canEdit) ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
               <button type="button" class="desk-acc-btn" id="accBtn_issue_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'issue')" title="Click down arrow to show/hide full items breakdown">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -1303,12 +1324,21 @@ const Desk = {
       actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.editDraft(${doc.id}, '${context}')">Edit</button>`;
       actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
     } else if (sLower === 'pending validation') {
-      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
-      actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
+      const isEntry = (context === 'grn' && this.currentReceiptFilter === 'Entry') || (context === 'issue' && this.currentIssueFilter === 'Entry');
+      if (!isEntry) {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
+      }
     } else if (sLower === 'validated') {
-      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #4f46e5; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Approved')">⭐ Approve Document</button>`;
+      const isEntry = (context === 'grn' && this.currentReceiptFilter === 'Entry') || (context === 'issue' && this.currentIssueFilter === 'Entry');
+      if (!isEntry) {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #4f46e5; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Approved')">⭐ Approve Document</button>`;
+      }
     } else if (sLower === 'approved') {
-      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${doc.id}); if(context==='posting') setTimeout(() => Desk.loadPostingTab(), 500);">🚀 Commit &amp; Post to FIFO Ledger</button>`;
+      const isEntry = (context === 'grn' && this.currentReceiptFilter === 'Entry') || (context === 'issue' && this.currentIssueFilter === 'Entry');
+      if (!isEntry) {
+        actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${doc.id}); if(context==='posting') setTimeout(() => Desk.loadPostingTab(), 500);">🚀 Commit &amp; Post to FIFO Ledger</button>`;
+      }
     }
 
     container.innerHTML = `
