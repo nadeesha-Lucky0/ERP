@@ -649,7 +649,7 @@ const Desk = {
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
               ${filter === 'Unposted Document Edit' && d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${d.id})" title="Edit unposted consignment details">✏️ Edit</button>` : ''}
-              ${sLower === 'draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Pending Validation')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Save document & send to Validation stage">✓ Save</button>` : ''}
+              ${sLower === 'draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.editDraft(${d.id}, 'grn')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Edit draft details in top form">✏️ Edit</button>` : ''}
               ${sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
               ${sLower === 'validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
               ${sLower === 'approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
@@ -830,7 +830,7 @@ const Desk = {
             <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
               <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
               ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">✏️ Edit</button>` : ''}
-              ${sLower === 'draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Pending Validation')" title="Save document & send to Validation stage">✓ Save</button>` : ''}
+              ${sLower === 'draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue')" title="Edit draft details in top form">✏️ Edit</button>` : ''}
               ${sLower === 'pending validation' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
               ${sLower === 'validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
               ${sLower === 'approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
@@ -875,6 +875,132 @@ const Desk = {
           Desk.showToast(res.message, true);
         }
       });
+  },
+
+  async editDraft(docId, context = 'grn') {
+    try {
+      this.setTab(context === 'grn' ? 'receipts' : 'issues');
+
+      if (context === 'grn') {
+        this.currentReceiptFilter = 'Entry';
+        const card = document.getElementById('bodyGrnEntryCard');
+        if (card) card.style.display = 'block';
+      } else {
+        this.currentIssueFilter = 'Entry';
+        const card = document.getElementById('bodyIssueEntryCard');
+        if (card) card.style.display = 'block';
+      }
+
+      this.showToast('Loading draft into form...');
+      const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`).then(r => r.json());
+      if (!res.success || !res.data) {
+        this.showToast(res.message || 'Failed to load document for editing', true);
+        return;
+      }
+
+      const doc = res.data.document || {};
+      const items = res.data.items || [];
+      const state = this.stockEntryState[context];
+
+      state.editingDocId = doc.id;
+      state.isEditing = true;
+      state.docTitle = doc.doc_no;
+      state.status = 'Draft';
+
+      // Update Top Bar Breadcrumb & Status Badge
+      const titleEl = document.getElementById(`${context}DocTitle`);
+      if (titleEl) {
+        titleEl.innerHTML = `Editing Draft: <strong style="color: #2563eb;">${doc.doc_no}</strong>`;
+      }
+      const badge = document.getElementById(`${context}StatusBadge`);
+      if (badge) {
+        badge.className = 'desk-badge badge-warning';
+        badge.textContent = 'Draft (Editing)';
+      }
+
+      // 1. Create Doc Type Header
+      const docTypeVal = doc.doc_type || (context === 'grn' ? 'GRN' : 'Material Issue');
+      this.setSelectedCreateDoc(context, docTypeVal);
+
+      // 2. Get Items From Header
+      const fromVal = doc.order_reference ? 'Purchase Order' : 'Predefined Supplier';
+      this.setSelectedGetItemsFrom(context, fromVal);
+
+      // 3. Select Warehouse
+      const targetWh = doc.warehouse || '';
+      if (targetWh) {
+        const whSelect = context === 'grn' ? document.getElementById('grnDefTargetWh') : document.getElementById('issueDefSourceWh');
+        if (whSelect) {
+          whSelect.value = targetWh;
+          if (whSelect.value !== targetWh) {
+            const opt = document.createElement('option');
+            opt.value = targetWh;
+            opt.textContent = targetWh;
+            opt.selected = true;
+            whSelect.appendChild(opt);
+          }
+        }
+      }
+
+      // 4. Dates
+      const delivEl = document.getElementById(`${context}DeliveryDate`);
+      if (delivEl && doc.delivery_date) delivEl.value = doc.delivery_date;
+      const accEl = document.getElementById(`${context}AccDate`);
+      if (accEl && (doc.acc_date || doc.doc_date)) accEl.value = doc.acc_date || doc.doc_date;
+
+      // 5. Party / Supplier / Department
+      const partyEl = document.getElementById(`${context}PartyName`);
+      if (partyEl) partyEl.value = doc.receipt_from || doc.department_code || '';
+
+      // 6. PO Reference
+      if (doc.order_reference) {
+        const poRefEl = document.getElementById(`${context}PoRefInput`) || document.getElementById(`${context}PoRef`);
+        if (poRefEl) poRefEl.value = doc.order_reference;
+        const poSec = document.getElementById(`${context}PurchaseSection`);
+        if (poSec) poSec.style.display = 'block';
+      }
+
+      // 7. Invoice No & Supplier Ref
+      const invNoEl = document.getElementById(`${context}InvoiceNo`);
+      if (invNoEl) invNoEl.value = doc.invoice_number || '';
+      const supRefEl = document.getElementById(`${context}SupplierRef`);
+      if (supRefEl) supRefEl.value = doc.other_ref_1 || '';
+      const invDateEl = document.getElementById(`${context}InvoiceDate`);
+      if (invDateEl && doc.other_ref_2) invDateEl.value = doc.other_ref_2;
+
+      // 8. Clean remarks
+      const rawRemarks = doc.remarks || '';
+      const cleanRemarks = rawRemarks.replace(/\[([^\]:]+):\s*([^\]]+)\]/g, '').replace(/\[Saved as Draft\]/g, '').trim();
+      const remEl = document.getElementById(`${context}Remarks`);
+      if (remEl) remEl.value = cleanRemarks;
+
+      // 9. Items Table
+      if (items.length > 0) {
+        state.items = items.map((it, idx) => ({
+          id: idx + 1,
+          warehouse: doc.warehouse || targetWh || 'WH 831.00 --VICTORIA WAREHOUSE',
+          item_code: it.sku || '',
+          item_name: it.item_name || '',
+          qty: parseFloat(it.quantity || 1),
+          basic_rate: parseFloat(it.unit_cost || 0),
+          uom: 'Nos'
+        }));
+        state.nextId = state.items.length + 1;
+      } else {
+        state.items = [];
+        this.addStockEntryRow(context, false);
+      }
+      this.renderStockEntryRows(context);
+
+      // Smooth scroll to form
+      const formEl = document.getElementById(context === 'grn' ? 'formStockEntry_grn' : 'formStockEntry_issue');
+      if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      this.showToast(`Draft ${doc.doc_no} loaded! You can now edit and save.`);
+    } catch (err) {
+      console.error(err);
+      this.showToast('Error loading draft: ' + err.message, true);
+    }
   },
 
   openEditReceipt(docId) {
@@ -1166,7 +1292,7 @@ const Desk = {
 
     let actionsHtml = '';
     if (sLower === 'draft') {
-      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Pending Validation')">✓ Save Document</button>`;
+      actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.editDraft(${doc.id}, '${context}')">✏️ Edit in Form</button>`;
       actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
     } else if (sLower === 'pending validation') {
       actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
@@ -4683,6 +4809,9 @@ const Desk = {
 
     // Initialize 1 default row if table empty
     const state = this.stockEntryState[context];
+    if (state && state.isEditing) {
+      return;
+    }
     this.setSelectedCreateDoc(context, state.docType || '');
     this.setSelectedGetItemsFrom(context, state.selectedGetItemsFrom || '');
     if (state.items.length === 0) {
@@ -5754,8 +5883,16 @@ const Desk = {
     if (invoiceDate) fullRemarks += ` [Inv Date: ${invoiceDate}]`;
     if (remarks) fullRemarks += ` ${remarks}`;
 
+    const isEditingExisting = !!state.editingDocId;
+    const editingId = state.editingDocId;
+
     const fd = new FormData();
-    fd.append('action', 'create_document');
+    if (isEditingExisting) {
+      fd.append('action', 'update_document');
+      fd.append('id', editingId);
+    } else {
+      fd.append('action', 'create_document');
+    }
     fd.append('doc_type', docType);
     fd.append('series', series);
     fd.append('stock_entry_type', entryType);
@@ -5765,6 +5902,7 @@ const Desk = {
     fd.append('receipt_from', partyName);
     fd.append('order_reference', poRef);
     fd.append('invoice_number', invoiceNo);
+    fd.append('other_ref_1', supplierRef);
     fd.append('remarks', fullRemarks);
     fd.append('invoice_total', invTotal);
     fd.append('items', JSON.stringify(formattedItems));
@@ -5795,22 +5933,24 @@ const Desk = {
       });
       const data = await res.json();
       if (data.success) {
-        const docNo = data.data?.doc_no || 'STE-' + Date.now();
+        const docNo = data.data?.doc_no || state.docTitle || ('STE-' + Date.now());
         state.docTitle = docNo;
-        state.status = 'Draft';
+        state.status = isDraft ? 'Draft' : 'Pending Validation';
+        state.editingDocId = null;
+        state.isEditing = false;
 
         const badge = document.getElementById(`${context}StatusBadge`);
         const titleEl = document.getElementById(`${context}DocTitle`);
         if (badge) {
-          badge.className = 'desk-badge badge-draft';
-          badge.textContent = 'Draft';
+          badge.className = isDraft ? 'desk-badge badge-draft' : 'desk-badge badge-warning';
+          badge.textContent = isDraft ? 'Draft' : 'Pending Validation';
         }
         if (titleEl) {
           titleEl.textContent = docNo;
         }
 
         if (isDraft) {
-          this.showToast(`Draft ${docNo} saved successfully! You can request unlisted codes or continue anytime.`);
+          this.showToast(`Draft ${docNo} saved successfully! You can edit or continue anytime.`);
         } else {
           this.showToast(`Stock Entry ${docNo} submitted to Validation stage!`);
           this.cancelStockEntryForm(context);
@@ -6537,7 +6677,9 @@ const Desk = {
       nextId: 1,
       docTitle: 'New Stock Entry',
       status: 'Not Saved',
-      selectedIds: new Set()
+      selectedIds: new Set(),
+      editingDocId: null,
+      isEditing: false
     };
 
     // 3. Reset 1 empty initial row and re-render

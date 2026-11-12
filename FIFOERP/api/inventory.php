@@ -601,13 +601,101 @@ try {
                 Response::error('Posted documents cannot be edited. Use Posted Cancellation instead.');
             }
 
+            $db->beginTransaction();
+
+            // If full items array is provided (from in-body Stock Entry Form)
+            if (isset($_POST['items'])) {
+                $warehouse = trim($_POST['warehouse'] ?? $doc['warehouse']);
+                $receiptFrom = trim($_POST['receipt_from'] ?? $doc['receipt_from']);
+                $orderReference = trim($_POST['order_reference'] ?? $doc['order_reference']);
+                $invoiceNumber = trim($_POST['invoice_number'] ?? $doc['invoice_number']);
+                $otherRef1 = trim($_POST['other_ref_1'] ?? $doc['other_ref_1']);
+                $remarks = trim($_POST['remarks'] ?? $doc['remarks']);
+                $deliveryDate = !empty($_POST['delivery_date']) ? $_POST['delivery_date'] : $doc['delivery_date'];
+                $accDate = !empty($_POST['acc_date']) ? $_POST['acc_date'] : $doc['acc_date'];
+                $invTotalManual = (float)($_POST['invoice_total'] ?? 0);
+
+                $isDraft = (!empty($_POST['is_draft']) && (string)$_POST['is_draft'] === '1');
+                $newStatus = $isDraft ? 'Draft' : 'Pending Validation';
+
+                $updDoc = $db->prepare("
+                    UPDATE unposted_documents
+                    SET warehouse = :wh,
+                        receipt_from = :from,
+                        order_reference = :order_ref,
+                        invoice_number = :inv_no,
+                        other_ref_1 = :ref1,
+                        remarks = :rem,
+                        delivery_date = :deliv_date,
+                        acc_date = :acc_date,
+                        status = :status,
+                        invoice_total = :inv_tot
+                    WHERE id = :id
+                ");
+                $updDoc->execute([
+                    ':wh' => $warehouse,
+                    ':from' => $receiptFrom,
+                    ':order_ref' => $orderReference,
+                    ':inv_no' => $invoiceNumber,
+                    ':ref1' => $otherRef1,
+                    ':rem' => $remarks,
+                    ':deliv_date' => $deliveryDate,
+                    ':acc_date' => $accDate,
+                    ':status' => $newStatus,
+                    ':inv_tot' => $invTotalManual,
+                    ':id' => $docId
+                ]);
+
+                // Replace line items
+                $delItems = $db->prepare("DELETE FROM unposted_document_items WHERE document_id = :id");
+                $delItems->execute([':id' => $docId]);
+
+                $items = json_decode($_POST['items'] ?? '[]', true) ?: [];
+                $insItem = $db->prepare("
+                    INSERT INTO unposted_document_items
+                    (document_id, sku, item_name, requested_quantity, quantity, unit_cost, total_cost, bin_location)
+                    VALUES
+                    (:doc_id, :sku, :name, :req_qty, :qty, :cost, :total, :bin)
+                ");
+
+                $totalInvoice = 0.0;
+                foreach ($items as $item) {
+                    $sku = trim($item['sku'] ?? '');
+                    $name = trim($item['item_name'] ?? '');
+                    $qty = (float)($item['quantity'] ?? 1);
+                    $cost = (float)($item['unit_cost'] ?? 0);
+                    $bin = trim($item['bin_location'] ?? 'Bay A');
+                    $subTotal = $qty * $cost;
+                    $totalInvoice += $subTotal;
+
+                    $insItem->execute([
+                        ':doc_id' => $docId,
+                        ':sku' => $sku,
+                        ':name' => $name,
+                        ':req_qty' => $qty,
+                        ':qty' => $qty,
+                        ':cost' => $cost,
+                        ':total' => $subTotal,
+                        ':bin' => $bin
+                    ]);
+                }
+
+                if ($invTotalManual <= 0) {
+                    $updTot = $db->prepare("UPDATE unposted_documents SET invoice_total = :tot WHERE id = :id");
+                    $updTot->execute([':tot' => $totalInvoice, ':id' => $docId]);
+                }
+
+                $db->commit();
+                Response::success("Draft {$doc['doc_no']} updated successfully.", ['doc_no' => $doc['doc_no'], 'status' => $newStatus]);
+                break;
+            }
+
             $deptCode = trim($_POST['department_code'] ?? $doc['department_code']);
             $destCode = trim($_POST['destination_code'] ?? $doc['destination_code']);
             $receiptFrom = trim($_POST['receipt_from'] ?? $doc['receipt_from']);
             $remarks = trim($_POST['remarks'] ?? $doc['remarks']);
             $qty = isset($_POST['quantity']) ? (int)$_POST['quantity'] : null;
 
-            $db->beginTransaction();
             $upd = $db->prepare("
                 UPDATE unposted_documents 
                 SET department_code = :dept, destination_code = :dest, receipt_from = :from, remarks = :rem
