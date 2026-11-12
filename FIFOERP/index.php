@@ -1138,53 +1138,70 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <div style="display: flex; align-items: center; gap: 8px;">
+              <!-- 1. Document Profile (TV-ISSUE, ISSUE, MAT-REQ) -->
               <div class="dropdown-wrapper" style="position: relative;">
                 <button type="button" class="frappe-btn" id="issueCreateBtn"
                   onclick="Desk.toggleSeDropdown('issueCreateDropdown')">
-                  <span id="issueCreateBtnText">Create</span> <span
+                  <span id="issueCreateBtnText">Document Profile</span> <span
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueCreateDropdown" class="frappe-dropdown-menu"
                   style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRN"
-                    onclick="Desk.createDocType('issue', 'GRN')">
-                    <span>GRN</span>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="TV-ISSUE"
+                    onclick="Desk.createDocType('issue', 'TV-ISSUE')">
+                    <span>TV-ISSUE</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRSP"
-                    onclick="Desk.createDocType('issue', 'GRSP')">
-                    <span>GRSP</span>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="ISSUE"
+                    onclick="Desk.createDocType('issue', 'ISSUE')">
+                    <span>ISSUE</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="MRA"
-                    onclick="Desk.createDocType('issue', 'MRA')">
-                    <span>MRA</span>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="MAT-REQ"
+                    onclick="Desk.createDocType('issue', 'MAT-REQ')">
+                    <span>MAT-REQ</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                 </div>
               </div>
 
+              <!-- 2. Issue To (Project, Cost Center, Warehouse, My Project, Section, Genaration as Expenditure) -->
               <div class="dropdown-wrapper" style="position: relative;">
                 <button type="button" class="frappe-btn" id="issueGetItemsBtn"
                   onclick="Desk.toggleSeDropdown('issueGetItemsDropdown')">
-                  <span id="issueGetItemsBtnText">Get Items From</span> <span
+                  <span id="issueGetItemsBtnText">Issue To</span> <span
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueGetItemsDropdown" class="frappe-dropdown-menu"
-                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
-                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order"
-                    onclick="Desk.openPoSelectionModal('issue')">
-                    <span>Purchase Order</span>
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 230px; padding: 6px 0;">
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Project"
+                    onclick="Desk.selectIssueToDestination('Project')">
+                    <span>Project</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Cost Center"
-                    onclick="Desk.openCostCenterSelectionModal('issue')">
+                    onclick="Desk.selectIssueToDestination('Cost Center')">
                     <span>Cost Center</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Warehouse"
+                    onclick="Desk.selectIssueToDestination('Warehouse')">
+                    <span>Warehouse</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="My Project"
+                    onclick="Desk.selectIssueToDestination('My Project')">
+                    <span>My Project</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Section"
-                    onclick="Desk.openSectionSelectionModal('issue')">
+                    onclick="Desk.selectIssueToDestination('Section')">
                     <span>Section</span>
+                    <span class="dropdown-check" style="display: none;">✓</span>
+                  </a>
+                  <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Genaration as Expenditure"
+                    onclick="Desk.selectIssueToDestination('Genaration as Expenditure')">
+                    <span>Genaration as Expenditure</span>
                     <span class="dropdown-check" style="display: none;">✓</span>
                   </a>
                 </div>

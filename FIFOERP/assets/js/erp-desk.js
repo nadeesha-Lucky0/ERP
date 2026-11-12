@@ -5905,13 +5905,19 @@ const Desk = {
   async submitStockEntryForm(context, isDraft = false) {
     const state = this.stockEntryState[context];
     if (!state || !state.docType) {
-      this.showToast('Please select "Create Document Type" at the top before saving.', true);
+      const msg = (context === 'issue')
+        ? 'Please select "Document Profile" at the top before saving.'
+        : 'Please select "Create Document Type" at the top before saving.';
+      this.showToast(msg, true);
       const btn = document.getElementById(`${context}CreateBtn`);
       if (btn) btn.focus();
       return;
     }
     if (!state.selectedGetItemsFrom) {
-      this.showToast('Please select "Get Items From" at the top before saving.', true);
+      const msg = (context === 'issue')
+        ? 'Please select "Issue To" at the top before saving.'
+        : 'Please select "Get Items From" at the top before saving.';
+      this.showToast(msg, true);
       const btn = document.getElementById(`${context}GetItemsBtn`);
       if (btn) btn.focus();
       return;
@@ -6078,7 +6084,11 @@ const Desk = {
     const btn = document.getElementById(`${context}CreateBtn`);
     const btnText = document.getElementById(`${context}CreateBtnText`);
     if (btnText) {
-      btnText.innerHTML = type ? `Create: <strong>${type}</strong>` : 'Create';
+      if (context === 'issue') {
+        btnText.innerHTML = type ? `Doc PF: <strong>${type}</strong>` : 'Document Profile';
+      } else {
+        btnText.innerHTML = type ? `Create: <strong>${type}</strong>` : 'Create';
+      }
     }
     if (btn) {
       btn.classList.toggle('has-selection', !!type);
@@ -6101,7 +6111,11 @@ const Desk = {
     const btn = document.getElementById(`${context}GetItemsBtn`);
     const btnText = document.getElementById(`${context}GetItemsBtnText`);
     if (btnText) {
-      btnText.innerHTML = source ? `From: <strong>${source}</strong>` : 'Get Items From';
+      if (context === 'issue') {
+        btnText.innerHTML = source ? `Issue To: <strong>${source}</strong>` : 'Issue To';
+      } else {
+        btnText.innerHTML = source ? `From: <strong>${source}</strong>` : 'Get Items From';
+      }
     }
     if (btn) {
       btn.classList.toggle('from-selected', !!source);
@@ -6123,19 +6137,34 @@ const Desk = {
     if (!state) return true;
     if (!state.docType) {
       if (showFeedback) {
-        this.showToast('Please select "Create" document type first (GRN, GRSP, or MRA).', true);
+        const msg = (context === 'issue')
+          ? 'Please select "Document Profile" first (TV-ISSUE, ISSUE, or MAT-REQ).'
+          : 'Please select "Create" document type first (GRN, GRSP, or MRA).';
+        this.showToast(msg, true);
         this.toggleSeDropdown(`${context}CreateDropdown`);
       }
       return false;
     }
     if (!state.selectedGetItemsFrom) {
       if (showFeedback) {
-        this.showToast('Please select "Get Items From" first (Purchase Order, Cost Center, or Section).', true);
+        const msg = (context === 'issue')
+          ? 'Please select "Issue To" first (Project, Cost Center, Warehouse, etc.).'
+          : 'Please select "Get Items From" first (Purchase Order, Cost Center, or Section).';
+        this.showToast(msg, true);
         this.toggleSeDropdown(`${context}GetItemsDropdown`);
       }
       return false;
     }
     return true;
+  },
+
+  selectIssueToDestination(dest) {
+    this.setSelectedGetItemsFrom('issue', dest);
+    const state = this.stockEntryState['issue'];
+    if (state) state.selectedGetItemsFrom = dest;
+    const drop = document.getElementById('issueGetItemsDropdown');
+    if (drop) drop.style.display = 'none';
+    this.showToast(`Selected Issue To: ${dest}`);
   },
 
   updateFormLockState(context) {
@@ -6235,10 +6264,12 @@ const Desk = {
 
     // Set Stock Entry Type and Warehouses
     const seTypeEl = document.getElementById(`${context}StockEntryType`);
-    if (type === 'MRA') {
+    if (context === 'issue') {
+      if (seTypeEl) seTypeEl.value = 'Material Issue';
+    } else if (type === 'MRA') {
       if (seTypeEl) seTypeEl.value = 'Material Receipt';
     } else if (type === 'GRSP') {
-      if (seTypeEl) seTypeEl.value = (context === 'issue') ? 'Material Issue' : 'Material Receipt';
+      if (seTypeEl) seTypeEl.value = 'Material Receipt';
       const whTarget = document.getElementById(`${context}DefaultTargetWarehouse`);
       if (whTarget) {
         Array.from(whTarget.options).forEach(opt => {
@@ -6288,7 +6319,8 @@ const Desk = {
     if (menu) menu.style.display = 'none';
 
     if (!state.selectedGetItemsFrom) {
-      this.showToast(`Selected "${type}". Now please select "Get Items From".`);
+      const nextPrompt = (context === 'issue') ? 'Issue To' : 'Get Items From';
+      this.showToast(`Selected "${type}". Now please select "${nextPrompt}".`);
       setTimeout(() => {
         const getMenu = document.getElementById(`${context}GetItemsDropdown`);
         if (getMenu) getMenu.style.display = 'block';
