@@ -649,7 +649,7 @@ const Desk = {
           <td>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
-              ${d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${d.id})" title="Edit unposted consignment details">✏️ Edit</button>` : ''}
+              ${filter === 'Unposted Document Edit' && d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${d.id})" title="Edit unposted consignment details">✏️ Edit</button>` : ''}
               ${d.status === 'Draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Certify delivery & send to Approval stage">✓ Validate</button>` : ''}
               ${d.status === 'Validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
               ${d.status === 'Approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
@@ -801,7 +801,7 @@ const Desk = {
         statusLabel = 'Cancelled';
       }
 
-      const canEdit = (rawStatus !== 'Posted' && rawStatus !== 'Cancelled');
+      const canEdit = (filter === 'Unposted Document Edit') && (rawStatus !== 'Posted' && rawStatus !== 'Cancelled');
 
       html += `
         <tr class="desk-doc-main-row" id="mainRow_issue_${d.id}">
@@ -1152,19 +1152,9 @@ const Desk = {
     let actionsHtml = '';
     if (sLower === 'draft') {
       actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
-      if (isGrn) {
-        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${doc.id})">✏️ Edit Details</button>`;
-      } else {
-        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${doc.id})">✏️ Edit Details</button>`;
-      }
       actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
     } else if (sLower === 'validated') {
       actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #4f46e5; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Approved')">⭐ Approve Document</button>`;
-      if (isGrn) {
-        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${doc.id})">✏️ Edit</button>`;
-      } else {
-        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${doc.id})">✏️ Edit</button>`;
-      }
     } else if (sLower === 'approved') {
       actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${doc.id}); if(context==='posting') setTimeout(() => Desk.loadPostingTab(), 500);">🚀 Commit &amp; Post to FIFO Ledger</button>`;
     }
