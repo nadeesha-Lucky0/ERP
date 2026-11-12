@@ -4624,7 +4624,6 @@ const Desk = {
       this.addStockEntryRow(context, false);
     }
     this.renderStockEntryRows(context);
-    this.updateFormLockState(context);
   },
 
   renderStockEntryRows(context) {
@@ -4721,6 +4720,9 @@ const Desk = {
   },
 
   addStockEntryRow(context, shouldRender = true) {
+    if (shouldRender && !this.validateMandatoryHeaders(context)) {
+      return;
+    }
     const state = this.stockEntryState[context];
     const defSource = document.getElementById(`${context}DefSourceWh`)?.value || '';
     const defTarget = document.getElementById(`${context}DefTargetWh`)?.value || '';
@@ -4867,6 +4869,9 @@ const Desk = {
   },
 
   toggleFloatingItemDropdown(context, rowId, triggerEl) {
+    if (!this.validateMandatoryHeaders(context)) {
+      return;
+    }
     const dd = this.getOrCreateFloatingDropdown();
     if (dd.style.display === 'block' && this.activeFloatingRowId === rowId && this.activeFloatingContext === context) {
       this.closeFloatingItemDropdown();
@@ -5426,6 +5431,9 @@ const Desk = {
 
   // Add Multiple Modal
   openAddMultipleModal(context) {
+    if (!this.validateMandatoryHeaders(context)) {
+      return;
+    }
     this.activeMultipleContext = context;
     const modal = document.getElementById('modalStockEntryAddMultiple');
     if (!modal) return;
@@ -5778,7 +5786,7 @@ const Desk = {
     const btn = document.getElementById(`${context}CreateBtn`);
     const btnText = document.getElementById(`${context}CreateBtnText`);
     if (btnText) {
-      btnText.innerHTML = type ? `Create: <strong>${type}</strong>` : 'Select Create Type';
+      btnText.innerHTML = type ? `Create: <strong>${type}</strong>` : 'Create';
     }
     if (btn) {
       btn.classList.toggle('has-selection', !!type);
@@ -5793,7 +5801,6 @@ const Desk = {
         if (check) check.style.display = isMatch ? 'inline-block' : 'none';
       });
     }
-    this.updateFormLockState(context);
   },
 
   setSelectedGetItemsFrom(context, source) {
@@ -5817,61 +5824,30 @@ const Desk = {
         if (check) check.style.display = isMatch ? 'inline-block' : 'none';
       });
     }
-    this.updateFormLockState(context);
+  },
+
+  validateMandatoryHeaders(context, showFeedback = true) {
+    const state = this.stockEntryState[context];
+    if (!state) return true;
+    if (!state.docType) {
+      if (showFeedback) {
+        this.showToast('Please select "Create" document type first (GRN, GRSP, or MRA).', true);
+        this.toggleSeDropdown(`${context}CreateDropdown`);
+      }
+      return false;
+    }
+    if (!state.selectedGetItemsFrom) {
+      if (showFeedback) {
+        this.showToast('Please select "Get Items From" first (Purchase Order, Cost Center, or Section).', true);
+        this.toggleSeDropdown(`${context}GetItemsDropdown`);
+      }
+      return false;
+    }
+    return true;
   },
 
   updateFormLockState(context) {
-    const state = this.stockEntryState[context];
-    const hasDocType = !!(state && state.docType);
-    const hasGetFrom = !!(state && state.selectedGetItemsFrom);
-    const isUnlocked = hasDocType && hasGetFrom;
-
-    const lockNotice = document.getElementById(`${context}StepLockNotice`);
-    const formFields = document.getElementById(`${context}FormFieldsWrapper`);
-    const createBtn = document.getElementById(`${context}CreateBtn`);
-    const getItemsBtn = document.getElementById(`${context}GetItemsBtn`);
-    const msgEl = document.getElementById(`${context}LockNoticeMsg`);
-
-    if (isUnlocked) {
-      if (lockNotice) lockNotice.style.display = 'none';
-      if (formFields) {
-        formFields.style.opacity = '1';
-        formFields.style.pointerEvents = 'auto';
-        formFields.style.filter = 'none';
-        formFields.removeAttribute('aria-disabled');
-      }
-      if (createBtn) createBtn.classList.remove('pulse-highlight');
-      if (getItemsBtn) getItemsBtn.classList.remove('pulse-highlight');
-    } else {
-      if (lockNotice) {
-        lockNotice.style.display = 'flex';
-        if (msgEl) {
-          if (!hasDocType && !hasGetFrom) {
-            msgEl.innerHTML = '<strong>Selection Required Before Entry:</strong> Please select <strong>Create Document Type</strong> and <strong>Get Items From</strong> above to unlock and fill this form.';
-          } else if (!hasDocType) {
-            msgEl.innerHTML = '<strong>Step 1 Required:</strong> Please select <strong>Create Document Type</strong> (GRN, GRSP, or MRA) above to proceed.';
-          } else if (!hasGetFrom) {
-            msgEl.innerHTML = '<strong>Step 2 Required:</strong> Please select <strong>Get Items From</strong> (Purchase Order, Cost Center, or Section) above to unlock the form.';
-          }
-        }
-      }
-      if (formFields) {
-        formFields.style.opacity = '0.35';
-        formFields.style.pointerEvents = 'none';
-        formFields.style.filter = 'grayscale(0.3)';
-        formFields.setAttribute('aria-disabled', 'true');
-      }
-      if (!hasDocType && createBtn) {
-        createBtn.classList.add('pulse-highlight');
-      } else if (createBtn) {
-        createBtn.classList.remove('pulse-highlight');
-      }
-      if (!hasGetFrom && getItemsBtn) {
-        getItemsBtn.classList.add('pulse-highlight');
-      } else if (getItemsBtn) {
-        getItemsBtn.classList.remove('pulse-highlight');
-      }
-    }
+    // Maintained clean ERPNext/Frappe style - no lock notice banner or dimmed screens
   },
 
   resetStockEntryForm(context) {
@@ -5936,7 +5912,6 @@ const Desk = {
     this.setSelectedCreateDoc(context, '');
     this.setSelectedGetItemsFrom(context, '');
     this.initStockEntryForm(context);
-    this.updateFormLockState(context);
     this.showToast('Stock Entry form reset.');
   },
 
@@ -6020,16 +5995,14 @@ const Desk = {
     const menu = document.getElementById(`${context}CreateDropdown`);
     if (menu) menu.style.display = 'none';
 
-    this.updateFormLockState(context);
-
     if (!state.selectedGetItemsFrom) {
-      this.showToast(`Selected "${type}". Now select "Get Items From" to unlock form.`);
+      this.showToast(`Selected "${type}". Now please select "Get Items From".`);
       setTimeout(() => {
         const getMenu = document.getElementById(`${context}GetItemsDropdown`);
         if (getMenu) getMenu.style.display = 'block';
       }, 150);
     } else {
-      this.showToast(`Selected "${type}". Form unlocked!`);
+      this.showToast(`Selected "${type}". Ready to add materials.`);
     }
   },
 
@@ -6336,6 +6309,9 @@ const Desk = {
 
 
   openRequestItemCodeModal(context) {
+    if (!this.validateMandatoryHeaders(context)) {
+      return;
+    }
     this.activeItemCodeContext = context || 'grn';
     const modal = document.getElementById('modalRequestItemCode');
     if (!modal) return;
@@ -6526,7 +6502,6 @@ const Desk = {
     // 5. Reset Dropdown Headers
     this.setSelectedCreateDoc(context, '');
     this.setSelectedGetItemsFrom(context, '');
-    this.updateFormLockState(context);
 
     // 6. Reset dynamic cards (PO card, Cost Center card)
     const poCard = document.getElementById(`${context}PurchaseSection`);
