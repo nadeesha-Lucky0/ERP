@@ -4708,7 +4708,7 @@ const Desk = {
     if (state.items.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
+          <td colspan="6" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
             No items in table. Click <strong>Add row</strong> or <strong>Add multiple</strong> to add items.
           </td>
         </tr>
@@ -4719,11 +4719,6 @@ const Desk = {
     let html = '';
     state.items.forEach((row, idx) => {
       const isChecked = state.selectedIds.has(row.id);
-      
-      let whOptions = '<option value="" ' + (!row.warehouse ? 'selected' : '') + '>-- Select Warehouse --</option>';
-      warehouses.forEach(w => {
-        whOptions += `<option value="${w}" ${row.warehouse === w ? 'selected' : ''}>${w}</option>`;
-      });
 
       html += `
         <tr data-row-id="${row.id}" style="${isChecked ? 'background: #f8fafc;' : ''}">
@@ -4732,11 +4727,6 @@ const Desk = {
           </td>
           <td style="text-align: center; color: #6c7680; font-size: 12px; font-weight: 500;">
             ${idx + 1}
-          </td>
-          <td>
-            <select class="frappe-control frappe-select" style="height: 30px; font-size: 12px;" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'warehouse', this.value)">
-              ${whOptions}
-            </select>
           </td>
           <td style="position: relative;">
             <div style="position: relative; width: 100%;">

@@ -787,30 +787,22 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
-            <!-- Default Warehouse (Collapsible, OPEN by default) -->
-            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
-              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('grnWhSection', this)">
-                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default
-                Warehouse
-              </div>
-              <div id="grnWhSection" style="display: block; padding: 12px 0 6px;">
-                <div
-                  style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
+            <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
+              <div style="max-width: 720px;">
+                <label class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Select Warehouse <span style="color: #e02424;">*</span></label>
+                <div id="grnWhSection" style="display: block;">
                   <div id="grnSourceWhGroup" style="display: none;">
-                    <label class="frappe-label">Default Source Warehouse</label>
                     <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('grn')">
+                      onchange="Desk.applyDefaultWarehouse('grn')" style="width: 100%; height: 38px;">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
-                    <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
                   </div>
                   <div id="grnTargetWhGroup" style="display: block;">
-                    <label class="frappe-label">Default Target Warehouse</label>
                     <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('grn')">
+                      onchange="Desk.applyDefaultWarehouse('grn')" style="width: 100%; height: 38px;">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
-                    <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
                   </div>
                 </div>
               </div>
@@ -829,7 +821,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                       <th style="width: 38px; text-align: center;"><input type="checkbox" id="grnCheckAll"
                           onchange="Desk.toggleSelectAllRows('grn', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
-                      <th id="grnColWhHeader" style="width: 240px;">Target Warehouse</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
                       <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
                       <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
@@ -1311,30 +1302,22 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
-            <!-- Default Warehouse (Collapsible, OPEN by default) -->
-            <div style="border-top: 1px solid #f1f3f5; padding-top: 12px; margin-bottom: 20px;">
-              <div class="frappe-section-head" onclick="Desk.toggleStockEntrySection('issueWhSection', this)">
-                <span class="frappe-sec-arrow" style="font-size: 11px; margin-right: 6px;">&#8744;</span> Default
-                Warehouse
-              </div>
-              <div id="issueWhSection" style="display: block; padding: 12px 0 6px;">
-                <div
-                  style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px;">
+            <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
+              <div style="max-width: 720px;">
+                <label class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Select Warehouse <span style="color: #e02424;">*</span></label>
+                <div id="issueWhSection" style="display: block;">
                   <div id="issueSourceWhGroup" style="display: block;">
-                    <label class="frappe-label">Default Source Warehouse</label>
                     <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('issue')">
+                      onchange="Desk.applyDefaultWarehouse('issue')" style="width: 100%; height: 38px;">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
-                    <div class="frappe-help-text">Sets "Source Warehouse" in each row of the items table.</div>
                   </div>
                   <div id="issueTargetWhGroup" style="display: none;">
-                    <label class="frappe-label">Default Target Warehouse</label>
                     <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('issue')">
+                      onchange="Desk.applyDefaultWarehouse('issue')" style="width: 100%; height: 38px;">
                       <option value="" selected>-- Select Warehouse --</option>
                     </select>
-                    <div class="frappe-help-text">Sets "Target Warehouse" in each row of the items table.</div>
                   </div>
                 </div>
               </div>
@@ -1353,7 +1336,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                       <th style="width: 38px; text-align: center;"><input type="checkbox" id="issueCheckAll"
                           onchange="Desk.toggleSelectAllRows('issue', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
-                      <th id="issueColWhHeader" style="width: 240px;">Source Warehouse</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
                       <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
                       <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
