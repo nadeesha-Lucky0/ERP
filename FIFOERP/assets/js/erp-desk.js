@@ -572,10 +572,7 @@ const Desk = {
       if (subEl) subEl.textContent = 'Newly recorded consignments saved as drafts for editing prior to validation';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-secondary" style="font-size: 11px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Drafts: ${docs.length}</span>`;
     } else if (filter === 'Validation') {
-      docs = allDocs.filter(d => {
-        const s = (d.status || '').toLowerCase();
-        return s === 'pending validation' || s === 'draft';
-      });
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'pending validation');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
       if (subEl) subEl.textContent = 'Technical store audit validation — certify received delivery against PO specs and warehouse bin storage';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
@@ -747,10 +744,7 @@ const Desk = {
       if (subEl) subEl.textContent = 'Draft material requisition notes saved for editing prior to validation';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-secondary" style="font-size: 11px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Drafts: ${docs.length}</span>`;
     } else if (filter === 'Validation') {
-      docs = allDocs.filter(d => {
-        const s = (d.status || '').toLowerCase();
-        return s === 'pending validation' || s === 'draft';
-      });
+      docs = allDocs.filter(d => (d.status || '').toLowerCase() === 'pending validation');
       if (titleEl) titleEl.textContent = 'Following Documents are pending for your validation';
       if (subEl) subEl.textContent = 'Storekeeper stock validation — verify quantity requirements against active FIFO batch balances';
       if (headerAction) headerAction.innerHTML = `<span class="badge badge-warning" style="font-size: 11px;">Pending Validation: ${docs.length}</span>`;
