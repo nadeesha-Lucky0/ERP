@@ -1660,208 +1660,172 @@ select.frappe-control option, select.frappe-select option {
   padding: 12px 16px 16px 16px;
   background: #f8fafc;
 }
-.desk-accordion-card {
+/* ==========================================================================
+   Industry-Standard Enterprise Document Sheet (Unified View - No Separate Cards)
+   ========================================================================== */
+.desk-doc-sheet {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 20px 22px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.desk-accordion-hero {
+.doc-sheet-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  padding-bottom: 14px;
   border-bottom: 1px solid #f1f5f9;
 }
 
-.desk-accordion-hero .hero-left {
+.doc-sheet-header .doc-title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.desk-accordion-hero .hero-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px solid #e2e8f0;
-}
-
-.desk-accordion-hero .hero-title {
+.doc-sheet-header .doc-id {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.01em;
 }
 
-.desk-accordion-hero .hero-sub {
+.doc-sheet-header .doc-sub {
   font-size: 12px;
   color: #64748b;
   margin-top: 3px;
 }
 
-.desk-accordion-hero .hero-right {
+.doc-sheet-header .doc-summary-metrics {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.hero-stat-pill {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 8px 14px;
-  display: flex;
-  flex-direction: column;
-  min-width: 100px;
-  text-align: right;
-}
-
-.hero-stat-pill .stat-lbl {
-  font-size: 10.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #64748b;
-  letter-spacing: 0.04em;
-}
-
-.hero-stat-pill .stat-num {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-top: 2px;
-}
-
-.hero-stat-pill.highlight {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-}
-
-.hero-stat-pill.highlight .stat-lbl {
-  color: #166534;
-}
-
-.hero-stat-pill.highlight .stat-num.val {
-  color: #15803d;
-  font-size: 15px;
-}
-
-.desk-accordion-sections {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 14px;
-  margin-bottom: 16px;
+  font-size: 12.5px;
+  color: #475569;
 }
 
-.desk-info-card {
+.doc-sheet-header .doc-summary-metrics .metric-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.doc-sheet-header .doc-summary-metrics .metric-item strong {
+  color: #0f172a;
+}
+
+.doc-sheet-header .doc-summary-metrics .metric-total {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 13.5px;
+}
+
+.doc-sheet-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 16px 0 10px 0;
+}
+
+.doc-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 20px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
-  overflow: hidden;
+  padding: 14px 18px;
 }
 
-.desk-info-card .card-head {
-  background: #f1f5f9;
-  padding: 8px 12px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #334155;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border-bottom: 1px solid #e2e8f0;
+@media (max-width: 992px) {
+  .doc-fields-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.desk-info-card .card-body {
-  padding: 10px 14px;
+@media (max-width: 576px) {
+  .doc-fields-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.doc-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
 }
 
-.desk-info-card .info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12.5px;
-  gap: 8px;
-}
-
-.desk-info-card .info-row .lbl {
+.doc-field .field-lbl {
+  font-size: 11px;
+  font-weight: 600;
   color: #64748b;
-  font-size: 11.5px;
-  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.desk-info-card .info-row .val {
+.doc-field .field-val {
+  font-size: 13px;
+  font-weight: 600;
   color: #0f172a;
-  text-align: right;
   word-break: break-word;
 }
 
-.desk-info-card .info-row .val code {
+.doc-field .field-val code {
   background: #e2e8f0;
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-size: 11px;
+  border: 1px solid #cbd5e1;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11.5px;
   color: #0f172a;
+  font-family: monospace;
 }
 
-.desk-accordion-clean-remarks {
-  background: #f8fafc;
+.doc-remarks-bar {
+  background: #fff;
   border: 1px solid #e2e8f0;
   border-left: 3px solid #3b82f6;
-  border-radius: 6px;
-  padding: 10px 14px;
+  border-radius: 4px;
+  padding: 9px 14px;
+  font-size: 12.5px;
+  margin-top: 12px;
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 16px;
+  align-items: baseline;
+  gap: 8px;
 }
 
-.desk-accordion-clean-remarks .rem-icon {
-  color: #3b82f6;
-  margin-top: 1px;
-}
-
-.desk-accordion-clean-remarks .rem-label {
+.doc-remarks-bar .rem-lbl {
+  font-size: 11px;
   font-weight: 700;
-  color: #334155;
-  font-size: 12px;
-  margin-right: 6px;
+  text-transform: uppercase;
+  color: #475569;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
 
-.desk-accordion-clean-remarks .rem-val {
-  font-size: 12.5px;
+.doc-remarks-bar .rem-txt {
   color: #1e293b;
-  font-style: italic;
 }
 
-.desk-accordion-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px 18px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 12px 16px;
-  font-size: 12.5px;
-  margin-bottom: 14px;
+.doc-sheet-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
 }
 .desk-accordion-meta-grid .meta-item {
   display: flex;

@@ -1178,138 +1178,101 @@ const Desk = {
     }
 
     container.innerHTML = `
-      <div class="desk-accordion-card">
-        <!-- Top Document Header Bar -->
-        <div class="desk-accordion-hero">
-          <div class="hero-left">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span class="hero-icon">
-                ${isGrn ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>` : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>`}
-              </span>
-              <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <h3 class="hero-title">${doc.doc_no}</h3>
-                  <span class="desk-badge" style="background: #e2e8f0; color: #1e293b; font-size: 11px; font-weight: 700;">${doc.doc_type || (isGrn ? 'GRN' : 'MRA')}</span>
-                  ${statusBadge}
-                </div>
-                <div class="hero-sub">${entryType} &bull; Created: <strong>${doc.doc_date || '-'}</strong></div>
-              </div>
+      <div class="desk-doc-sheet">
+        <!-- Document Header Bar -->
+        <div class="doc-sheet-header">
+          <div>
+            <div class="doc-title-row">
+              <h3 class="doc-id">${doc.doc_no}</h3>
+              <span class="desk-badge" style="background: #f1f5f9; color: #334155; font-size: 11px; font-weight: 700; border: 1px solid #cbd5e1;">${doc.doc_type || (isGrn ? 'GRN' : 'MRA')}</span>
+              ${statusBadge}
             </div>
+            <div class="doc-sub">${entryType} &bull; Document Date: <strong>${doc.doc_date || '-'}</strong></div>
           </div>
-          <div class="hero-right">
-            <div class="hero-stat-pill">
-              <span class="stat-lbl">Line Items</span>
-              <span class="stat-num">${items.length} ${items.length === 1 ? 'Item' : 'Items'}</span>
+          <div class="doc-summary-metrics">
+            <div class="metric-item">
+              <span>Line Items:</span>
+              <strong>${items.length}</strong>
             </div>
-            <div class="hero-stat-pill">
-              <span class="stat-lbl">Total Quantity</span>
-              <span class="stat-num">${totalQty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span>
+            <div class="metric-item">
+              <span>Total Qty:</span>
+              <strong>${totalQty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</strong>
             </div>
-            <div class="hero-stat-pill highlight">
-              <span class="stat-lbl">Total Valuation</span>
-              <span class="stat-num val">Rs. ${totalVal}</span>
+            <div class="metric-total">
+              Rs. ${totalVal}
             </div>
           </div>
         </div>
 
-        <!-- 3-Column Structured Information Cards -->
-        <div class="desk-accordion-sections">
-          <!-- Card 1: Logistics & Warehouse -->
-          <div class="desk-info-card">
-            <div class="card-head">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-              <span>${isGrn ? 'Supplier & Warehouse' : 'Destination & Storage'}</span>
-            </div>
-            <div class="card-body">
-              <div class="info-row">
-                <span class="lbl">${isGrn ? 'Supplier / Source' : 'Department'}</span>
-                <span class="val"><strong>${party}</strong></span>
-              </div>
-              <div class="info-row">
-                <span class="lbl">${isGrn ? 'Target Warehouse' : 'Source Warehouse'}</span>
-                <span class="val">${dest}</span>
-              </div>
-              <div class="info-row">
-                <span class="lbl">Delivery Date</span>
-                <span class="val"><strong>${delivDate}</strong></span>
-              </div>
-            </div>
+        <!-- Document Details Grid (Unified Form Grid - No Separate Cards) -->
+        <div class="doc-sheet-section-title">Document Details</div>
+        <div class="doc-fields-grid">
+          <div class="doc-field">
+            <span class="field-lbl">${isGrn ? 'Supplier / Source' : 'Requesting Dept'}</span>
+            <span class="field-val"><strong>${party}</strong></span>
+          </div>
+          <div class="doc-field">
+            <span class="field-lbl">${isGrn ? 'Target Warehouse' : 'Source Warehouse'}</span>
+            <span class="field-val">${dest}</span>
+          </div>
+          <div class="doc-field">
+            <span class="field-lbl">Document Date</span>
+            <span class="field-val">${doc.doc_date || '-'}</span>
+          </div>
+          <div class="doc-field">
+            <span class="field-lbl">Delivery Date</span>
+            <span class="field-val">${delivDate}</span>
           </div>
 
-          <!-- Card 2: References & Invoicing -->
-          <div class="desk-info-card">
-            <div class="card-head">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-              <span>Reference Documents</span>
-            </div>
-            <div class="card-body">
-              <div class="info-row">
-                <span class="lbl">${isGrn ? 'Purchase Order Ref' : 'Requisition Ref'}</span>
-                <span class="val">${poRef !== '-' ? `<code style="font-weight:600;">${poRef}</code>` : '<span style="color:#94a3b8;">None</span>'}</span>
-              </div>
-              <div class="info-row">
-                <span class="lbl">${isGrn ? 'Invoice / DN No' : 'Delivery Note'}</span>
-                <span class="val">${invNo !== '-' ? `<strong>${invNo}</strong>` : '<span style="color:#94a3b8;">None</span>'}</span>
-              </div>
-              <div class="info-row">
-                <span class="lbl">Supplier / Consignment Ref</span>
-                <span class="val">${supRef !== '-' ? supRef : '<span style="color:#94a3b8;">None</span>'}</span>
-              </div>
-              ${invDate !== '-' ? `
-                <div class="info-row">
-                  <span class="lbl">Invoice Date</span>
-                  <span class="val"><strong>${invDate}</strong></span>
-                </div>
-              ` : ''}
-            </div>
+          <div class="doc-field">
+            <span class="field-lbl">${isGrn ? 'Purchase Order Ref' : 'Requisition Ref'}</span>
+            <span class="field-val">${poRef !== '-' ? `<code>${poRef}</code>` : '<span style="color:#94a3b8; font-weight: 400;">None</span>'}</span>
+          </div>
+          <div class="doc-field">
+            <span class="field-lbl">${isGrn ? 'Invoice / Delivery Note' : 'Delivery Note'}</span>
+            <span class="field-val">${invNo !== '-' ? `<strong>${invNo}</strong>` : '<span style="color:#94a3b8; font-weight: 400;">None</span>'}</span>
+          </div>
+          <div class="doc-field">
+            <span class="field-lbl">Supplier / Consignment Ref</span>
+            <span class="field-val">${supRef !== '-' ? supRef : '<span style="color:#94a3b8; font-weight: 400;">None</span>'}</span>
+          </div>
+          <div class="doc-field">
+            <span class="field-lbl">Stock Entry Type</span>
+            <span class="field-val">${entryType}</span>
           </div>
 
-          <!-- Card 3: Accounting & Lifecycle -->
-          <div class="desk-info-card">
-            <div class="card-head">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span>Accounting & Audit</span>
+          <div class="doc-field">
+            <span class="field-lbl">Accounting Date</span>
+            <span class="field-val">${accDate}</span>
+          </div>
+          ${invDate !== '-' ? `
+            <div class="doc-field">
+              <span class="field-lbl">Invoice Date</span>
+              <span class="field-val">${invDate}</span>
             </div>
-            <div class="card-body">
-              <div class="info-row">
-                <span class="lbl">Accounting Date</span>
-                <span class="val"><strong>${accDate}</strong></span>
-              </div>
-              <div class="info-row">
-                <span class="lbl">Stock Entry Type</span>
-                <span class="val">${entryType}</span>
-              </div>
-              <div class="info-row">
-                <span class="lbl">Current Stage</span>
-                <span class="val">${statusBadge}</span>
-              </div>
-            </div>
+          ` : ''}
+          <div class="doc-field">
+            <span class="field-lbl">Current Stage</span>
+            <span class="field-val">${statusBadge}</span>
           </div>
         </div>
 
         <!-- Remarks Section (Clean, without bracket system tags) -->
         ${cleanRemarks ? `
-          <div class="desk-accordion-clean-remarks">
-            <div class="rem-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            </div>
-            <div class="rem-text">
-              <span class="rem-label">Notes / Remarks:</span>
-              <span class="rem-val">${cleanRemarks}</span>
-            </div>
+          <div class="doc-remarks-bar">
+            <span class="rem-lbl">Remarks:</span>
+            <span class="rem-txt">${cleanRemarks}</span>
           </div>
         ` : ''}
 
         <!-- Line Items Table -->
-        <div style="margin-top: 16px;">
+        <div style="margin-top: 18px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="font-size: 13px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
-              <span>Allocated Line Items (${items.length})</span>
-            </div>
+            <div class="doc-sheet-section-title" style="margin: 0;">Allocated Line Items (${items.length})</div>
             <span style="font-size: 11.5px; color: #64748b;">All rates &amp; valuations evaluated against FIFO ledger</span>
           </div>
 
-          <div class="desk-table-wrapper" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff;">
+          <div class="desk-table-wrapper" style="border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; background: #fff;">
             <table class="desk-table" style="font-size: 12.5px; margin: 0; width: 100%;">
               <thead>
                 <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
@@ -1340,7 +1303,7 @@ const Desk = {
         </div>
 
         <!-- Action & Collapse Bar -->
-        <div class="desk-accordion-footer">
+        <div class="doc-sheet-footer">
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             ${actionsHtml}
             <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${doc.id})">Full Screen View</button>
