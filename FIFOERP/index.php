@@ -7,6 +7,10 @@ use App\Helpers\Icon;
 // Require authentication
 Auth::requireLogin();
 $currentUser = Auth::user();
+if (($currentUser['role_name'] ?? '') === 'code_admin') {
+  header('Location: admin/index.php');
+  exit;
+}
 $isSuperAdmin = ($currentUser['role_name'] ?? '') === 'super_admin';
 $isAdmin = $isSuperAdmin;
 
