@@ -6469,6 +6469,35 @@ const Desk = {
       }
     }
 
+    // Adapt Reference Data labels for Issue Document Profiles (ISSUE, MAT-REQ, TV-ISSUE)
+    if (context === 'issue') {
+      const lbl1 = document.getElementById('issueRefLabel1');
+      const lbl2 = document.getElementById('issueRefLabel2');
+      const lbl3 = document.getElementById('issueRefLabel3');
+      const lbl4 = document.getElementById('issueRefLabel4');
+      const grp4 = document.getElementById('issueRefGroup4');
+
+      if (type === 'ISSUE') {
+        if (lbl1) lbl1.textContent = 'TO [TYPE] :';
+        if (lbl2) lbl2.textContent = 'JOB NO. / S/N NO. :';
+        if (lbl3) lbl3.textContent = 'RECIPIENT :';
+        if (lbl4) lbl4.textContent = 'DESIGNATION :';
+        if (grp4) grp4.style.display = 'block';
+      } else if (type === 'MAT-REQ') {
+        if (lbl1) lbl1.textContent = 'COST CODE :';
+        if (lbl2) lbl2.textContent = 'TO :';
+        if (lbl3) lbl3.textContent = 'JOB NUMBER :';
+        if (grp4) grp4.style.display = 'none';
+      } else {
+        // TV-ISSUE
+        if (lbl1) lbl1.textContent = 'REF 1 :';
+        if (lbl2) lbl2.textContent = 'REF 2 :';
+        if (lbl3) lbl3.textContent = 'REF 3 :';
+        if (lbl4) lbl4.textContent = 'REF 4 :';
+        if (grp4) grp4.style.display = 'block';
+      }
+    }
+
     // Close Create menu
     const menu = document.getElementById(`${context}CreateDropdown`);
     if (menu) menu.style.display = 'none';

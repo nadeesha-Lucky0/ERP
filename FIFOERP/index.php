@@ -1319,6 +1319,29 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
+            <!-- Reference Data (Dynamic per Document Profile: ISSUE, MAT-REQ, TV-ISSUE) -->
+            <div id="issueReferenceDataSection" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+              <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 12px;">Reference Data</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div>
+                  <label class="frappe-label" id="issueRefLabel1">REF 1 :</label>
+                  <input type="text" name="ref_1" id="issueRef1" class="frappe-control" placeholder="">
+                </div>
+                <div>
+                  <label class="frappe-label" id="issueRefLabel2">REF 2 :</label>
+                  <input type="text" name="ref_2" id="issueRef2" class="frappe-control" placeholder="">
+                </div>
+                <div>
+                  <label class="frappe-label" id="issueRefLabel3">REF 3 :</label>
+                  <input type="text" name="ref_3" id="issueRef3" class="frappe-control" placeholder="">
+                </div>
+                <div id="issueRefGroup4">
+                  <label class="frappe-label" id="issueRefLabel4">REF 4 :</label>
+                  <input type="text" name="ref_4" id="issueRef4" class="frappe-control" placeholder="">
+                </div>
+              </div>
+            </div>
+
             <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
               <div style="max-width: 720px;">
