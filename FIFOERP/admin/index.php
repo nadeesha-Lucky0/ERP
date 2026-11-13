@@ -557,23 +557,44 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
   <link rel="stylesheet" href="<?= $base ?>/assets/css/dashboard.css?v=<?= time() ?>">
   <?php if ($isCodeAdmin): ?>
   <style>
-    /* Clean ERPNext-style Light UI for Code Admin */
-    body { background: #f8fafc !important; color: #1e293b !important; }
-    .admin-sidebar, .sidebar { background: #ffffff !important; border-right: 1px solid #e2e8f0 !important; }
-    .admin-topbar, .topbar { background: #ffffff !important; border-bottom: 1px solid #e2e8f0 !important; }
-    .admin-nav-item.active, .nav-item.active, .sidebar-tab.active, .admin-tab-btn.active {
+    /* Clean ERPNext-style Light UI for Code Admin (matching EGL FIFOERP theme) */
+    :root {
+      --primary: #059669 !important;
+      --primary-dark: #047857 !important;
+      --brand-maroon: #059669 !important;
+      --accent: #059669 !important;
+    }
+    body { background: #f8fafc !important; color: #1e293b !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
+    .admin-sidebar, .sidebar, aside.sidebar { background: #ffffff !important; border-right: 1px solid #e2e8f0 !important; }
+    .admin-topbar, .topbar, header.topbar, .main-header { background: #ffffff !important; border-bottom: 1px solid #e2e8f0 !important; }
+    .sidebar-nav-btn, .admin-nav-item, .nav-item, .sidebar-tab, .admin-tab-btn, [data-tab] {
+      border-radius: 6px !important;
+      color: #475569 !important;
+      font-weight: 500 !important;
+      transition: all 0.15s ease !important;
+    }
+    .sidebar-nav-btn.active, .admin-nav-item.active, .nav-item.active, .sidebar-tab.active, .admin-tab-btn.active, [data-tab].active {
       background: #ecfdf5 !important;
       color: #059669 !important;
-      border-color: #a7f3d0 !important;
+      border: 1px solid #a7f3d0 !important;
       font-weight: 600 !important;
+      box-shadow: none !important;
     }
-    .admin-nav-item.active svg, .nav-item.active svg, .admin-tab-btn.active svg {
+    .sidebar-nav-btn.active svg, .admin-nav-item.active svg, .nav-item.active svg, .admin-tab-btn.active svg, [data-tab].active svg {
       color: #059669 !important;
       stroke: #059669 !important;
     }
-    .admin-nav-item:hover:not(.active), .admin-tab-btn:hover:not(.active) {
+    .sidebar-nav-btn:hover:not(.active), .admin-nav-item:hover:not(.active), .admin-tab-btn:hover:not(.active), [data-tab]:hover:not(.active) {
       background: #f1f5f9 !important;
       color: #0f172a !important;
+    }
+    .btn-primary, .btn-maroon, button[style*="#650b2b"], .btn[style*="#650b2b"] {
+      background: #059669 !important;
+      border-color: #047857 !important;
+      color: #ffffff !important;
+    }
+    .btn-primary:hover, .btn-maroon:hover, button[style*="#650b2b"]:hover {
+      background: #047857 !important;
     }
     .card, .admin-card, .kpi-card {
       background: #ffffff !important;
