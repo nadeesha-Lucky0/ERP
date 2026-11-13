@@ -62,9 +62,10 @@
       this.isLoading = true;
       try {
         const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php?action=list_master_items&limit=25000').then(r => r.json());
-        if (res.ok && res.data && Array.isArray(res.data.items)) {
+        const itemsList = (res && Array.isArray(res.items)) ? res.items : (res && res.data && Array.isArray(res.data.items) ? res.data.items : null);
+        if (itemsList) {
           // STRICT RULE: Pending process items must NEVER appear in item search
-          this.allItems = res.data.items.filter(it => it.approval_status !== 'PENDING' && it.status !== 'PENDING');
+          this.allItems = itemsList.filter(it => it.approval_status !== 'PENDING' && it.status !== 'PENDING');
         } else {
           this.allItems = [];
         }
