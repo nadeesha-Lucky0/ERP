@@ -76,30 +76,42 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
           <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
         </button>
         <div class="sidebar-submenu" id="submenu-receipts">
-          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-receipts" data-workflow-filter="Entry" onclick="Desk.navigateWorkflow('tab-receipts', 'Entry', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
-            <span>Entry</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Validation" onclick="Desk.navigateWorkflow('tab-receipts', 'Validation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
-            <span>Validation</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Approval" onclick="Desk.navigateWorkflow('tab-receipts', 'Approval', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
-            <span>Approval</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Unposted Document Edit" onclick="Desk.navigateWorkflow('tab-receipts', 'Unposted Document Edit', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
-            <span>Unposted Document Edit</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Posted Cancellation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
-            <span>Posted Cancellation</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Unposted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Unposted Cancellation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('x-circle', 12) ?></span>
-            <span>Unposted Cancellation</span>
-          </button>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-receipts-entry', $userId)): ?>
+            <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-receipts" data-workflow-filter="Entry" onclick="Desk.navigateWorkflow('tab-receipts', 'Entry', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
+              <span>Entry</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-receipts-validation', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Validation" onclick="Desk.navigateWorkflow('tab-receipts', 'Validation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
+              <span>Validation</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-receipts-approval', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Approval" onclick="Desk.navigateWorkflow('tab-receipts', 'Approval', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
+              <span>Approval</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-receipts-edit', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Unposted Document Edit" onclick="Desk.navigateWorkflow('tab-receipts', 'Unposted Document Edit', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
+              <span>Unposted Document Edit</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-receipts-posted-cancel', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Posted Cancellation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
+              <span>Posted Cancellation</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-receipts-unposted-cancel', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-receipts" data-workflow-filter="Unposted Cancellation" onclick="Desk.navigateWorkflow('tab-receipts', 'Unposted Cancellation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('x-circle', 12) ?></span>
+              <span>Unposted Cancellation</span>
+            </button>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>
@@ -111,30 +123,42 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
           <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
         </button>
         <div class="sidebar-submenu" id="submenu-issues">
-          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-issues" data-workflow-filter="Entry" onclick="Desk.navigateWorkflow('tab-issues', 'Entry', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
-            <span>Entry</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Validation" onclick="Desk.navigateWorkflow('tab-issues', 'Validation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
-            <span>Validation</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Approval" onclick="Desk.navigateWorkflow('tab-issues', 'Approval', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
-            <span>Approval</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Unposted Document Edit" onclick="Desk.navigateWorkflow('tab-issues', 'Unposted Document Edit', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
-            <span>Unposted Document Edit</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Posted Cancellation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
-            <span>Posted Cancellation</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Unposted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Unposted Cancellation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('x-circle', 12) ?></span>
-            <span>Unposted Cancellation</span>
-          </button>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-entry', $userId)): ?>
+            <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-issues" data-workflow-filter="Entry" onclick="Desk.navigateWorkflow('tab-issues', 'Entry', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
+              <span>Entry</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-validation', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Validation" onclick="Desk.navigateWorkflow('tab-issues', 'Validation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
+              <span>Validation</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-approval', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Approval" onclick="Desk.navigateWorkflow('tab-issues', 'Approval', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
+              <span>Approval</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-edit', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Unposted Document Edit" onclick="Desk.navigateWorkflow('tab-issues', 'Unposted Document Edit', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
+              <span>Unposted Document Edit</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-posted-cancel', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Posted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Posted Cancellation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('rotate-ccw', 12) ?></span>
+              <span>Posted Cancellation</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-unposted-cancel', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-issues" data-workflow-filter="Unposted Cancellation" onclick="Desk.navigateWorkflow('tab-issues', 'Unposted Cancellation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('x-circle', 12) ?></span>
+              <span>Unposted Cancellation</span>
+            </button>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>
