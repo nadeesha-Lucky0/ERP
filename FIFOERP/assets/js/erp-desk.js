@@ -6335,7 +6335,6 @@ const Desk = {
         });
       };
       fillSel('issueToCostCenterSelect', lookups.cost_centers, '-- Select Cost Center --', c => ({ val: c.code, label: c.name }));
-      fillSel('issueToProjectSelect', lookups.projects, '-- Select Project --');
       fillSel('issueToWarehouseSelect', lookups.warehouses, '-- Select Issue To Warehouse --');
       fillSel('issueToMyProjectSelect', lookups.my_projects, '-- Select Your Project --');
       fillSel('issueToSectionSelect', lookups.sections, '-- Select Section --', s => ({ val: s.code, label: s.display_label || `${s.code} - ${s.title}` }));
@@ -6354,7 +6353,6 @@ const Desk = {
     if (dest === 'Project') {
       if (lblDestDept) lblDestDept.textContent = 'Project Dest Dept';
       document.getElementById('issueToGrp_destDept').style.display = 'block';
-      document.getElementById('issueToGrp_project').style.display = 'block';
     } else if (dest === 'Cost Center') {
       if (lblDestDept) lblDestDept.textContent = 'Dept Id';
       document.getElementById('issueToGrp_destDept').style.display = 'block';

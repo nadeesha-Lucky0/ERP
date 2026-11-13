@@ -1329,12 +1329,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                     <option value="">-- Select Cost Center --</option>
                   </select>
                 </div>
-                <div id="issueToGrp_project" class="issue-to-grp" style="display: none;">
-                  <label class="frappe-label">Project</label>
-                  <select id="issueToProjectSelect" class="frappe-control frappe-select">
-                    <option value="">-- Select Project --</option>
-                  </select>
-                </div>
                 <div id="issueToGrp_warehouse" class="issue-to-grp" style="display: none;">
                   <label class="frappe-label">Warehouse to Issue</label>
                   <select id="issueToWarehouseSelect" class="frappe-control frappe-select">
