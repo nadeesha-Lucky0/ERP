@@ -21,7 +21,7 @@ $permModel = new Permission();
 $currentUser = Auth::user();
 $adminDetails = $userModel->findById(Auth::id());
 
-$userRole = $currentUser['role'] ?? 'operator';
+$userRole = $currentUser['role_name'] ?? $currentUser['role'] ?? 'operator';
 $userRoleId = (int) ($adminDetails['role_id'] ?? 4);
 
 $isSuperAdmin = ($userRole === 'super_admin');
