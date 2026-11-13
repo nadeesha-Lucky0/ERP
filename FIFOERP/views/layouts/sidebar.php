@@ -187,42 +187,60 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
           <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
         </button>
         <div class="sidebar-submenu" id="submenu-pv-workflow">
-          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-freeze" onclick="Desk.navigatePvSub('pv-sub-freeze', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('lock', 12) ?></span>
-            <span>Freeze Batches</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-generate" onclick="Desk.navigatePvSub('pv-sub-generate', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('file-plus', 12) ?></span>
-            <span>Generate Sheet</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-entry" onclick="Desk.navigatePvSub('pv-sub-entry', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
-            <span>Count Entry</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-edit" onclick="Desk.navigatePvSub('pv-sub-edit', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
-            <span>Verification Edit</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-validation" onclick="Desk.navigatePvSub('pv-sub-validation', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
-            <span>Validation</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-approval" onclick="Desk.navigatePvSub('pv-sub-approval', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
-            <span>Approval</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-posting" onclick="Desk.navigatePvSub('pv-sub-posting', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
-            <span>Posting</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-gl" onclick="Desk.navigatePvSub('pv-sub-gl', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('database', 12) ?></span>
-            <span>GL Posting</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-unfreeze" onclick="Desk.navigatePvSub('pv-sub-unfreeze', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('unlock', 12) ?></span>
-            <span>Unfreeze Batches</span>
-          </button>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-freeze', $userId)): ?>
+            <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-freeze" onclick="Desk.navigatePvSub('pv-sub-freeze', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('lock', 12) ?></span>
+              <span>Freeze Batches</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-generate-sheet', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-generate" onclick="Desk.navigatePvSub('pv-sub-generate', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('file-plus', 12) ?></span>
+              <span>Generate Sheet</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-entry', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-entry" onclick="Desk.navigatePvSub('pv-sub-entry', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('edit', 12) ?></span>
+              <span>Count Entry</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-edit', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-edit" onclick="Desk.navigatePvSub('pv-sub-edit', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('edit-3', 12) ?></span>
+              <span>Verification Edit</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-validation', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-validation" onclick="Desk.navigatePvSub('pv-sub-validation', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('check-circle', 12) ?></span>
+              <span>Validation</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-approval', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-approval" onclick="Desk.navigatePvSub('pv-sub-approval', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('award', 12) ?></span>
+              <span>Approval</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-posting', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-posting" onclick="Desk.navigatePvSub('pv-sub-posting', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('send', 12) ?></span>
+              <span>Posting</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-gl-posting', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-gl" onclick="Desk.navigatePvSub('pv-sub-gl', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('database', 12) ?></span>
+              <span>GL Posting</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-unfreeze', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-workflow" data-pv-sub="pv-sub-unfreeze" onclick="Desk.navigatePvSub('pv-sub-unfreeze', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('unlock', 12) ?></span>
+              <span>Unfreeze Batches</span>
+            </button>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>
@@ -234,26 +252,36 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
           <span class="sidebar-chevron"><?= Icon::get('chevron-down', 13) ?></span>
         </button>
         <div class="sidebar-submenu" id="submenu-pv-reports">
-          <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-avg" onclick="Desk.navigatePvReportSub('pv-sub-avg', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('trending-up', 12) ?></span>
-            <span>Avg Consumption</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-final" onclick="Desk.navigatePvReportSub('pv-sub-final', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('file-text', 12) ?></span>
-            <span>Final Report</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-other" onclick="Desk.navigatePvReportSub('pv-sub-other', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('layers', 12) ?></span>
-            <span>Other Reports</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-summary" onclick="Desk.navigatePvReportSub('pv-sub-summary', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('clipboard', 12) ?></span>
-            <span>PHV Sheet Summary</span>
-          </button>
-          <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-av7" onclick="Desk.navigatePvReportSub('pv-sub-av7', this)">
-            <span class="sidebar-sub-icon"><?= Icon::get('file-check', 12) ?></span>
-            <span>Form AV 7 Summary</span>
-          </button>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-avg-consumption', $userId)): ?>
+            <button type="button" class="sidebar-sub-item active" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-avg" onclick="Desk.navigatePvReportSub('pv-sub-avg', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('trending-up', 12) ?></span>
+              <span>Avg Consumption</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-final-report', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-final" onclick="Desk.navigatePvReportSub('pv-sub-final', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('file-text', 12) ?></span>
+              <span>Final Report</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-other-reports', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-other" onclick="Desk.navigatePvReportSub('pv-sub-other', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('layers', 12) ?></span>
+              <span>Other Reports</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-sheet-summary', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-summary" onclick="Desk.navigatePvReportSub('pv-sub-summary', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('clipboard', 12) ?></span>
+              <span>PHV Sheet Summary</span>
+            </button>
+          <?php endif; ?>
+          <?php if ($permModel->hasPermission($roleId, 'tab-user-pv-av7-summary', $userId)): ?>
+            <button type="button" class="sidebar-sub-item" data-parent-tab="tab-pv-reports" data-pv-report-sub="pv-sub-av7" onclick="Desk.navigatePvReportSub('pv-sub-av7', this)">
+              <span class="sidebar-sub-icon"><?= Icon::get('file-check', 12) ?></span>
+              <span>Form AV 7 Summary</span>
+            </button>
+          <?php endif; ?>
         </div>
       </div>
     <?php endif; ?>
