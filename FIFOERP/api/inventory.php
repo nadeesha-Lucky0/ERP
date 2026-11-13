@@ -158,10 +158,33 @@ try {
             } catch (\Throwable $e) {}
             try {
                 $central->exec("CREATE TABLE IF NOT EXISTS erp_predefined_suppliers (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(200) NOT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                if ((int)$central->query("SELECT COUNT(*) FROM erp_predefined_suppliers")->fetchColumn() === 0) {
+                    $seedSup = [
+                        'Lanka Lubricants Ltd', 'Colombo Electrical Supplies Ltd', 'Industrial Spares (Pvt) Ltd',
+                        'Diesel & Motor Engineering (DIMO)', 'United Motors Lanka PLC', 'Hayleys Power & Energy',
+                        'Ceylon Petroleum Corporation (CPC)', 'State Engineering Corporation', 'Walker Sons & Co Ltd',
+                        'Kelani Cables PLC', 'Brown & Company PLC', 'Tokyo Cement Company', 'Avent Technologies (Pvt) Ltd'
+                    ];
+                    $stSeedSup = $central->prepare("INSERT INTO erp_predefined_suppliers (name, status) VALUES (?, 'active')");
+                    foreach ($seedSup as $s) { $stSeedSup->execute([$s]); }
+                }
                 $suppliers = $central->query("SELECT id, name, status FROM erp_predefined_suppliers ORDER BY name ASC")->fetchAll();
             } catch (\Throwable $e) {}
             try {
                 $central->exec("CREATE TABLE IF NOT EXISTS erp_cost_centers (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(50) NOT NULL, name VARCHAR(150) NOT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                if ((int)$central->query("SELECT COUNT(*) FROM erp_cost_centers")->fetchColumn() === 0) {
+                    $seedCc = [
+                        ['831.00', '831.00 - Victoria Operations & Capital'],
+                        ['831.10', '831.10 - Mechanical Maintenance - Victoria PS'],
+                        ['831.20', '831.20 - Electrical Maintenance - Victoria PS'],
+                        ['831.30', '831.30 - Civil Engineering & Dam Safety - Victoria'],
+                        ['831.40', '831.40 - Instrumentation & Control System - Victoria'],
+                        ['831.50', '831.50 - Power House Auxiliary Stores - Victoria'],
+                        ['831.60', '831.60 - Chemical & Lubricants Division - Victoria']
+                    ];
+                    $stSeedCc = $central->prepare("INSERT INTO erp_cost_centers (code, name, status) VALUES (?, ?, 'active')");
+                    foreach ($seedCc as $c) { $stSeedCc->execute($c); }
+                }
                 $costCenters = $central->query("SELECT id, code, name, status FROM erp_cost_centers ORDER BY code ASC")->fetchAll();
             } catch (\Throwable $e) {}
             Response::success('Admin lookups loaded', [
