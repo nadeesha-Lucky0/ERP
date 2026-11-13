@@ -313,26 +313,6 @@ class Permission {
                     'path' => 'Authorized Tasks > Allocated Qty Correction',
                     'level' => 2
                 ],
-            ],
-            '6. Code Management' => [
-                'tab-user-code-roles' => [
-                    'label' => 'User Roles & Codes',
-                    'desc' => 'Code Management > User Roles > Defined Roles & Code Option',
-                    'path' => 'Code Management > User Roles & Codes',
-                    'level' => 2
-                ],
-                'tab-user-code-locations' => [
-                    'label' => 'Station / Location Codes',
-                    'desc' => 'Code Management > Station Codes',
-                    'path' => 'Code Management > Station Codes',
-                    'level' => 2
-                ],
-                'tab-user-code-departments' => [
-                    'label' => 'Department Codes',
-                    'desc' => 'Code Management > Department Codes',
-                    'path' => 'Code Management > Department Codes',
-                    'level' => 2
-                ],
             ]
         ];
     }
