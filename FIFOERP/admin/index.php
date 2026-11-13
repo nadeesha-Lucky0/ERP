@@ -555,6 +555,34 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
   <title><?= $pageTitle ?> | <?= APP_NAME ?></title>
   <link rel="stylesheet" href="<?= $base ?>/assets/css/design-system.css?v=<?= time() ?>">
   <link rel="stylesheet" href="<?= $base ?>/assets/css/dashboard.css?v=<?= time() ?>">
+  <?php if ($isCodeAdmin): ?>
+  <style>
+    /* Clean ERPNext-style Light UI for Code Admin */
+    body { background: #f8fafc !important; color: #1e293b !important; }
+    .admin-sidebar, .sidebar { background: #ffffff !important; border-right: 1px solid #e2e8f0 !important; }
+    .admin-topbar, .topbar { background: #ffffff !important; border-bottom: 1px solid #e2e8f0 !important; }
+    .admin-nav-item.active, .nav-item.active, .sidebar-tab.active, .admin-tab-btn.active {
+      background: #ecfdf5 !important;
+      color: #059669 !important;
+      border-color: #a7f3d0 !important;
+      font-weight: 600 !important;
+    }
+    .admin-nav-item.active svg, .nav-item.active svg, .admin-tab-btn.active svg {
+      color: #059669 !important;
+      stroke: #059669 !important;
+    }
+    .admin-nav-item:hover:not(.active), .admin-tab-btn:hover:not(.active) {
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    .card, .admin-card, .kpi-card {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+    }
+  </style>
+  <?php endif; ?>
 </head>
 
 <body>
