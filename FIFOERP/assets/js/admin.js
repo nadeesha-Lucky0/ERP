@@ -7596,7 +7596,8 @@ window.updateSearchImagesOption = function () {
       '</div>' +
       '<button type="button" id="modalReqSearchDrawBtn" onclick="openItemImageSearch(\'drawing dimensions\')" title="Search technical drawings / dimensions" style="flex:none;background:#ffffff;color:#1d4ed8;border:1px solid #93c5fd;font-size:0.7rem;font-weight:700;border-radius:6px;padding:6px 8px;cursor:pointer;">Drawings</button>' +
       '<button type="button" id="modalReqSearchImagesBtn" onclick="openItemImageSearch()" style="flex:none;background:#2563eb;color:#ffffff;border:none;font-size:0.74rem;font-weight:700;border-radius:6px;padding:7px 10px;cursor:pointer;">View images &#8599;</button>';
-    input.insertAdjacentElement('afterend', box);
+    const anchor = document.getElementById('spellSuggestReqItemName') || input;
+    anchor.insertAdjacentElement('afterend', box);
     const hint = document.createElement('div');
     hint.style.cssText = 'font-size:0.64rem;color:#64748b;margin-top:3px;';
     hint.textContent = 'Opens Google Images in a new tab. Save the picture, then add it under Item Photos below.';
