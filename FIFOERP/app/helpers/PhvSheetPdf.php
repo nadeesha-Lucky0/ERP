@@ -59,10 +59,7 @@ class PhvSheetPdf {
         $c .= "440 760 115 38 re f\n";
         $c .= "1 1 1 rg\n";
         $c .= "BT\n/F2 11 Tf\n";
-        $c .= "452 780 Td (SHEET " . sprintf('%02d', $sheetNum) . " / " . sprintf('%02d', $totalSheets) . ") Tj\n";
-        $c .= "ET\n";
-        $c .= "BT\n/F1 8 Tf\n";
-        $c .= "455 768 Td (" . count($items) . " ITEMS / SHEET) Tj\n";
+        $c .= "452 775 Td (SHEET " . sprintf('%02d', $sheetNum) . " / " . sprintf('%02d', $totalSheets) . ") Tj\n";
         $c .= "ET\n";
 
         // Table Header Row
@@ -170,7 +167,7 @@ class PhvSheetPdf {
         // Page footer note
         $c .= "0.55 0.6 0.65 rg\n";
         $c .= "BT\n/F1 7 Tf\n";
-        $c .= "30 38 Td (Form EGL-ST-PHV-01 | Standard 21 Items Stock Count Tally Sheet | Generated on $date) Tj\n";
+        $c .= "30 38 Td (Generated on $date) Tj\n";
         $c .= "430 0 Td (Page $sheetNum of $totalSheets) Tj\n";
         $c .= "ET\n";
 
