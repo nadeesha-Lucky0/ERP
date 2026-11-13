@@ -677,7 +677,20 @@ try {
                 Response::error('Please select at least one warehouse/department.');
             }
             $isFreeze = ($action === 'freeze_warehouses') ? 1 : 0;
-            $user = $_SESSION['username'] ?? 'Admin';
+            $user = $_SESSION['role_name'] ?? '';
+            if ($user === '' && !empty($_SESSION['role_id'])) {
+                try {
+                    $stR = $central->prepare("SELECT display_name, name FROM roles WHERE id = ?");
+                    $stR->execute([(int)$_SESSION['role_id']]);
+                    $rRow = $stR->fetch();
+                    if ($rRow) {
+                        $user = $rRow['display_name'] ?: $rRow['name'];
+                    }
+                } catch (\Throwable $e) {}
+            }
+            if ($user === '') {
+                $user = $_SESSION['username'] ?? 'User';
+            }
             $stDept = $central->prepare("SELECT id, code, name FROM departments WHERE id = ?");
             $stUpsert = $central->prepare("
                 INSERT INTO erp_warehouse_freeze (department_id, department_code, department_name, is_frozen, frozen_at, frozen_by)
