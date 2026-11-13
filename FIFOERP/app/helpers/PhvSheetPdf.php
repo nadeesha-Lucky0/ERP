@@ -25,7 +25,7 @@ class PhvSheetPdf {
 
         // 2: Pages
         $pagesId = $newObj();
-        $buffer .= "<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
+        $buffer .= "<< /Type /Pages /Kids [6 0 R] /Count 1 >>\nendobj\n";
 
         // Fonts: Helvetica & Helvetica-Bold
         $fontId = $newObj();
@@ -179,10 +179,8 @@ class PhvSheetPdf {
         $len = strlen($c);
         $buffer .= "<< /Length $len >>\nstream\n$c\nendstream\nendobj\n";
 
-        // Page object
-        $pageId = 3;
-        $offsets[$pageId] = strlen($buffer);
-        $buffer .= "$pageId 0 obj\n";
+        // Page object (6)
+        $pageId = $newObj();
         $buffer .= "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 $fontId 0 R /F2 $fontBoldId 0 R >> >> /Contents $contentId 0 R >>\nendobj\n";
 
         // Xref table
