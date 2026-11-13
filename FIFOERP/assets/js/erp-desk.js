@@ -1926,8 +1926,9 @@ const Desk = {
     const station = encodeURIComponent(document.getElementById('sheetStation')?.value || 'Victoria Hydro Power Station');
     const costCenter = encodeURIComponent(document.getElementById('sheetCostCenter')?.value || 'Mechanical');
     const warehouse = encodeURIComponent(document.getElementById('sheetWarehouse')?.value || 'Central Main Store');
-    Desk.showToast('Preparing ZIP package with all 21-item PDF count sheets...');
-    window.location.href = `${this.baseUrl}/api/phv.php?action=download_sheets_zip&session_id=1&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}`;
+    const perPage = Math.max(1, Math.min(100, parseInt(document.getElementById('sheetItemsPerPage')?.value, 10) || 21));
+    Desk.showToast(`Preparing ZIP package with all ${perPage}-item PDF count sheets...`);
+    window.location.href = `${this.baseUrl}/api/phv.php?action=download_sheets_zip&session_id=1&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}&per_page=${perPage}`;
   },
 
   downloadCurrentSheetPdf() {
@@ -1935,7 +1936,8 @@ const Desk = {
     const station = encodeURIComponent(document.getElementById('sheetStation')?.value || 'Victoria Hydro Power Station');
     const costCenter = encodeURIComponent(document.getElementById('sheetCostCenter')?.value || 'Mechanical');
     const warehouse = encodeURIComponent(document.getElementById('sheetWarehouse')?.value || 'Central Main Store');
-    window.open(`${this.baseUrl}/api/phv.php?action=download_sheet_pdf&session_id=1&sheet_num=${cur}&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}`, '_blank');
+    const perPage = Math.max(1, Math.min(100, parseInt(document.getElementById('sheetItemsPerPage')?.value, 10) || 21));
+    window.open(`${this.baseUrl}/api/phv.php?action=download_sheet_pdf&session_id=1&sheet_num=${cur}&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}&per_page=${perPage}`, '_blank');
   },
 
   loadPvEntry() {

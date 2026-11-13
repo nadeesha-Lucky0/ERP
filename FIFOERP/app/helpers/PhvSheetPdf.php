@@ -62,7 +62,7 @@ class PhvSheetPdf {
         $c .= "452 780 Td (SHEET " . sprintf('%02d', $sheetNum) . " / " . sprintf('%02d', $totalSheets) . ") Tj\n";
         $c .= "ET\n";
         $c .= "BT\n/F1 8 Tf\n";
-        $c .= "455 768 Td (21 ITEMS / SHEET) Tj\n";
+        $c .= "455 768 Td (" . count($items) . " ITEMS / SHEET) Tj\n";
         $c .= "ET\n";
 
         // Table Header Row

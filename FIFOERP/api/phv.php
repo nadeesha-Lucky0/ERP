@@ -493,8 +493,9 @@ try {
                 die('No inventory items found to generate count sheets.');
             }
 
-            // Exactly 21 items per sheet
-            $chunks = array_chunk($items, 21);
+            // Configurable items per sheet (default 21)
+            $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 21)));
+            $chunks = array_chunk($items, $perPage);
             $totalSheets = count($chunks);
 
             $zipPath = tempnam(sys_get_temp_dir(), 'phv_zip_') . '.zip';
@@ -609,7 +610,8 @@ try {
                 $items = $stmt->fetchAll();
             }
 
-            $chunks = array_chunk($items, 21);
+            $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 21)));
+            $chunks = array_chunk($items, $perPage);
             $totalSheets = max(1, count($chunks));
             $chunk = $chunks[$sheetNum - 1] ?? [];
 

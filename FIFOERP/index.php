@@ -1745,6 +1745,11 @@ require_once __DIR__ . '/views/layouts/header.php';
 
             <!-- Download Action Buttons -->
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <label for="sheetItemsPerPage" style="font-size: 12px; font-weight: 600; color: #475569; margin: 0;">Items / Sheet:</label>
+                <input type="number" id="sheetItemsPerPage" class="desk-form-control" value="21" min="1" max="100"
+                  style="width: 68px; padding: 5px 8px; font-size: 13px; font-weight: 600; text-align: center;">
+              </div>
               <button type="button" class="desk-btn desk-btn-primary"
                 style="background: #0284c7; border-color: #0284c7; font-weight: 600;"
                 onclick="Desk.downloadAllSheetsZip()">
