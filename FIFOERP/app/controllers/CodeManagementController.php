@@ -18,7 +18,7 @@ class CodeManagementController {
     private Location $locationModel;
 
     public function __construct() {
-        Auth::requireAuth();
+        Auth::requireLogin();
         $this->masterModel = new MasterItem();
         $this->logModel = new ActivityLog();
         $this->userModel = new User();
