@@ -1319,6 +1319,27 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
+            <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
+              <div style="max-width: 720px;">
+                <label class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Select Warehouse <span style="color: #e02424;">*</span></label>
+                <div id="issueWhSection" style="display: block;">
+                  <div id="issueSourceWhGroup" style="display: block;">
+                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select"
+                      onchange="Desk.applyDefaultWarehouse('issue')" style="width: 100%; height: 38px;">
+                      <option value="" selected>-- Select Warehouse --</option>
+                    </select>
+                  </div>
+                  <div id="issueTargetWhGroup" style="display: none;">
+                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control frappe-select"
+                      onchange="Desk.applyDefaultWarehouse('issue')" style="width: 100%; height: 38px;">
+                      <option value="" selected>-- Select Warehouse --</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Reference Data (Dynamic per Document Profile: ISSUE, MAT-REQ, TV-ISSUE) -->
             <div id="issueReferenceDataSection" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
               <div style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 12px;">Reference Data</div>
@@ -1338,27 +1359,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                 <div id="issueRefGroup4">
                   <label class="frappe-label" id="issueRefLabel4">REF 4 :</label>
                   <input type="text" name="ref_4" id="issueRef4" class="frappe-control" placeholder="">
-                </div>
-              </div>
-            </div>
-
-            <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
-            <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
-              <div style="max-width: 720px;">
-                <label class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Select Warehouse <span style="color: #e02424;">*</span></label>
-                <div id="issueWhSection" style="display: block;">
-                  <div id="issueSourceWhGroup" style="display: block;">
-                    <select name="default_source_warehouse" id="issueDefSourceWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('issue')" style="width: 100%; height: 38px;">
-                      <option value="" selected>-- Select Warehouse --</option>
-                    </select>
-                  </div>
-                  <div id="issueTargetWhGroup" style="display: none;">
-                    <select name="default_target_warehouse" id="issueDefTargetWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('issue')" style="width: 100%; height: 38px;">
-                      <option value="" selected>-- Select Warehouse --</option>
-                    </select>
-                  </div>
                 </div>
               </div>
             </div>
