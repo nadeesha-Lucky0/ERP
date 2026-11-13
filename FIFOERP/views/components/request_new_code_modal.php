@@ -11,8 +11,8 @@
       </div>
 
       <form id="simpleRequestCodeForm" onsubmit="executeSimpleCodeRequest(event);" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
-        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(Session::csrfToken()) ?>">
-        <input type="hidden" name="origin_station_id" value="<?= (int)($activeLocationId ?: 1) ?>">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+        <input type="hidden" name="origin_station_id" value="<?= (int)($currentUser['location_id'] ?? 1) ?>">
         <input type="hidden" name="tier1" id="modalReqTier1" value="1">
         <input type="hidden" name="tier2" id="modalReqTier2" value="1">
         <input type="hidden" name="tier3" id="modalReqTier3" value="1">
