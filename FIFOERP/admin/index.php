@@ -623,7 +623,7 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
       border-radius: 8px !important;
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
     }
-    .topbar-toggle-btn, .sidebar-brand-titles {
+    .topbar-toggle-btn {
       display: none !important;
     }
   </style>
@@ -6079,8 +6079,12 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
           <div class="sidebar-brand-content">
             <img src="<?= $base ?>/assets/images/EGL-NEW.png" alt="EGL Logo" class="sidebar-brand-logo">
             <div class="sidebar-brand-titles">
-              <strong>Electricity Generation</strong>
-              <span><?= $isSuperAdmin ? 'Super Admin Hub' : ($isCodeAdmin ? 'Code Management Hub' : ($isAccountant ? 'Accounts & Codes Hub' : 'Admin Console')) ?></span>
+              <?php if ($isCodeAdmin): ?>
+                <strong style="font-size: 1rem; font-weight: 800; color: #4c0519; letter-spacing: 0.01em;">EGL FIFOERP</strong>
+              <?php else: ?>
+                <strong>Electricity Generation</strong>
+                <span><?= $isSuperAdmin ? 'Super Admin Hub' : ($isAccountant ? 'Accounts & Codes Hub' : 'Admin Console') ?></span>
+              <?php endif; ?>
             </div>
           </div>
           <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebarCollapse();" title="Collapse / Expand Sidebar" aria-label="Toggle Sidebar">
