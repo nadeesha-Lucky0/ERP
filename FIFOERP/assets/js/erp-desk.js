@@ -792,10 +792,12 @@ const Desk = {
       }
     }
 
-    // Update active tab in sidebar
+    // Update active tab in sidebar & stage dropdown
     document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-issues"]').forEach(el => {
       el.classList.toggle('active', el.getAttribute('data-workflow-filter') === filter);
     });
+    const issueStageSel = document.getElementById('issueStageSelect');
+    if (issueStageSel) issueStageSel.value = filter;
 
     let docs = allDocs;
     if (filter === 'All') {
