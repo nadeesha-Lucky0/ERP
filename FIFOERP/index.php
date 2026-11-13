@@ -3488,6 +3488,11 @@ require_once __DIR__ . '/views/layouts/header.php';
          PANE: Item & Material Codes (Code Main Tab)
          ============================================================ -->
     <div id="tab-codes" class="tab-pane" style="display: none;">
+      <?php
+        $searchPrefix = 'ps';
+        include __DIR__ . '/views/components/item_search_module.php';
+      ?>
+      <div style="display: none;">
       <div class="workspace-header">
         <div class="workspace-title-box">
           <h1>Item &amp; Material Codes Directory</h1>
@@ -4463,6 +4468,16 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 <!-- Include Modal Dialogs -->
 <?php require_once __DIR__ . '/views/components/modals.php'; ?>
+
+<!-- Item Search Module Script -->
+<script src="<?= BASE_PATH ?>/assets/js/item_search.js?v=<?= time() ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof window.initItemSearchModule === 'function') {
+    window.initItemSearchModule('ps');
+  }
+});
+</script>
 
 <!-- Include Footer -->
 <?php require_once __DIR__ . '/views/layouts/footer.php'; ?>
