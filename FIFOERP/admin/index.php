@@ -579,24 +579,33 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
       background-color: #ffffff !important;
       border-bottom: 1px solid #e2e8f0 !important;
     }
-    .sidebar-nav-btn, .admin-nav-item, .nav-item, .sidebar-tab, .admin-tab-btn, [data-tab] {
+    .sidebar-tab-btn, .sidebar-nav-btn, .admin-nav-item, .nav-item, .sidebar-tab, .admin-tab-btn, [data-tab-target] {
       border-radius: 8px !important;
-      color: #64748b !important;
+      color: #334155 !important;
+      background: transparent !important;
       font-weight: 500 !important;
+      font-size: 13.5px !important;
+      padding: 9px 12px !important;
+      border: 1px solid transparent !important;
       transition: all 0.15s ease !important;
     }
-    .sidebar-nav-btn.active, .admin-nav-item.active, .nav-item.active, .sidebar-tab.active, .admin-tab-btn.active, [data-tab].active {
-      background-color: #f0fdfa !important;
-      color: #0d9488 !important;
-      border: 1px solid #ccfbf1 !important;
-      font-weight: 600 !important;
-      box-shadow: none !important;
+    .sidebar-tab-btn .tab-icon, .sidebar-tab-btn svg {
+      color: #64748b !important;
+      stroke: #64748b !important;
     }
-    .sidebar-nav-btn.active svg, .admin-nav-item.active svg, .nav-item.active svg, .admin-tab-btn.active svg, [data-tab].active svg {
+    .sidebar-tab-btn.active, .sidebar-nav-btn.active, .admin-nav-item.active, .nav-item.active, .sidebar-tab.active, .admin-tab-btn.active, [data-tab-target].active {
+      background-color: #ffffff !important;
+      color: #0d9488 !important;
+      border: 1px solid #e2e8f0 !important;
+      border-left: 3px solid #0d9488 !important;
+      font-weight: 600 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    }
+    .sidebar-tab-btn.active .tab-icon, .sidebar-tab-btn.active svg, .sidebar-nav-btn.active svg, .admin-nav-item.active svg, .nav-item.active svg, .admin-tab-btn.active svg, [data-tab-target].active svg {
       color: #0d9488 !important;
       stroke: #0d9488 !important;
     }
-    .sidebar-nav-btn:hover:not(.active), .admin-nav-item:hover:not(.active), .admin-tab-btn:hover:not(.active), [data-tab]:hover:not(.active) {
+    .sidebar-tab-btn:hover:not(.active), .sidebar-nav-btn:hover:not(.active), .admin-nav-item:hover:not(.active), .admin-tab-btn:hover:not(.active), [data-tab-target]:hover:not(.active) {
       background-color: #f1f5f9 !important;
       color: #0f172a !important;
     }
