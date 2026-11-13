@@ -4508,6 +4508,10 @@ require_once __DIR__ . '/views/layouts/header.php';
 <?php require_once __DIR__ . '/views/components/modals.php'; ?>
 
 <!-- Item Search Module Script -->
+<script>
+window.APP_DATA = window.APP_DATA || {};
+window.APP_DATA.tierHierarchy = <?= json_encode((new \App\Models\MasterItem())->getTierHierarchy()) ?>;
+</script>
 <script src="<?= BASE_PATH ?>/assets/js/item_search.js?v=<?= time() ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
