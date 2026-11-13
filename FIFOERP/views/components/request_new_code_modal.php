@@ -1,4 +1,4 @@
-  <div class="modal-backdrop" id="requestNewCodeModal">
+  <div class="modal-backdrop" id="requestNewCodeModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 10050; align-items: center; justify-content: center;">
     <div class="modal-dialog" style="max-width: 96vw; width: 96vw; height: 92vh; max-height: 92vh; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); border: 1px solid #cbd5e1; overflow: hidden; margin: auto;">
       <div class="modal-header" style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 10px 18px; display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -224,7 +224,7 @@
   <!-- =======================================================================
        10. EDIT CODE CREATION REQUEST MODAL (PENDING REQUESTS ONLY)
        ======================================================================= -->
-  <div class="modal-backdrop" id="editCodeRequestModal" data-keep-values="true" style="z-index: 10040;" onclick="if(event.target === this) window.closeModal('editCodeRequestModal');">
+  <div class="modal-backdrop" id="editCodeRequestModal" data-keep-values="true" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); z-index: 10040; align-items: center; justify-content: center;" onclick="if(event.target === this) window.closeModal('editCodeRequestModal');">
     <div class="modal-dialog" style="max-width: 620px; width: 95vw; max-height: 90vh; display: flex; flex-direction: column; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); border: 1px solid #cbd5e1; overflow: hidden; margin: auto; background: #ffffff;">
       
       <div class="modal-header" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-bottom: 1px solid #cbd5e1; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
