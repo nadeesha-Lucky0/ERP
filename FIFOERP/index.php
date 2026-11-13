@@ -4510,11 +4510,19 @@ require_once __DIR__ . '/views/layouts/header.php';
 <!-- Item Search Module Script -->
 <script>
 window.APP_DATA = window.APP_DATA || {};
-window.APP_DATA.tierHierarchy = <?= json_encode((new \App\Models\MasterItem())->getTierHierarchy()) ?>;
+window.APP_DATA.tierHierarchy = window.APP_DATA.tierHierarchy || { tier1: [], tier2: {}, tier3: {} };
 </script>
 <script src="<?= BASE_PATH ?>/assets/js/item_search.js?v=<?= time() ?>"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    const res = await fetch('<?= BASE_PATH ?>/api/code_management.php?action=get_tiers').then(r => r.json());
+    if (res && res.tiers) {
+      window.APP_DATA.tierHierarchy = res.tiers;
+    } else if (res && res.tier1) {
+      window.APP_DATA.tierHierarchy = res;
+    }
+  } catch (e) {}
   if (window.itemSearchController && window.itemSearchController['user']) {
     window.itemSearchController['user'].init();
   }
