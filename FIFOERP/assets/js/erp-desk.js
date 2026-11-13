@@ -568,6 +568,82 @@ const Desk = {
         el.classList.toggle('active', el === subBtn);
       });
     }
+    if (subTabId === 'pv-sub-freeze' || subTabId === 'pv-sub-unfreeze') {
+      this.loadWarehouseFreezeTables();
+    }
+  },
+
+  async loadWarehouseFreezeTables() {
+    const freezeBody = document.getElementById('freezeWarehousesTableBody');
+    const unfreezeBody = document.getElementById('unfreezeWarehousesTableBody');
+    try {
+      const res = await fetch(`${this.baseUrl}/api/phv.php?action=get_warehouse_freeze_status`);
+      const data = await res.json();
+      if (!data.success || !data.data) return;
+      const warehouses = data.data.warehouses || [];
+
+      if (freezeBody) {
+        freezeBody.innerHTML = warehouses.length ? warehouses.map(w => {
+          const isFrz = Number(w.is_frozen) === 1;
+          return `
+            <tr>
+              <td style="text-align: center;">
+                <input type="checkbox" class="freeze-wh-chk" value="${w.id}" ${isFrz ? 'disabled' : ''}>
+              </td>
+              <td><code>${this.escapeHtml(w.code)}</code></td>
+              <td><strong>${this.escapeHtml(w.name)}</strong></td>
+              <td><span class="desk-badge ${isFrz ? 'badge-danger' : 'badge-approved'}">${isFrz ? 'FROZEN' : 'ACTIVE'}</span></td>
+              <td>${w.frozen_at ? this.escapeHtml(w.frozen_at) : '-'}</td>
+              <td>${w.frozen_by ? this.escapeHtml(w.frozen_by) : '-'}</td>
+            </tr>
+          `;
+        }).join('') : '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No active warehouses found.</td></tr>';
+      }
+
+      if (unfreezeBody) {
+        const frozenList = warehouses.filter(w => Number(w.is_frozen) === 1);
+        unfreezeBody.innerHTML = frozenList.length ? frozenList.map(w => `
+          <tr>
+            <td style="text-align: center;">
+              <input type="checkbox" class="unfreeze-wh-chk" value="${w.id}">
+            </td>
+            <td><code>${this.escapeHtml(w.code)}</code></td>
+            <td><strong>${this.escapeHtml(w.name)}</strong></td>
+            <td><span class="desk-badge badge-danger">FROZEN</span></td>
+            <td>${w.frozen_at ? this.escapeHtml(w.frozen_at) : '-'}</td>
+            <td>${w.frozen_by ? this.escapeHtml(w.frozen_by) : '-'}</td>
+          </tr>
+        `).join('') : '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No frozen warehouses found.</td></tr>';
+      }
+    } catch (e) {
+      console.error('Failed to load warehouse freeze status:', e);
+    }
+  },
+
+  async freezeSelectedWarehouses(isFreeze) {
+    const cls = isFreeze ? '.freeze-wh-chk:checked' : '.unfreeze-wh-chk:checked';
+    const ids = Array.from(document.querySelectorAll(cls)).map(c => c.value);
+    if (ids.length === 0) {
+      this.showToast(`Please select at least one warehouse to ${isFreeze ? 'freeze' : 'unfreeze'}.`, true);
+      return;
+    }
+    const fd = new FormData();
+    fd.append('action', isFreeze ? 'freeze_warehouses' : 'unfreeze_warehouses');
+    fd.append('department_ids', JSON.stringify(ids));
+    try {
+      const res = await fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.showToast(data.message);
+        const selAll = document.getElementById(isFreeze ? 'freezeSelectAll' : 'unfreezeSelectAll');
+        if (selAll) selAll.checked = false;
+        this.loadWarehouseFreezeTables();
+      } else {
+        this.showToast(data.message || 'Action failed.', true);
+      }
+    } catch (e) {
+      this.showToast('Network error while updating warehouse freeze status.', true);
+    }
   },
 
   navigatePvReportSub(subTabId, subBtn) {

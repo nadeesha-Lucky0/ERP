@@ -1636,22 +1636,38 @@ require_once __DIR__ . '/views/layouts/header.php';
       <!-- SUB-PANE 1: FREEZE BATCHES -->
       <div id="pv-sub-freeze" class="pv-sub-pane active">
         <div class="desk-card" style="margin-bottom: 20px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; flex-wrap: wrap; gap: 12px;">
             <div>
-              <div style="font-weight: 700; font-size: 14px; color: var(--text-dark);">Store Transaction Lock Status
-              </div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">When frozen, all Receipts (GRN)
-                and Material Issues are blocked across the station.</div>
+              <div style="font-weight: 700; font-size: 14px; color: var(--text-dark);">Warehouse / Branch Freeze Control</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Select warehouses/departments below and freeze them before Physical Verification. Frozen warehouses cannot perform GRN or Material Issue transactions.</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div id="freezeStatusBadge">
-                <span class="badge badge-success" style="font-size: 13px; padding: 6px 14px;">Store Status: NORMAL /
-                  ACTIVE</span>
-              </div>
-              <button class="desk-btn desk-btn-primary" onclick="Desk.freezeAllBatches(true)">
-                <?= Icon::get('lock', 13) ?> Freeze All Batches Now
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.loadWarehouseFreezeTables()">
+                <?= Icon::get('refresh', 13) ?> Refresh
+              </button>
+              <button class="desk-btn desk-btn-primary" onclick="Desk.freezeSelectedWarehouses(true)">
+                <?= Icon::get('lock', 13) ?> Freeze Selected Warehouses
               </button>
             </div>
+          </div>
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px; text-align: center;">
+                    <input type="checkbox" id="freezeSelectAll" onchange="document.querySelectorAll('.freeze-wh-chk').forEach(c => { if(!c.disabled) c.checked = this.checked; })">
+                  </th>
+                  <th>Code</th>
+                  <th>Department / Warehouse Name</th>
+                  <th>Status</th>
+                  <th>Frozen At</th>
+                  <th>Frozen By</th>
+                </tr>
+              </thead>
+              <tbody id="freezeWarehousesTableBody">
+                <tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Loading warehouses...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -2119,20 +2135,40 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 9: UNFREEZE BATCHES -->
       <div id="pv-sub-unfreeze" class="pv-sub-pane">
-        <div class="desk-card" style="padding: 30px 24px; text-align: center; max-width: 600px; margin: 20px auto;">
-          <div style="margin-bottom: 16px; color: #0d9488;">
-            <?= Icon::get('unlock', 48) ?>
+        <div class="desk-card" style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div style="font-weight: 700; font-size: 14px; color: var(--text-dark);">Unfreeze Warehouses / Branches</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Select frozen warehouses below to re-open them for normal GRN and Material Issue operations.</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.loadWarehouseFreezeTables()">
+                <?= Icon::get('refresh', 13) ?> Refresh
+              </button>
+              <button class="desk-btn desk-btn-primary" onclick="Desk.freezeSelectedWarehouses(false)">
+                <?= Icon::get('unlock', 13) ?> Unfreeze Selected Warehouses
+              </button>
+            </div>
           </div>
-          <h3 style="margin: 0 0 10px 0; font-size: 1.25rem;">Ready to Re-Open Stores for Normal Operations?</h3>
-          <p style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 24px;">
-            Unfreezing will remove transaction locks on all batches across Victoria Hydro Station. Engineering
-            departments will be able to submit and receive Material Issues again.
-          </p>
-          <button class="desk-btn desk-btn-primary"
-            style="padding: 10px 28px; font-size: 14px; font-weight: 700; margin: 0 auto;"
-            onclick="Desk.freezeAllBatches(false)">
-            <?= Icon::get('unlock', 14) ?> Confirm &amp; Unfreeze Batches
-          </button>
+          <div class="desk-table-wrapper">
+            <table class="desk-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px; text-align: center;">
+                    <input type="checkbox" id="unfreezeSelectAll" onchange="document.querySelectorAll('.unfreeze-wh-chk').forEach(c => { if(!c.disabled) c.checked = this.checked; })">
+                  </th>
+                  <th>Code</th>
+                  <th>Department / Warehouse Name</th>
+                  <th>Status</th>
+                  <th>Frozen At</th>
+                  <th>Frozen By</th>
+                </tr>
+              </thead>
+              <tbody id="unfreezeWarehousesTableBody">
+                <tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Loading frozen warehouses...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div> <!-- Close #tab-pv-workflow -->

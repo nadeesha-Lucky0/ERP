@@ -636,6 +636,76 @@ try {
             echo $pdfData;
             exit;
 
+        case 'get_warehouse_freeze_status':
+            $central = Database::getConnection();
+            $central->exec("CREATE TABLE IF NOT EXISTS erp_warehouse_freeze (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                department_id INT NOT NULL UNIQUE,
+                department_code VARCHAR(50) DEFAULT '',
+                department_name VARCHAR(150) DEFAULT '',
+                is_frozen TINYINT(1) DEFAULT 0,
+                frozen_at DATETIME NULL,
+                frozen_by VARCHAR(100) NULL
+            )");
+            $rows = $central->query("
+                SELECT d.id, d.code, d.name, COALESCE(f.is_frozen, 0) as is_frozen, f.frozen_at, f.frozen_by
+                FROM departments d
+                LEFT JOIN erp_warehouse_freeze f ON f.department_id = d.id
+                WHERE d.status = 'active'
+                ORDER BY d.name ASC
+            ")->fetchAll();
+            Response::success('Warehouse freeze status loaded', ['warehouses' => $rows]);
+            break;
+
+        case 'freeze_warehouses':
+        case 'unfreeze_warehouses':
+            $central = Database::getConnection();
+            $central->exec("CREATE TABLE IF NOT EXISTS erp_warehouse_freeze (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                department_id INT NOT NULL UNIQUE,
+                department_code VARCHAR(50) DEFAULT '',
+                department_name VARCHAR(150) DEFAULT '',
+                is_frozen TINYINT(1) DEFAULT 0,
+                frozen_at DATETIME NULL,
+                frozen_by VARCHAR(100) NULL
+            )");
+            $rawIds = $_POST['department_ids'] ?? '';
+            $ids = is_array($rawIds) ? $rawIds : (json_decode($rawIds, true) ?: array_filter(explode(',', $rawIds)));
+            $ids = array_map('intval', $ids);
+            $ids = array_filter($ids, fn($v) => $v > 0);
+            if (empty($ids)) {
+                Response::error('Please select at least one warehouse/department.');
+            }
+            $isFreeze = ($action === 'freeze_warehouses') ? 1 : 0;
+            $user = $_SESSION['username'] ?? 'Admin';
+            $stDept = $central->prepare("SELECT id, code, name FROM departments WHERE id = ?");
+            $stUpsert = $central->prepare("
+                INSERT INTO erp_warehouse_freeze (department_id, department_code, department_name, is_frozen, frozen_at, frozen_by)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    department_code = VALUES(department_code),
+                    department_name = VALUES(department_name),
+                    is_frozen = VALUES(is_frozen),
+                    frozen_at = VALUES(frozen_at),
+                    frozen_by = VALUES(frozen_by)
+            ");
+            foreach ($ids as $did) {
+                $stDept->execute([$did]);
+                $d = $stDept->fetch();
+                if ($d) {
+                    $stUpsert->execute([
+                        $did,
+                        $d['code'] ?? '',
+                        $d['name'] ?? '',
+                        $isFreeze,
+                        $isFreeze ? date('Y-m-d H:i:s') : null,
+                        $isFreeze ? $user : null
+                    ]);
+                }
+            }
+            Response::success($isFreeze ? 'Selected warehouses have been FROZEN for Physical Verification.' : 'Selected warehouses have been UNFROZEN.');
+            break;
+
         default:
             Response::error('Invalid PHV action: ' . $action);
     }

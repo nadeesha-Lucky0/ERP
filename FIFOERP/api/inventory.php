@@ -534,6 +534,22 @@ try {
             $deptCode = trim($_POST['department_code'] ?? 'STORES-01');
             $destCode = trim($_POST['destination_code'] ?? 'DEST-ST-01');
             $warehouse = trim($_POST['warehouse'] ?? 'Main Store Bay-01');
+
+            // Block GRN & Material Issue if the selected warehouse is frozen for Physical Verification
+            try {
+                $centralChk = Database::getConnection();
+                $stFrz = $centralChk->prepare("
+                    SELECT department_code, department_name FROM erp_warehouse_freeze
+                    WHERE is_frozen = 1
+                      AND (CONCAT(department_code, ' -- ', department_name) = ? OR department_name = ? OR department_code = ?)
+                    LIMIT 1
+                ");
+                $stFrz->execute([$warehouse, $warehouse, $warehouse]);
+                $frozenRow = $stFrz->fetch();
+                if ($frozenRow) {
+                    Response::error("Warehouse '{$warehouse}' is currently FROZEN for Physical Verification. GRN and Material Issue transactions are blocked until unfrozen.");
+                }
+            } catch (\Throwable $e) {}
             $remarks = trim($_POST['remarks'] ?? '');
             $itemsJson = $_POST['items'] ?? '[]';
             $items = is_string($itemsJson) ? json_decode($itemsJson, true) : $itemsJson;
