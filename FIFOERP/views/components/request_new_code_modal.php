@@ -56,22 +56,7 @@
               </div>
             </div>
 
-            <!-- Item code (4th segment) - only visible in "Add New Item" mode -->
-            <div id="modalReqSeqWrap" style="display: none; margin-bottom: 0;">
-              <label for="modalReqSeqInput" style="display: block; font-size: 0.72rem; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 4px;">Item code (4th segment) *</label>
-              <div style="display: flex; align-items: center; gap: 8px; background: #f1f5f9; border-radius: 6px; padding: 8px 10px;">
-                <span style="font-family: monospace; font-size: 0.95rem; font-weight: 800; color: #64748b;"><span id="modalReqSeqPrefix"></span></span>
-                <input type="text" id="modalReqSeqInput" inputmode="numeric" maxlength="3" autocomplete="off" aria-label="4th code segment"
-                  oninput="this.value = this.value.replace(/\D/g, '').slice(0, 3); if (window.AddItemFlow) window.AddItemFlow.onInput();"
-                  onblur="if (this.value !== '') this.value = this.value.padStart(3, '0');"
-                  style="width: 70px; text-align: center; font-family: monospace; font-size: 1.1rem; font-weight: 800; height: 34px; border: 1px solid #71717a; border-radius: 4px;">
-                <span id="modalReqSeqSuggest" style="font-size: 0.72rem; color: #64748b;"></span>
-              </div>
-              <div id="modalReqCodeNote" aria-live="polite"></div>
-              <label id="modalReqConfirmRow" style="display: none; margin-top: 6px; font-size: 0.78rem; font-weight: 600; color: #92400e; cursor: pointer;">
-                <input type="checkbox" id="modalReqConfirm" onchange="if (window.AddItemFlow) window.AddItemFlow.updateSubmit();"> It is a different item, create anyway
-              </label>
-            </div>
+            <!-- Item code (4th segment) removed per user request -->
 
             <!-- Item Name / Description Input -->
             <div class="form-group" style="margin-bottom: 0;">
