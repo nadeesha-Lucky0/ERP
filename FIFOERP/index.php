@@ -3492,6 +3492,44 @@ require_once __DIR__ . '/views/layouts/header.php';
         $searchPrefix = 'user';
         include __DIR__ . '/views/components/item_search_module.php';
       ?>
+
+      <!-- My Station's Submitted Code Creation Requests Card -->
+      <div class="card" id="myStationRequestsCard" style="padding: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin: 24px 0 0 0; overflow: hidden;">
+        <div style="padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0;">My Station's Code Creation Requests</h4>
+            <span style="font-size: 0.75rem; color: #64748b;">
+              Track approval status of requested item codes submitted by <strong><?= htmlspecialchars($currentUser['location_name'] ?? 'Power Station') ?></strong>
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="if(typeof loadStationRequests==='function') loadStationRequests();"
+            style="font-size: 0.75rem; font-weight: 600; padding: 3px 10px; height: 28px; border-radius: 3px; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer;" title="Refresh Requests List">
+            Refresh Requests
+          </button>
+        </div>
+
+        <div style="overflow-x: auto; max-height: 480px; overflow-y: auto;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin-bottom: 0;">
+            <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 2; border-bottom: 1px solid #cbd5e1;">
+              <tr>
+                <th style="padding: 6px 10px; text-align: left; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 140px;">ITEM CODE</th>
+                <th style="padding: 6px 10px; text-align: left; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">ITEM DESCRIPTION &amp; SPECS</th>
+                <th style="padding: 6px 10px; text-align: left; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 70px;">UOM</th>
+                <th style="padding: 6px 10px; text-align: left; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 130px;">REQUESTED AT</th>
+                <th style="padding: 6px 10px; text-align: left; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 150px;">STATUS</th>
+                <th style="padding: 6px 10px; text-align: right; font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; width: 140px;">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="stationRequestsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.8125rem;">
+                  No code creation requests found. Use the <strong>Request Code</strong> button above to request new codes.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div style="display: none;">
       <div class="workspace-header">
         <div class="workspace-title-box">
