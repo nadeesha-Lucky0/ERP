@@ -1753,9 +1753,6 @@ require_once __DIR__ . '/views/layouts/header.php';
               <button type="button" class="desk-btn desk-btn-default" onclick="Desk.downloadCurrentSheetPdf()">
                 <?= Icon::get('file-text', 13) ?> Download Current Sheet (PDF)
               </button>
-              <button type="button" class="desk-btn desk-btn-default" onclick="window.print()">
-                <?= Icon::get('printer', 13) ?> Print Sheet
-              </button>
             </div>
           </div>
 
