@@ -34,8 +34,8 @@ $allIssueCodes = $isAdmin ? $issueCodeModel->getAll() : [];
 $issueCategoryCounts = $isAdmin ? $issueCodeModel->getCategoryCounts() : [];
 $groupedIssueCodes = $issueCodeModel->getAllGrouped();
 
-// Check if showing staff portal (non-admins, code_admin, or admin previewing staff view)
-$showStaffView = !$isAdmin || $isCodeAdmin || (isset($_GET['view']) && $_GET['view'] === 'staff');
+// Check if showing staff portal (non-admins, or admin previewing staff view)
+$showStaffView = !$isAdmin || (isset($_GET['view']) && $_GET['view'] === 'staff');
 
 // Strict tab authorization for admin console
 $canAccessMasterCodes = in_array($userRole, ['code_admin', 'admin']);
