@@ -3967,10 +3967,11 @@ require_once __DIR__ . '/views/layouts/header.php';
         <label class="frappe-label">Target Warehouse</label>
         <select id="modalPoWarehouseSelect" class="frappe-control frappe-select" style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
-          <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
-          <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
-          <option value="WH_DMG_VIC --DAMAGES - VICTORIA PS">WH_DMG_VIC --DAMAGES - VICTORIA PS</option>
-          <option value="WH_SP_VIC --SPARE WAREHOUSE - VICTORIA">WH_SP_VIC --SPARE WAREHOUSE - VICTORIA</option>
+          <?php if (!empty($departments)): foreach ($departments as $dept): if (($dept['status'] ?? '') === 'active'):
+            $whLabel = trim(($dept['code'] ?? '') . ' -- ' . ($dept['name'] ?? ''), ' -');
+          ?>
+            <option value="<?= htmlspecialchars($whLabel) ?>"><?= htmlspecialchars($whLabel) ?></option>
+          <?php endif; endforeach; endif; ?>
         </select>
       </div>
 
@@ -4011,10 +4012,11 @@ require_once __DIR__ . '/views/layouts/header.php';
         <select id="modalCostCenterWarehouseSelect" class="frappe-control frappe-select"
           style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
-          <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
-          <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
-          <option value="WH_DMG_VIC --DAMAGES - VICTORIA PS">WH_DMG_VIC --DAMAGES - VICTORIA PS</option>
-          <option value="WH_SP_VIC --SPARE WAREHOUSE - VICTORIA">WH_SP_VIC --SPARE WAREHOUSE - VICTORIA</option>
+          <?php if (!empty($departments)): foreach ($departments as $dept): if (($dept['status'] ?? '') === 'active'):
+            $whLabel = trim(($dept['code'] ?? '') . ' -- ' . ($dept['name'] ?? ''), ' -');
+          ?>
+            <option value="<?= htmlspecialchars($whLabel) ?>"><?= htmlspecialchars($whLabel) ?></option>
+          <?php endif; endforeach; endif; ?>
         </select>
       </div>
     </div>
@@ -4048,10 +4050,11 @@ require_once __DIR__ . '/views/layouts/header.php';
         <select id="modalSectionWarehouseSelect" class="frappe-control frappe-select"
           style="width: 100%; max-width: 100%;">
           <option value="" selected>-- Select Warehouse --</option>
-          <option value="WH 831.00 --VICTORIA WAREHOUSE">WH 831.00 --VICTORIA WAREHOUSE</option>
-          <option value="WH_CON_VIC --CONSUMABLES - VICTORIA PS">WH_CON_VIC --CONSUMABLES - VICTORIA PS</option>
-          <option value="WH_DMG_VIC --DAMAGES - VICTORIA PS">WH_DMG_VIC --DAMAGES - VICTORIA PS</option>
-          <option value="WH_SP_VIC --SPARE WAREHOUSE - VICTORIA">WH_SP_VIC --SPARE WAREHOUSE - VICTORIA</option>
+          <?php if (!empty($departments)): foreach ($departments as $dept): if (($dept['status'] ?? '') === 'active'):
+            $whLabel = trim(($dept['code'] ?? '') . ' -- ' . ($dept['name'] ?? ''), ' -');
+          ?>
+            <option value="<?= htmlspecialchars($whLabel) ?>"><?= htmlspecialchars($whLabel) ?></option>
+          <?php endif; endforeach; endif; ?>
         </select>
       </div>
     </div>
