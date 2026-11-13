@@ -1062,8 +1062,9 @@
       $('modalReqConfirm').checked = false;
       $('modalReqConfirmRow').style.display = 'none';
       $('modalReqCodeNote').innerHTML = '';
-      $('modalReqSeqSuggest').textContent = 'checking…';
-      $('modalReqSeqWrap').style.display = 'block';
+      $('modalReqSeqSuggest').textContent = '';
+      $('modalReqSeqWrap').style.display = 'none';
+      this.seqOk = true;
       $('modalReqFormattedCode').textContent = `${t1}-${pad2(t2)}-${pad2(t3)}-…`;
       const badge = $('modalReqAssignBadge'); if (badge) badge.textContent = 'Next free code';
 
@@ -1092,6 +1093,12 @@
     },
 
     async check(applySuggestion) {
+      const wrap = $('modalReqSeqWrap');
+      if (!wrap || wrap.style.display === 'none') {
+        this.seqOk = true;
+        this.updateSubmit();
+        return;
+      }
       const id = ++this.reqId;
       const seqEl = $('modalReqSeqInput');
       const { t1, t2, t3 } = this.t;
