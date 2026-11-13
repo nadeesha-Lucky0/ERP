@@ -4510,6 +4510,39 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 <?php include __DIR__ . '/views/components/request_new_code_modal.php'; ?>
 
+<style>
+#toast-container, .toast-container {
+  position: fixed;
+  top: 18px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  min-width: 260px;
+  max-width: 400px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #0f172a;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.toast.toast-success { background: #059669; }
+.toast.toast-error { background: #dc2626; }
+.toast.toast-warning { background: #d97706; }
+.toast.toast-info { background: #0284c7; }
+</style>
+
 <!-- Item Search Module Script -->
 <script>
 window.APP_DATA = window.APP_DATA || {};
