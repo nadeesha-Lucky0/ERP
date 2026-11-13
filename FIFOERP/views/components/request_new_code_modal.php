@@ -88,6 +88,7 @@
                 placeholder="E.G. DEEP GROOVE BALL BEARING 6205 2RS C3" required spellcheck="true" autocomplete="off" lang="en"
                 oninput="this.value = this.value.toUpperCase(); if(typeof onModalReqNameInput === 'function') onModalReqNameInput();"
                 style="font-size: 0.88rem; font-weight: 600; padding: 8px 10px; border: 1px solid #71717a; border-radius: 4px; text-transform: uppercase; width: 100%; resize: vertical; line-height: 1.4;"></textarea>
+              <div id="spellSuggestReqItemName" style="margin-top: 6px; font-size: 0.73rem; min-height: 18px; display: none; align-items: center; gap: 6px; flex-wrap: wrap;"></div>
             </div>
 
             <!-- Hidden specs field to maintain backward compatibility -->
