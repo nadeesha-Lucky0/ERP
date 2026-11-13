@@ -48,6 +48,10 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
     <span class="sidebar-icon"><?= Icon::get('layers') ?></span>
     <span>Sections, Suppliers &amp; Cost Centers</span>
   </button>
+  <a href="admin/index.php" target="_blank" class="sidebar-nav-item" style="text-decoration: none;">
+    <span class="sidebar-icon"><?= Icon::get('tag') ?></span>
+    <span>Code Admin Console &nearr;</span>
+  </a>
 
 <?php else: ?>
   <!-- ============================================================
