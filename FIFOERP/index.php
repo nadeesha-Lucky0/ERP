@@ -3896,9 +3896,18 @@ require_once __DIR__ . '/views/layouts/header.php';
 
         <!-- SUB-PANE 6: SECTIONS, SUPPLIERS & COST CENTERS -->
         <div id="admin-sub-lookups" class="admin-sub-pane">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
+          <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+            <label style="font-size: 0.85rem; font-weight: 600; color: #334155; margin: 0;">Select Category:</label>
+            <select id="adminLookupsSubSelect" class="desk-form-control" style="width: auto; min-width: 240px; padding: 6px 12px; font-weight: 600;" onchange="Desk.switchAdminLookupSub(this.value)">
+              <option value="section">Sections (Destination Codes)</option>
+              <option value="supplier">Predefined Suppliers</option>
+              <option value="cost_center">Cost Centers</option>
+            </select>
+          </div>
+
+          <div>
             <!-- 1. Sections -->
-            <div class="desk-card">
+            <div id="admin-lookup-pane-section" class="desk-card admin-lookup-pane" style="display: block;">
               <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Sections (Destination Codes)</h2>
@@ -3924,7 +3933,7 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <!-- 2. Predefined Suppliers -->
-            <div class="desk-card">
+            <div id="admin-lookup-pane-supplier" class="desk-card admin-lookup-pane" style="display: none;">
               <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Predefined Suppliers</h2>
@@ -3949,7 +3958,7 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
 
             <!-- 3. Cost Centers -->
-            <div class="desk-card">
+            <div id="admin-lookup-pane-cost_center" class="desk-card admin-lookup-pane" style="display: none;">
               <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Cost Centers</h2>

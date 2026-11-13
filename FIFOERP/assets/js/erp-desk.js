@@ -4286,6 +4286,12 @@ const Desk = {
     }
   },
 
+  switchAdminLookupSub(type) {
+    document.querySelectorAll('.admin-lookup-pane').forEach(p => {
+      p.style.display = (p.id === `admin-lookup-pane-${type}`) ? 'block' : 'none';
+    });
+  },
+
   async loadAdminLookups() {
     try {
       const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_admin_lookups`);
