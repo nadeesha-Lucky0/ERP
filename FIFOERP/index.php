@@ -4508,6 +4508,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 <!-- Include Modal Dialogs -->
 <?php require_once __DIR__ . '/views/components/modals.php'; ?>
 
+<?php include __DIR__ . '/views/components/request_new_code_modal.php'; ?>
+
 <!-- Item Search Module Script -->
 <script>
 window.APP_DATA = window.APP_DATA || {};
