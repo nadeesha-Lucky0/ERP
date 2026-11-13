@@ -2555,49 +2555,114 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- In-Body Payslip Cancellation Form -->
       <div class="desk-card"
-        style="margin-bottom: 22px; padding: 22px 26px; border: 1.5px solid #000000; border-radius: 4px; background: #ffffff;">
+        style="margin-bottom: 22px; padding: 22px 26px; border: 1px solid #e2e8f0; border-radius: 6px; background: #ffffff;">
         <h3
-          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #000000; display: flex; align-items: center; gap: 8px;">
-          <?= Icon::get('alert-triangle', 16) ?> Enter Payslip Cancellation Requisition
+          style="margin: 0 0 16px 0; font-size: 1.05rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+          <?= Icon::get('alert-triangle', 16) ?> Payslip Cancellation Entry
         </h3>
         <form id="bodyPayslipCancelForm" onsubmit="event.preventDefault(); Desk.submitBodyPayslipCancel(this);">
-          <div
-            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
             <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Payslip No *</label>
-              <input type="text" name="payslip_no" class="desk-form-control" placeholder="e.g. PS-2026-11-831-042"
-                required style="border: 1px solid #71717a; border-radius: 2px;">
+              <label class="desk-form-label" style="font-weight: 600;">Document Profile</label>
+              <select name="doc_profile" class="desk-form-control">
+                <option value="">-Select DOC PF-</option>
+                <option value="PAY-CANCEL">PAY-CANCEL</option>
+                <option value="PS-REV">PS-REV</option>
+              </select>
             </div>
             <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Employee Name *</label>
-              <input type="text" name="employee_name" class="desk-form-control" placeholder="e.g. K. L. Bandara"
-                required style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">EPF Number</label>
-              <input type="text" name="epf_no" class="desk-form-control" placeholder="e.g. EPF-55829"
-                style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Pay Period *</label>
-              <input type="text" name="pay_period" class="desk-form-control" value="<?= date('F Y') ?>" required
-                style="border: 1px solid #71717a; border-radius: 2px;">
-            </div>
-            <div class="desk-form-group" style="margin: 0;">
-              <label class="desk-form-label" style="font-weight: 700; color: #000000;">Amount (Rs.) *</label>
-              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00"
-                required style="border: 1px solid #71717a; border-radius: 2px;">
+              <label class="desk-form-label" style="font-weight: 600;">Profile Description</label>
+              <input type="text" name="profile_desc" class="desk-form-control" placeholder="Document Profile Description" readonly style="background: #f8fafc;">
             </div>
           </div>
-          <div class="desk-form-group" style="margin-bottom: 16px;">
-            <label class="desk-form-label" style="font-weight: 700; color: #000000;">Reason for Cancellation *</label>
-            <input type="text" name="reason" class="desk-form-control"
-              placeholder="e.g. Disputed shift overtime calculation / Salary adjustment recalculation" required
-              style="border: 1px solid #71717a; border-radius: 2px;">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Document Number *</label>
+              <input type="text" name="payslip_no" class="desk-form-control" placeholder="e.g. PS-2026-11-831-042" required>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Document Date</label>
+              <input type="date" name="doc_date" class="desk-form-control" value="<?= date('Y-m-d') ?>">
+            </div>
           </div>
-          <div style="display: flex; justify-content: flex-end;">
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Source Doc Profile</label>
+              <select name="src_doc_profile" class="desk-form-control">
+                <option value="">-Select Src DOC PF-</option>
+                <option value="PAYSLIP">PAYSLIP</option>
+                <option value="PV-PAY">PV-PAY</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Accounting Date</label>
+              <input type="date" name="acc_date" class="desk-form-control" value="<?= date('Y-m-d') ?>">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Source Doc Number</label>
+              <select name="src_doc_no" class="desk-form-control">
+                <option value="">-Select Src DOC NO-</option>
+              </select>
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Pay Period *</label>
+              <input type="text" name="pay_period" class="desk-form-control" value="<?= date('F Y') ?>" required>
+            </div>
+          </div>
+
+          <div class="desk-form-group" style="margin-bottom: 14px;">
+            <label class="desk-form-label" style="font-weight: 600;">Cancellation Reason *</label>
+            <textarea name="reason" class="desk-form-control" rows="3" placeholder="Enter reason for cancellation..." required></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Non Taxable Amount</label>
+              <input type="number" name="non_taxable_amount" class="desk-form-control" step="0.01" min="0" placeholder="0.00">
+            </div>
+            <div class="desk-form-group" style="margin: 0;">
+              <label class="desk-form-label" style="font-weight: 600;">Total Payable to Supplier (Rs.) *</label>
+              <input type="number" name="amount" class="desk-form-control" step="0.01" min="1" placeholder="0.00" required>
+            </div>
+          </div>
+
+          <!-- Expand to View Payee Details -->
+          <div style="border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 16px; overflow: hidden;">
+            <div style="background: #f1f5f9; padding: 10px 14px; font-weight: 600; font-size: 0.88rem; color: #1e293b; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"
+              onclick="const b = document.getElementById('payeeDetailsBody'); b.style.display = b.style.display === 'none' ? 'block' : 'none';">
+              <span>Expand to View Payee Details</span>
+              <span style="font-size: 12px;">&#9662;</span>
+            </div>
+            <div id="payeeDetailsBody" style="padding: 14px; background: #eff6ff; border-top: 1px solid #cbd5e1;">
+              <div class="desk-form-group" style="margin-bottom: 12px;">
+                <label class="desk-form-label" style="font-weight: 600;">Payee Name *</label>
+                <input type="text" name="employee_name" class="desk-form-control" placeholder="Enter Payee Name" required>
+              </div>
+              <div class="desk-form-group" style="margin: 0;">
+                <label class="desk-form-label" style="font-weight: 600;">Payee Address</label>
+                <textarea name="payee_address" class="desk-form-control" rows="2" placeholder="Enter Payee Address"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; font-weight: 600; font-size: 0.88rem; color: #334155;">
+            Project Costing Details
+          </div>
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-weight: 600; font-size: 0.88rem; color: #334155;">
+            Cash Book Payment Details
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="desk-btn desk-btn-default" style="padding: 7px 20px;" onclick="document.getElementById('bodyPayslipCancelForm').reset();">
+              Clear
+            </button>
             <button type="submit" class="desk-btn desk-btn-danger" style="padding: 7px 22px; font-weight: 600;">
-              <?= Icon::get('send', 13) ?> Submit Cancellation Requisition
+              <?= Icon::get('send', 13) ?> Cancel Pay Slip
             </button>
           </div>
         </form>
