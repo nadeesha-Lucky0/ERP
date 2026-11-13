@@ -99,13 +99,23 @@ try {
                 'Avent Technologies (Pvt) Ltd'
             ];
 
-            // Warehouses
-            $warehouses = [
-                'WH 831.00 --VICTORIA WAREHOUSE',
-                'WH_CON_VIC --CONSUMABLES - VICTORIA PS',
-                'WH_DMG_VIC --DAMAGES - VICTORIA PS',
-                'WH_SP_VIC --SPARE WAREHOUSE - VICTORIA'
-            ];
+            // Warehouses from Admin Panel (Operational Departments & Warehouses)
+            $warehouses = [];
+            try {
+                $stWh = $central->query("SELECT code, name FROM departments WHERE status = 'active' ORDER BY name ASC");
+                $depts = $stWh->fetchAll();
+                foreach ($depts as $d) {
+                    $code = trim((string)($d['code'] ?? ''));
+                    $name = trim((string)($d['name'] ?? ''));
+                    if ($code !== '' && $name !== '') {
+                        $warehouses[] = $code . ' -- ' . $name;
+                    } elseif ($name !== '') {
+                        $warehouses[] = $name;
+                    } elseif ($code !== '') {
+                        $warehouses[] = $code;
+                    }
+                }
+            } catch (\Throwable $e) {}
 
             // Common materials
             $materials = [];

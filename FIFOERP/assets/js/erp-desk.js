@@ -4826,12 +4826,7 @@ const Desk = {
     if (lookups) {
       const defSource = document.getElementById(`${context}DefSourceWh`);
       const defTarget = document.getElementById(`${context}DefTargetWh`);
-      const warehouses = lookups.warehouses || [
-        'WH 831.00 --VICTORIA WAREHOUSE',
-        'WH_CON_VIC --CONSUMABLES - VICTORIA PS',
-        'WH_DMG_VIC --DAMAGES - VICTORIA PS',
-        'WH_SP_VIC --SPARE WAREHOUSE - VICTORIA'
-      ];
+      const warehouses = Array.isArray(lookups.warehouses) ? lookups.warehouses : [];
 
       const populateWh = (sel, defaultVal) => {
         if (!sel || sel.children.length > 1) return;
