@@ -557,50 +557,62 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
   <link rel="stylesheet" href="<?= $base ?>/assets/css/dashboard.css?v=<?= time() ?>">
   <?php if ($isCodeAdmin): ?>
   <style>
-    /* Clean ERPNext-style Light UI for Code Admin (matching EGL FIFOERP theme) */
+    /* Exact EGL FIFOERP Desk Theme (from erp-desk.css) for Code Admin */
     :root {
-      --primary: #059669 !important;
-      --primary-dark: #047857 !important;
-      --brand-maroon: #059669 !important;
-      --accent: #059669 !important;
+      --primary: #0d9488 !important;
+      --primary-hover: #0f766e !important;
+      --primary-light: #f0fdfa !important;
+      --primary-dark: #0f766e !important;
+      --brand-maroon: #0d9488 !important;
+      --accent: #0d9488 !important;
     }
-    body { background: #f8fafc !important; color: #1e293b !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important; }
-    .admin-sidebar, .sidebar, aside.sidebar { background: #ffffff !important; border-right: 1px solid #e2e8f0 !important; }
-    .admin-topbar, .topbar, header.topbar, .main-header { background: #ffffff !important; border-bottom: 1px solid #e2e8f0 !important; }
+    body {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    }
+    .admin-sidebar, .sidebar, aside.sidebar {
+      background-color: #f8fafc !important;
+      border-right: 1px solid #e2e8f0 !important;
+    }
+    .admin-topbar, .topbar, header.topbar, .main-header {
+      background-color: #ffffff !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
     .sidebar-nav-btn, .admin-nav-item, .nav-item, .sidebar-tab, .admin-tab-btn, [data-tab] {
-      border-radius: 6px !important;
-      color: #475569 !important;
+      border-radius: 8px !important;
+      color: #64748b !important;
       font-weight: 500 !important;
       transition: all 0.15s ease !important;
     }
     .sidebar-nav-btn.active, .admin-nav-item.active, .nav-item.active, .sidebar-tab.active, .admin-tab-btn.active, [data-tab].active {
-      background: #ecfdf5 !important;
-      color: #059669 !important;
-      border: 1px solid #a7f3d0 !important;
+      background-color: #f0fdfa !important;
+      color: #0d9488 !important;
+      border: 1px solid #ccfbf1 !important;
       font-weight: 600 !important;
       box-shadow: none !important;
     }
     .sidebar-nav-btn.active svg, .admin-nav-item.active svg, .nav-item.active svg, .admin-tab-btn.active svg, [data-tab].active svg {
-      color: #059669 !important;
-      stroke: #059669 !important;
+      color: #0d9488 !important;
+      stroke: #0d9488 !important;
     }
     .sidebar-nav-btn:hover:not(.active), .admin-nav-item:hover:not(.active), .admin-tab-btn:hover:not(.active), [data-tab]:hover:not(.active) {
-      background: #f1f5f9 !important;
+      background-color: #f1f5f9 !important;
       color: #0f172a !important;
     }
     .btn-primary, .btn-maroon, button[style*="#650b2b"], .btn[style*="#650b2b"] {
-      background: #059669 !important;
-      border-color: #047857 !important;
+      background-color: #0d9488 !important;
+      border-color: #0f766e !important;
       color: #ffffff !important;
     }
     .btn-primary:hover, .btn-maroon:hover, button[style*="#650b2b"]:hover {
-      background: #047857 !important;
+      background-color: #0f766e !important;
     }
     .card, .admin-card, .kpi-card {
-      background: #ffffff !important;
+      background-color: #ffffff !important;
       border: 1px solid #e2e8f0 !important;
       border-radius: 8px !important;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
     }
   </style>
   <?php endif; ?>
