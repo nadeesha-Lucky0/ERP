@@ -6313,12 +6313,62 @@ const Desk = {
     return true;
   },
 
-  selectIssueToDestination(dest) {
+  async selectIssueToDestination(dest) {
     this.setSelectedGetItemsFrom('issue', dest);
     const state = this.stockEntryState['issue'];
     if (state) state.selectedGetItemsFrom = dest;
     const drop = document.getElementById('issueGetItemsDropdown');
     if (drop) drop.style.display = 'none';
+
+    const lookups = this.cachedStockLookups || await this.loadStockEntryLookups();
+    if (lookups) {
+      const fillSel = (id, items, placeholder, mapFn) => {
+        const sel = document.getElementById(id);
+        if (!sel || sel.children.length > 1 || !Array.isArray(items)) return;
+        sel.innerHTML = `<option value="">${placeholder}</option>`;
+        items.forEach(item => {
+          const opt = document.createElement('option');
+          const mapped = mapFn ? mapFn(item) : { val: item, label: item };
+          opt.value = mapped.val;
+          opt.textContent = mapped.label;
+          sel.appendChild(opt);
+        });
+      };
+      fillSel('issueToCostCenterSelect', lookups.cost_centers, '-- Select Cost Center --', c => ({ val: c.code, label: c.name }));
+      fillSel('issueToProjectSelect', lookups.projects, '-- Select Project --');
+      fillSel('issueToWarehouseSelect', lookups.warehouses, '-- Select Issue To Warehouse --');
+      fillSel('issueToMyProjectSelect', lookups.my_projects, '-- Select Your Project --');
+      fillSel('issueToSectionSelect', lookups.sections, '-- Select Section --', s => ({ val: s.code, label: s.display_label || `${s.code} - ${s.title}` }));
+      fillSel('issueToCostCodeSelect', lookups.cost_codes, '-- Select Cost Cd --', c => ({ val: c.code, label: c.label || c.code }));
+      fillSel('issueToIssuingTypeSelect', lookups.issuing_types, '-- Select Issuing Type --');
+    }
+
+    const sec = document.getElementById('issueToDynamicSection');
+    const titleEl = document.getElementById('issueToDynamicTitle');
+    const lblDestDept = document.getElementById('issueToLbl_destDept');
+    document.querySelectorAll('#issueToDynamicSection .issue-to-grp').forEach(g => g.style.display = 'none');
+
+    if (sec) sec.style.display = 'block';
+    if (titleEl) titleEl.textContent = `Issue To: ${dest}`;
+
+    if (dest === 'Project') {
+      if (lblDestDept) lblDestDept.textContent = 'Project Dest Dept';
+      document.getElementById('issueToGrp_destDept').style.display = 'block';
+      document.getElementById('issueToGrp_project').style.display = 'block';
+    } else if (dest === 'Cost Center') {
+      if (lblDestDept) lblDestDept.textContent = 'Dept Id';
+      document.getElementById('issueToGrp_destDept').style.display = 'block';
+    } else if (dest === 'Warehouse') {
+      document.getElementById('issueToGrp_warehouse').style.display = 'block';
+    } else if (dest === 'My Project') {
+      document.getElementById('issueToGrp_myProject').style.display = 'block';
+    } else if (dest === 'Section') {
+      document.getElementById('issueToGrp_section').style.display = 'block';
+      document.getElementById('issueToGrp_costCode').style.display = 'block';
+    } else if (dest === 'Genaration as Expenditure') {
+      document.getElementById('issueToGrp_issuingType').style.display = 'block';
+    }
+
     this.showToast(`Selected Issue To: ${dest}`);
   },
 

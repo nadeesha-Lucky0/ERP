@@ -1319,6 +1319,55 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
+            <!-- Dynamic Issue To Details (Shown between Delivery & Accounting Dates and Select Warehouse) -->
+            <div id="issueToDynamicSection" style="display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;">
+              <div id="issueToDynamicTitle" style="font-size: 13px; font-weight: 600; color: #1f272e; margin-bottom: 10px;">Issue To Details</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div id="issueToGrp_destDept" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label" id="issueToLbl_destDept">Project Dest Dept</label>
+                  <select id="issueToCostCenterSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Cost Center --</option>
+                  </select>
+                </div>
+                <div id="issueToGrp_project" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label">Project</label>
+                  <select id="issueToProjectSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Project --</option>
+                  </select>
+                </div>
+                <div id="issueToGrp_warehouse" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label">Warehouse to Issue</label>
+                  <select id="issueToWarehouseSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Issue To Warehouse --</option>
+                  </select>
+                </div>
+                <div id="issueToGrp_myProject" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label">My Prj Dest Dept</label>
+                  <select id="issueToMyProjectSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Your Project --</option>
+                  </select>
+                </div>
+                <div id="issueToGrp_section" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label">Section</label>
+                  <select id="issueToSectionSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Section --</option>
+                  </select>
+                </div>
+                <div id="issueToGrp_costCode" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label">Cost Code</label>
+                  <select id="issueToCostCodeSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Cost Cd --</option>
+                  </select>
+                </div>
+                <div id="issueToGrp_issuingType" class="issue-to-grp" style="display: none;">
+                  <label class="frappe-label">Issuing Type</label>
+                  <select id="issueToIssuingTypeSelect" class="frappe-control frappe-select">
+                    <option value="">-- Select Issuing Type --</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
               <div style="max-width: 720px;">
