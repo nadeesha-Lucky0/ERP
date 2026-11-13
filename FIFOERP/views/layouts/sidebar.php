@@ -341,11 +341,13 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
     <?php endif; ?>
   <?php endif; ?>
 
-  <div class="sidebar-section-title">Master Data</div>
-  <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-codes') ?>" data-tab="tab-codes">
-    <span class="sidebar-icon"><?= Icon::get('tag') ?></span>
-    <span>Code</span>
-  </button>
+  <?php if ($permModel->canAccessTab('tab-codes', $roleId, $userId)): ?>
+    <div class="sidebar-section-title">Master Data</div>
+    <button type="button" class="sidebar-nav-item <?= $getActiveClass('tab-codes') ?>" data-tab="tab-codes">
+      <span class="sidebar-icon"><?= Icon::get('tag') ?></span>
+      <span>Code</span>
+    </button>
+  <?php endif; ?>
 
 <?php endif; ?>
 </aside>

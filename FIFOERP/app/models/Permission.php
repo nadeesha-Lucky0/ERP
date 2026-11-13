@@ -313,6 +313,14 @@ class Permission {
                     'path' => 'Authorized Tasks > Allocated Qty Correction',
                     'level' => 2
                 ],
+            ],
+            '6. Master Data' => [
+                'tab-codes' => [
+                    'label' => 'Code',
+                    'desc' => 'Master Data > Code',
+                    'path' => 'Master Data > Code',
+                    'level' => 1
+                ]
             ]
         ];
     }
@@ -525,9 +533,6 @@ class Permission {
     }
 
     public function canAccessTab(string $tabId, int $roleId, ?int $userId = null): bool {
-        if ($tabId === 'tab-codes') {
-            return true;
-        }
         $role = ($roleId > 0) ? (new Role())->findById($roleId) : null;
         if ($role && $role['name'] === 'super_admin') {
             return true;
