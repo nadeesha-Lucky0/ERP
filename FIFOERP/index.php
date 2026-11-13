@@ -1114,11 +1114,21 @@ require_once __DIR__ . '/views/layouts/header.php';
           <select id="issueStageSelect" class="desk-form-control"
             style="width: auto; min-width: 160px; padding: 6px 12px; font-weight: 600;"
             onchange="Desk.filterIssues(this.value)">
-            <option value="Entry">Entry</option>
-            <option value="Edit">Edit</option>
-            <option value="Validation">Validation</option>
-            <option value="Approval">Approval</option>
-            <option value="Posting">Posting</option>
+            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-entry', $userId)): ?>
+              <option value="Entry">Entry</option>
+            <?php endif; ?>
+            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-edit', $userId)): ?>
+              <option value="Edit">Edit</option>
+            <?php endif; ?>
+            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-validation', $userId)): ?>
+              <option value="Validation">Validation</option>
+            <?php endif; ?>
+            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-approval', $userId)): ?>
+              <option value="Approval">Approval</option>
+            <?php endif; ?>
+            <?php if ($permModel->hasPermission($roleId, 'tab-user-posting', $userId)): ?>
+              <option value="Posting">Posting</option>
+            <?php endif; ?>
             <option value="All">All</option>
           </select>
           <button class="desk-btn desk-btn-default" onclick="Desk.loadIssues()">
