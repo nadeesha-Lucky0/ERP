@@ -1032,7 +1032,7 @@
 
     try {
       App.toast(`Uploading Image ${slot}...`, 'info');
-      const res = await fetch('/api/code_management.php', {
+      const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData
@@ -1073,7 +1073,7 @@
     formData.append('_csrf_token', csrfToken);
 
     try {
-      const res = await fetch('/api/code_management.php', {
+      const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData
@@ -1131,7 +1131,7 @@
     formData.append('_csrf_token', csrfToken);
 
     try {
-      const res = await fetch('/api/code_management.php', {
+      const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php', {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData

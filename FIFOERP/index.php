@@ -3489,7 +3489,7 @@ require_once __DIR__ . '/views/layouts/header.php';
          ============================================================ -->
     <div id="tab-codes" class="tab-pane" style="display: none;">
       <?php
-        $searchPrefix = 'ps';
+        $searchPrefix = 'user';
         include __DIR__ . '/views/components/item_search_module.php';
       ?>
       <div style="display: none;">
@@ -4473,8 +4473,8 @@ require_once __DIR__ . '/views/layouts/header.php';
 <script src="<?= BASE_PATH ?>/assets/js/item_search.js?v=<?= time() ?>"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  if (typeof window.initItemSearchModule === 'function') {
-    window.initItemSearchModule('ps');
+  if (window.itemSearchController && window.itemSearchController['user']) {
+    window.itemSearchController['user'].init();
   }
 });
 </script>
