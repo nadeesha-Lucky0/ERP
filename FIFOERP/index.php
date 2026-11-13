@@ -3489,6 +3489,7 @@ require_once __DIR__ . '/views/layouts/header.php';
          ============================================================ -->
     <div id="tab-codes" class="tab-pane" style="display: none;">
       <?php
+        $allTiersGrouped = $allTiersGrouped ?? (new \App\Models\MasterItem())->getAllTiersGrouped();
         $searchPrefix = 'user';
         include __DIR__ . '/views/components/item_search_module.php';
       ?>
