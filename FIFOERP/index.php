@@ -4517,6 +4517,25 @@ window.APP_DATA.tierHierarchy = <?= json_encode((new \App\Models\MasterItem())->
 </script>
 <script src="<?= BASE_PATH ?>/assets/js/item_search.js?v=<?= time() ?>"></script>
 <script>
+if (typeof window.openModal !== 'function') {
+  window.openModal = function(id) {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'flex'; el.classList.add('active'); }
+  };
+}
+if (typeof window.closeModal !== 'function') {
+  window.closeModal = function(id) {
+    const el = document.getElementById(id);
+    if (el) { el.style.display = 'none'; el.classList.remove('active'); }
+  };
+}
+document.addEventListener('click', function(e) {
+  const closeBtn = e.target.closest('[data-close-modal]');
+  if (closeBtn) {
+    const backdrop = closeBtn.closest('.modal-backdrop');
+    if (backdrop) { backdrop.style.display = 'none'; backdrop.classList.remove('active'); }
+  }
+});
 document.addEventListener('DOMContentLoaded', function() {
   if (window.itemSearchController && window.itemSearchController['user']) {
     window.itemSearchController['user'].init();
