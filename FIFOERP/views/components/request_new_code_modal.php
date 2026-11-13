@@ -1,4 +1,4 @@
-﻿  <div class="modal-backdrop" id="requestNewCodeModal">
+  <div class="modal-backdrop" id="requestNewCodeModal">
     <div class="modal-dialog" style="max-width: 96vw; width: 96vw; height: 92vh; max-height: 92vh; display: flex; flex-direction: column; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); border: 1px solid #cbd5e1; overflow: hidden; margin: auto;">
       <div class="modal-header" style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 10px 18px; display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -239,7 +239,7 @@
       </div>
 
       <form id="editCodeRequestForm" onsubmit="executeEditCodeRequest(event);" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;" enctype="multipart/form-data">
-        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(Session::csrfToken()) ?>">
+        <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
         <input type="hidden" name="request_id" id="editReqId" value="">
         <input type="hidden" name="delete_image_1" id="editReqDeleteImg1" value="0">
         <input type="hidden" name="delete_image_2" id="editReqDeleteImg2" value="0">
