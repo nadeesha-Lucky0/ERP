@@ -3893,12 +3893,127 @@ require_once __DIR__ . '/views/layouts/header.php';
             </div>
           </div>
         </div>
+
+        <!-- SUB-PANE 6: SECTIONS, SUPPLIERS & COST CENTERS -->
+        <div id="admin-sub-lookups" class="admin-sub-pane">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
+            <!-- 1. Sections -->
+            <div class="desk-card">
+              <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Sections (Destination Codes)</h2>
+                  <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Used in Get Items From -> Section</div>
+                </div>
+                <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openAdminLookupModal('section')">+ Add Section</button>
+              </div>
+              <div class="desk-table-wrapper">
+                <table class="desk-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Title</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminSectionsTableBody">
+                    <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 16px;">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 2. Predefined Suppliers -->
+            <div class="desk-card">
+              <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Predefined Suppliers</h2>
+                  <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Used in Get Items From -> Purchase Order</div>
+                </div>
+                <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openAdminLookupModal('supplier')">+ Add Supplier</button>
+              </div>
+              <div class="desk-table-wrapper">
+                <table class="desk-table">
+                  <thead>
+                    <tr>
+                      <th>Supplier Name</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminSuppliersTableBody">
+                    <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 16px;">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 3. Cost Centers -->
+            <div class="desk-card">
+              <div class="desk-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h2 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;">Cost Centers</h2>
+                  <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Used in Get Items From -> Cost Center</div>
+                </div>
+                <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.openAdminLookupModal('cost_center')">+ Add Cost Center</button>
+              </div>
+              <div class="desk-table-wrapper">
+                <table class="desk-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Name</th>
+                      <th>Status</th>
+                      <th style="text-align: right;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminCostCentersTableBody">
+                    <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 16px;">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     <?php endif; ?>
 
   </main>
 </div>
 
+
+<!-- Admin Lookup Add/Edit Modal (Section, Supplier, Cost Center) -->
+<div id="adminLookupModal" class="desk-modal-backdrop" style="display: none;">
+  <div class="desk-modal" style="max-width: 440px; width: 92%; border-radius: 8px; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.18);">
+    <div class="desk-modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 id="adminLookupModalTitle" style="font-size: 15px; font-weight: 700; margin: 0; color: #1f272e;">Add Item</h3>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('adminLookupModal')">&times;</button>
+    </div>
+    <div class="desk-modal-body" style="padding: 20px 24px;">
+      <input type="hidden" id="adminLookupType" value="">
+      <input type="hidden" id="adminLookupId" value="0">
+      <div id="adminLookupCodeGroup" style="margin-bottom: 14px;">
+        <label class="frappe-label">Code <span style="color: #e02424;">*</span></label>
+        <input type="text" id="adminLookupCode" class="frappe-control" placeholder="e.g. 831.10 or SEC-01">
+      </div>
+      <div style="margin-bottom: 14px;">
+        <label class="frappe-label" id="adminLookupNameLabel">Name / Title <span style="color: #e02424;">*</span></label>
+        <input type="text" id="adminLookupName" class="frappe-control" placeholder="Enter name or title">
+      </div>
+      <div>
+        <label class="frappe-label">Status</label>
+        <select id="adminLookupStatus" class="frappe-control frappe-select">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="desk-modal-footer" style="border-top: 1px solid #e2e8f0; padding: 14px 24px; display: flex; justify-content: flex-end; gap: 8px;">
+      <button type="button" class="frappe-btn" onclick="Desk.closeModal('adminLookupModal')">Cancel</button>
+      <button type="button" class="frappe-btn frappe-btn-primary" onclick="Desk.saveAdminLookup()">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- ==============================================================
      FRAPPE STOCK ENTRY SELECTION MODALS

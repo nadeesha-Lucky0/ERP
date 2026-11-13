@@ -29,16 +29,26 @@ try {
                 $sections = $stSec->fetchAll();
             } catch (\Throwable $e) {}
 
-            // Cost Centers
-            $costCenters = [
-                ['code' => '831.00', 'name' => '831.00 - Victoria Operations & Capital'],
-                ['code' => '831.10', 'name' => '831.10 - Mechanical Maintenance - Victoria PS'],
-                ['code' => '831.20', 'name' => '831.20 - Electrical Maintenance - Victoria PS'],
-                ['code' => '831.30', 'name' => '831.30 - Civil Engineering & Dam Safety - Victoria'],
-                ['code' => '831.40', 'name' => '831.40 - Instrumentation & Control System - Victoria'],
-                ['code' => '831.50', 'name' => '831.50 - Power House Auxiliary Stores - Victoria'],
-                ['code' => '831.60', 'name' => '831.60 - Chemical & Lubricants Division - Victoria']
-            ];
+            // Cost Centers from erp_cost_centers
+            $costCenters = [];
+            try {
+                $central->exec("CREATE TABLE IF NOT EXISTS erp_cost_centers (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(50) NOT NULL, name VARCHAR(150) NOT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                $cntCc = (int)$central->query("SELECT COUNT(*) FROM erp_cost_centers")->fetchColumn();
+                if ($cntCc === 0) {
+                    $seedCc = [
+                        ['831.00', '831.00 - Victoria Operations & Capital'],
+                        ['831.10', '831.10 - Mechanical Maintenance - Victoria PS'],
+                        ['831.20', '831.20 - Electrical Maintenance - Victoria PS'],
+                        ['831.30', '831.30 - Civil Engineering & Dam Safety - Victoria'],
+                        ['831.40', '831.40 - Instrumentation & Control System - Victoria'],
+                        ['831.50', '831.50 - Power House Auxiliary Stores - Victoria'],
+                        ['831.60', '831.60 - Chemical & Lubricants Division - Victoria']
+                    ];
+                    $stSeed = $central->prepare("INSERT INTO erp_cost_centers (code, name, status) VALUES (?, ?, 'active')");
+                    foreach ($seedCc as $c) { $stSeed->execute($c); }
+                }
+                $costCenters = $central->query("SELECT code, name FROM erp_cost_centers WHERE status = 'active' ORDER BY code ASC")->fetchAll();
+            } catch (\Throwable $e) {}
 
             // Projects
             $projects = [
@@ -82,22 +92,23 @@ try {
                 ['code' => 'C401', 'label' => 'C401 - Lubricants, Greases & Consumables']
             ];
 
-            // Approved Suppliers
-            $suppliers = [
-                'Lanka Lubricants Ltd',
-                'Colombo Electrical Supplies Ltd',
-                'Industrial Spares (Pvt) Ltd',
-                'Diesel & Motor Engineering (DIMO)',
-                'United Motors Lanka PLC',
-                'Hayleys Power & Energy',
-                'Ceylon Petroleum Corporation (CPC)',
-                'State Engineering Corporation',
-                'Walker Sons & Co Ltd',
-                'Kelani Cables PLC',
-                'Brown & Company PLC',
-                'Tokyo Cement Company',
-                'Avent Technologies (Pvt) Ltd'
-            ];
+            // Approved Suppliers from erp_predefined_suppliers
+            $suppliers = [];
+            try {
+                $central->exec("CREATE TABLE IF NOT EXISTS erp_predefined_suppliers (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(200) NOT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                $cntSup = (int)$central->query("SELECT COUNT(*) FROM erp_predefined_suppliers")->fetchColumn();
+                if ($cntSup === 0) {
+                    $seedSup = [
+                        'Lanka Lubricants Ltd', 'Colombo Electrical Supplies Ltd', 'Industrial Spares (Pvt) Ltd',
+                        'Diesel & Motor Engineering (DIMO)', 'United Motors Lanka PLC', 'Hayleys Power & Energy',
+                        'Ceylon Petroleum Corporation (CPC)', 'State Engineering Corporation', 'Walker Sons & Co Ltd',
+                        'Kelani Cables PLC', 'Brown & Company PLC', 'Tokyo Cement Company', 'Avent Technologies (Pvt) Ltd'
+                    ];
+                    $stSeedSup = $central->prepare("INSERT INTO erp_predefined_suppliers (name, status) VALUES (?, 'active')");
+                    foreach ($seedSup as $s) { $stSeedSup->execute([$s]); }
+                }
+                $suppliers = $central->query("SELECT name FROM erp_predefined_suppliers WHERE status = 'active' ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
+            } catch (\Throwable $e) {}
 
             // Warehouses from Admin Panel (Operational Departments & Warehouses)
             $warehouses = [];
@@ -135,6 +146,90 @@ try {
                 'warehouses' => $warehouses,
                 'materials' => $materials
             ]);
+            break;
+
+        case 'get_admin_lookups':
+            $central = Database::getConnection();
+            $sections = [];
+            $suppliers = [];
+            $costCenters = [];
+            try {
+                $sections = $central->query("SELECT id, code, title, display_label, status FROM issue_destination_codes ORDER BY sort_order ASC, code ASC")->fetchAll();
+            } catch (\Throwable $e) {}
+            try {
+                $central->exec("CREATE TABLE IF NOT EXISTS erp_predefined_suppliers (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(200) NOT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                $suppliers = $central->query("SELECT id, name, status FROM erp_predefined_suppliers ORDER BY name ASC")->fetchAll();
+            } catch (\Throwable $e) {}
+            try {
+                $central->exec("CREATE TABLE IF NOT EXISTS erp_cost_centers (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(50) NOT NULL, name VARCHAR(150) NOT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+                $costCenters = $central->query("SELECT id, code, name, status FROM erp_cost_centers ORDER BY code ASC")->fetchAll();
+            } catch (\Throwable $e) {}
+            Response::success('Admin lookups loaded', [
+                'sections' => $sections,
+                'suppliers' => $suppliers,
+                'cost_centers' => $costCenters
+            ]);
+            break;
+
+        case 'save_admin_lookup':
+            $central = Database::getConnection();
+            $type = trim($_POST['type'] ?? '');
+            $id = (int)($_POST['id'] ?? 0);
+            $code = trim($_POST['code'] ?? '');
+            $name = trim($_POST['name'] ?? '');
+            $status = trim($_POST['status'] ?? 'active');
+
+            if ($type === 'section') {
+                if ($code === '' || $name === '') Response::error('Code and Title are required.');
+                $displayLabel = $code . ' - ' . $name;
+                if ($id > 0) {
+                    $st = $central->prepare("UPDATE issue_destination_codes SET code = ?, title = ?, display_label = ?, status = ? WHERE id = ?");
+                    $st->execute([$code, $name, $displayLabel, $status, $id]);
+                } else {
+                    $st = $central->prepare("INSERT INTO issue_destination_codes (code, title, display_label, status) VALUES (?, ?, ?, ?)");
+                    $st->execute([$code, $name, $displayLabel, $status]);
+                }
+                Response::success('Section saved.');
+            } elseif ($type === 'supplier') {
+                if ($name === '') Response::error('Supplier Name is required.');
+                if ($id > 0) {
+                    $st = $central->prepare("UPDATE erp_predefined_suppliers SET name = ?, status = ? WHERE id = ?");
+                    $st->execute([$name, $status, $id]);
+                } else {
+                    $st = $central->prepare("INSERT INTO erp_predefined_suppliers (name, status) VALUES (?, ?)");
+                    $st->execute([$name, $status]);
+                }
+                Response::success('Supplier saved.');
+            } elseif ($type === 'cost_center') {
+                if ($code === '' || $name === '') Response::error('Code and Name are required.');
+                if ($id > 0) {
+                    $st = $central->prepare("UPDATE erp_cost_centers SET code = ?, name = ?, status = ? WHERE id = ?");
+                    $st->execute([$code, $name, $status, $id]);
+                } else {
+                    $st = $central->prepare("INSERT INTO erp_cost_centers (code, name, status) VALUES (?, ?, ?)");
+                    $st->execute([$code, $name, $status]);
+                }
+                Response::success('Cost Center saved.');
+            } else {
+                Response::error('Invalid lookup type.');
+            }
+            break;
+
+        case 'delete_admin_lookup':
+            $central = Database::getConnection();
+            $type = trim($_POST['type'] ?? '');
+            $id = (int)($_POST['id'] ?? 0);
+            if ($id <= 0) Response::error('Invalid ID.');
+            if ($type === 'section') {
+                $central->prepare("DELETE FROM issue_destination_codes WHERE id = ?")->execute([$id]);
+            } elseif ($type === 'supplier') {
+                $central->prepare("DELETE FROM erp_predefined_suppliers WHERE id = ?")->execute([$id]);
+            } elseif ($type === 'cost_center') {
+                $central->prepare("DELETE FROM erp_cost_centers WHERE id = ?")->execute([$id]);
+            } else {
+                Response::error('Invalid lookup type.');
+            }
+            Response::success('Deleted successfully.');
             break;
 
         case 'search_materials':

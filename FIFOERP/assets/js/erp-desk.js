@@ -4281,6 +4281,160 @@ const Desk = {
     document.querySelectorAll('.sidebar-nav-item[data-admin-sub]').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-admin-sub') === subTabId);
     });
+    if (subTabId === 'admin-sub-lookups') {
+      this.loadAdminLookups();
+    }
+  },
+
+  async loadAdminLookups() {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_admin_lookups`);
+      const data = await res.json();
+      if (!data.success || !data.data) return;
+      const { sections = [], suppliers = [], cost_centers = [] } = data.data;
+
+      const secBody = document.getElementById('adminSectionsTableBody');
+      if (secBody) {
+        secBody.innerHTML = sections.length ? sections.map(s => `
+          <tr>
+            <td><code>${this.escapeHtml(s.code)}</code></td>
+            <td><strong>${this.escapeHtml(s.title)}</strong></td>
+            <td><span class="desk-badge ${s.status === 'active' ? 'badge-approved' : 'badge-danger'}">${this.escapeHtml(s.status)}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openAdminLookupModal('section', ${s.id}, '${this.escapeAttr(s.code)}', '${this.escapeAttr(s.title)}', '${this.escapeAttr(s.status)}')">Edit</button>
+              <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteAdminLookup('section', ${s.id}, '${this.escapeAttr(s.code)}')">Delete</button>
+            </td>
+          </tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">No sections found.</td></tr>';
+      }
+
+      const supBody = document.getElementById('adminSuppliersTableBody');
+      if (supBody) {
+        supBody.innerHTML = suppliers.length ? suppliers.map(s => `
+          <tr>
+            <td><strong>${this.escapeHtml(s.name)}</strong></td>
+            <td><span class="desk-badge ${s.status === 'active' ? 'badge-approved' : 'badge-danger'}">${this.escapeHtml(s.status)}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openAdminLookupModal('supplier', ${s.id}, '', '${this.escapeAttr(s.name)}', '${this.escapeAttr(s.status)}')">Edit</button>
+              <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteAdminLookup('supplier', ${s.id}, '${this.escapeAttr(s.name)}')">Delete</button>
+            </td>
+          </tr>
+        `).join('') : '<tr><td colspan="3" style="text-align:center;color:#94a3b8;padding:16px;">No suppliers found.</td></tr>';
+      }
+
+      const ccBody = document.getElementById('adminCostCentersTableBody');
+      if (ccBody) {
+        ccBody.innerHTML = cost_centers.length ? cost_centers.map(c => `
+          <tr>
+            <td><code>${this.escapeHtml(c.code)}</code></td>
+            <td><strong>${this.escapeHtml(c.name)}</strong></td>
+            <td><span class="desk-badge ${c.status === 'active' ? 'badge-approved' : 'badge-danger'}">${this.escapeHtml(c.status)}</span></td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.openAdminLookupModal('cost_center', ${c.id}, '${this.escapeAttr(c.code)}', '${this.escapeAttr(c.name)}', '${this.escapeAttr(c.status)}')">Edit</button>
+              <button class="desk-btn desk-btn-danger desk-btn-sm" style="margin-left: 4px;" onclick="Desk.deleteAdminLookup('cost_center', ${c.id}, '${this.escapeAttr(c.code)}')">Delete</button>
+            </td>
+          </tr>
+        `).join('') : '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:16px;">No cost centers found.</td></tr>';
+      }
+    } catch (e) {
+      console.error('Failed to load admin lookups:', e);
+    }
+  },
+
+  escapeHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  escapeAttr(str) {
+    return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  },
+
+  openAdminLookupModal(type, id = 0, code = '', name = '', status = 'active') {
+    document.getElementById('adminLookupType').value = type;
+    document.getElementById('adminLookupId').value = id || 0;
+    document.getElementById('adminLookupCode').value = code || '';
+    document.getElementById('adminLookupName').value = name || '';
+    document.getElementById('adminLookupStatus').value = status || 'active';
+
+    const codeGroup = document.getElementById('adminLookupCodeGroup');
+    const titleEl = document.getElementById('adminLookupModalTitle');
+    const nameLabel = document.getElementById('adminLookupNameLabel');
+
+    if (type === 'supplier') {
+      if (codeGroup) codeGroup.style.display = 'none';
+      if (titleEl) titleEl.textContent = id ? 'Edit Predefined Supplier' : 'Add Predefined Supplier';
+      if (nameLabel) nameLabel.innerHTML = 'Supplier Name <span style="color: #e02424;">*</span>';
+    } else if (type === 'cost_center') {
+      if (codeGroup) codeGroup.style.display = 'block';
+      if (titleEl) titleEl.textContent = id ? 'Edit Cost Center' : 'Add Cost Center';
+      if (nameLabel) nameLabel.innerHTML = 'Cost Center Name <span style="color: #e02424;">*</span>';
+    } else {
+      if (codeGroup) codeGroup.style.display = 'block';
+      if (titleEl) titleEl.textContent = id ? 'Edit Section' : 'Add Section';
+      if (nameLabel) nameLabel.innerHTML = 'Section Title <span style="color: #e02424;">*</span>';
+    }
+    this.openModal('adminLookupModal');
+  },
+
+  async saveAdminLookup() {
+    const type = document.getElementById('adminLookupType').value;
+    const id = document.getElementById('adminLookupId').value;
+    const code = document.getElementById('adminLookupCode').value.trim();
+    const name = document.getElementById('adminLookupName').value.trim();
+    const status = document.getElementById('adminLookupStatus').value;
+
+    if ((type === 'section' || type === 'cost_center') && !code) {
+      this.showToast('Please enter a Code.', true);
+      return;
+    }
+    if (!name) {
+      this.showToast('Please enter a Name / Title.', true);
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append('action', 'save_admin_lookup');
+    fd.append('type', type);
+    fd.append('id', id);
+    fd.append('code', code);
+    fd.append('name', name);
+    fd.append('status', status);
+
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.closeModal('adminLookupModal');
+        this.cachedStockLookups = null;
+        this.showToast(data.message || 'Saved successfully.');
+        this.loadAdminLookups();
+      } else {
+        this.showToast(data.message || 'Failed to save.', true);
+      }
+    } catch (e) {
+      this.showToast('Network error while saving.', true);
+    }
+  },
+
+  async deleteAdminLookup(type, id, label) {
+    if (!confirm(`Are you sure you want to delete "${label}"?`)) return;
+    const fd = new FormData();
+    fd.append('action', 'delete_admin_lookup');
+    fd.append('type', type);
+    fd.append('id', id);
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success) {
+        this.cachedStockLookups = null;
+        this.showToast('Deleted successfully.');
+        this.loadAdminLookups();
+      } else {
+        this.showToast(data.message || 'Failed to delete.', true);
+      }
+    } catch (e) {
+      this.showToast('Network error while deleting.', true);
+    }
   },
 
   filterDepartmentsByLocation(locId) {

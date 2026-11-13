@@ -44,6 +44,10 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
     <span class="sidebar-icon"><?= Icon::get('check-square') ?></span>
     <span>Permissions Matrix</span>
   </button>
+  <button type="button" class="sidebar-nav-item" data-tab="tab-admin" data-admin-sub="admin-sub-lookups">
+    <span class="sidebar-icon"><?= Icon::get('layers') ?></span>
+    <span>Sections, Suppliers &amp; Cost Centers</span>
+  </button>
 
 <?php else: ?>
   <!-- ============================================================
