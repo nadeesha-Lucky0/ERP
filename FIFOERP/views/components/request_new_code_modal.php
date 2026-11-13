@@ -79,8 +79,9 @@
                 <label style="font-size: 0.76rem; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0;">
                   Item Description / Name *
                 </label>
-                <button type="button" onclick="SmartSpellChecker.autoFixAll('modalReqItemName'); if(typeof onModalReqNameInput === 'function') onModalReqNameInput();" style="background: none; border: none; color: #0284c7; font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0;" title="Auto-detect & fix typos">
-                  âœ¨ Auto-Fix Spelling
+                <button type="button" onclick="SmartSpellChecker.autoFixAll('modalReqItemName'); if(typeof onModalReqNameInput === 'function') onModalReqNameInput();" style="background: none; border: none; color: #0284c7; font-size: 0.72rem; font-weight: 700; cursor: pointer; padding: 0; display: inline-flex; align-items: center; gap: 4px;" title="Auto-detect & fix typos">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                  Auto-Fix Spelling
                 </button>
               </div>
               <textarea name="item_name" id="modalReqItemName" class="form-control" rows="3"
@@ -132,12 +133,17 @@
                 <div id="modalReqImg1Box" style="border: 1.5px dashed #cbd5e1; border-radius: 6px; padding: 10px 8px; background: #f8fafc; text-align: center; cursor: pointer; position: relative; transition: all 0.15s ease;"
                      onclick="document.getElementById('modalReqImg1Input').click();"
                      onmouseover="this.style.borderColor='#650b2b'; this.style.background='#fdf2f5';"
-                     onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
+                     onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
+                     ondragover="event.preventDefault(); this.style.borderColor='#0d9488'; this.style.background='#f0fdfa';"
+                     ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
+                     ondrop="event.preventDefault(); this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; if(event.dataTransfer.files && event.dataTransfer.files.length){ const inp=document.getElementById('modalReqImg1Input'); const dt=new DataTransfer(); dt.items.add(event.dataTransfer.files[0]); inp.files=dt.files; if(typeof previewAddCodeImage==='function') previewAddCodeImage(1, inp); }">
                   <input type="file" name="image_1" id="modalReqImg1Input" accept="image/jpeg,image/png,image/webp" style="display: none;" onchange="previewAddCodeImage(1, this);">
                   <div id="modalReqImg1Placeholder">
-                    <div style="font-size: 1.3rem; line-height: 1; margin-bottom: 3px;">ðŸ“·</div>
+                    <div style="display: flex; justify-content: center; margin-bottom: 4px; color: #475569;">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                    </div>
                     <div style="font-size: 0.74rem; font-weight: 700; color: #334155;">Image 1</div>
-                    <div style="font-size: 0.64rem; color: #94a3b8;">Click to upload</div>
+                    <div style="font-size: 0.64rem; color: #94a3b8;">Drag &amp; drop or click</div>
                   </div>
                   <div id="modalReqImg1Preview" style="display: none; position: relative;">
                     <img id="modalReqImg1Tag" src="" alt="Image 1" style="max-height: 65px; max-width: 100%; object-fit: contain; border-radius: 4px;">
@@ -150,12 +156,17 @@
                 <div id="modalReqImg2Box" style="border: 1.5px dashed #cbd5e1; border-radius: 6px; padding: 10px 8px; background: #f8fafc; text-align: center; cursor: pointer; position: relative; transition: all 0.15s ease;"
                      onclick="document.getElementById('modalReqImg2Input').click();"
                      onmouseover="this.style.borderColor='#650b2b'; this.style.background='#fdf2f5';"
-                     onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';">
+                     onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
+                     ondragover="event.preventDefault(); this.style.borderColor='#0d9488'; this.style.background='#f0fdfa';"
+                     ondragleave="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
+                     ondrop="event.preventDefault(); this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; if(event.dataTransfer.files && event.dataTransfer.files.length){ const inp=document.getElementById('modalReqImg2Input'); const dt=new DataTransfer(); dt.items.add(event.dataTransfer.files[0]); inp.files=dt.files; if(typeof previewAddCodeImage==='function') previewAddCodeImage(2, inp); }">
                   <input type="file" name="image_2" id="modalReqImg2Input" accept="image/jpeg,image/png,image/webp" style="display: none;" onchange="previewAddCodeImage(2, this);">
                   <div id="modalReqImg2Placeholder">
-                    <div style="font-size: 1.3rem; line-height: 1; margin-bottom: 3px;">ðŸ“·</div>
+                    <div style="display: flex; justify-content: center; margin-bottom: 4px; color: #475569;">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                    </div>
                     <div style="font-size: 0.74rem; font-weight: 700; color: #334155;">Image 2</div>
-                    <div style="font-size: 0.64rem; color: #94a3b8;">Click to upload</div>
+                    <div style="font-size: 0.64rem; color: #94a3b8;">Drag &amp; drop or click</div>
                   </div>
                   <div id="modalReqImg2Preview" style="display: none; position: relative;">
                     <img id="modalReqImg2Tag" src="" alt="Image 2" style="max-height: 65px; max-width: 100%; object-fit: contain; border-radius: 4px;">
