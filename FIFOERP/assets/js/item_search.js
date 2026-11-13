@@ -8,6 +8,15 @@
 
   window.itemSearchController = window.itemSearchController || {};
 
+  function resolveImg(u) {
+    if (typeof window.itemImgUrl === 'function') return window.itemImgUrl(u);
+    u = String(u || '').trim();
+    if (!u || /^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u;
+    const b = (document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '').replace(/^https?:\/\/[^\/]+/i, '').replace(/\/+$/, '');
+    u = u.replace(/^\.?\/+/, '');
+    return (b && ('/' + u).indexOf(b + '/') === 0) ? '/' + u : b + '/' + u;
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return String(str)
@@ -340,7 +349,7 @@
               No items match your search filters. Try adjusting keywords or tier dropdowns.
             </td>
           </tr>
-        `;
+        ` + this._addRowHtml();
         if (pagBtnsEl) pagBtnsEl.innerHTML = '';
         return;
       }
@@ -423,7 +432,7 @@
             <td style="padding: 6px 10px; text-align: center; border: 1px solid #cbd5e1; white-space: nowrap;">
               ${isMaster ? `
                 <span style="display: inline-block; font-size: 0.72rem; font-weight: 800; color: #ffffff; background: #ea580c; border: 1px solid #c2410c; padding: 3px 8px; border-radius: 4px;">
-                  Master Added
+                  Master
                 </span>
               ` : `
                 <span style="display: inline-block; font-size: 0.72rem; font-weight: 700; color: #0369a1; background: #e0f2fe; border: 1px solid #bae6fd; padding: 3px 8px; border-radius: 4px;">
@@ -442,17 +451,19 @@
                   View
                 </button>
 
-                <button type="button" onclick="window.itemSearchController['${this.prefix}'].openGoogle('${escapeHtml(desc)}');"
-                  style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; cursor: pointer;"
-                  title="Search item datasheet on Google">
-                  🌐 Google
-                </button>
+                ${this.prefix !== 'user' ? `
+                  <button type="button" onclick="window.itemSearchController['${this.prefix}'].openGoogle('${escapeHtml(desc)}');"
+                    style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; cursor: pointer;"
+                    title="Search item datasheet on Google">
+                    🌐 Google
+                  </button>
+                ` : ''}
 
                 ${isMaster ? `
                   <button type="button" onclick="window.itemSearchController['${this.prefix}'].handleMasterAdd(${idx});"
                     style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #650b2b; color: #ffffff; border: 1px solid #4a071e; cursor: pointer;"
-                    title="Add code to station inventory">
-                    ➕ Add
+                    title="Add this code to the warehouse (station inventory)">
+                    ➕ Add to Warehouse
                   </button>
                 ` : `
                   <button type="button" onclick="window.itemSearchController['${this.prefix}'].openItemRequestModal(${idx});"
@@ -465,7 +476,7 @@
             </td>
           </tr>
         `;
-      }).join('');
+      }).join('') + this._addRowHtml();
 
       this.currentPageItems = pageItems;
 
@@ -622,17 +633,10 @@
      */
     goToAddCode(t1 = 0, t2 = 0, t3 = 0) {
       if (this.prefix === 'user') {
-        if (typeof window.switchUserCodeSubTab === 'function') {
-          window.switchUserCodeSubTab('add');
-        }
-        if (t1 > 0) {
-          const simpleT1 = document.getElementById('simpleTier1');
-          if (simpleT1) {
-            simpleT1.value = t1;
-            if (typeof window.onSimpleTier1Change === 'function') {
-              window.onSimpleTier1Change();
-            }
-          }
+        // The separate "Add Code" tab was removed; new codes are requested from Item Search
+        // via the "+ Add New Item" button after choosing the 1st / 2nd / 3rd categories.
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('Select the 1st, 2nd and 3rd category, then use "+ Add New Item".', 'info');
         }
       } else {
         // Admin portal
@@ -652,7 +656,7 @@
     }
 
     /**
-     * Handle click on ➕ Add button for Master Added item
+     * Handle click on ➕ Add to Warehouse button for Master item
      */
     handleMasterAdd(idx) {
       const it = this.currentPageItems?.[idx];
@@ -680,6 +684,7 @@
      * Open Request Modal for Approved (Not in Master) item
      */
     openItemRequestModal(idx) {
+      if (window.AddItemFlow) window.AddItemFlow.reset();
       const it = this.currentPageItems?.[idx];
       if (!it) return;
 
@@ -804,7 +809,7 @@
       if (codeEl) codeEl.textContent = formattedCode;
       if (statusEl) {
         if (isMaster) {
-          statusEl.textContent = 'MASTER ADDED';
+          statusEl.textContent = 'MASTER';
           statusEl.style.background = '#ffedd5';
           statusEl.style.color = '#c2410c';
           statusEl.style.border = '1px solid #fed7aa';
@@ -940,8 +945,8 @@
                 </div>
               ` : ''}
             </div>
-            <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 140px; cursor: pointer;" onclick="window.open('${escapeHtml(imgUrl)}', '_blank');">
-              <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(it.item_name || 'Item')}"
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; min-height: 140px; cursor: pointer;" onclick="window.open('${escapeHtml(resolveImg(imgUrl))}', '_blank');">
+              <img src="${escapeHtml(resolveImg(imgUrl))}" alt="${escapeHtml(it.item_name || 'Item')}"
                 style="max-height: 140px; max-width: 100%; object-fit: contain; border-radius: 4px; transition: transform 0.2s;"
                 onmouseover="this.style.transform='scale(1.03)';" onmouseout="this.style.transform='scale(1)';"
                 onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'color:#dc2626; font-size:0.75rem; text-align:center;\\'>Failed to load image</div>';">
@@ -979,6 +984,260 @@
   }
 
   // Register instances
+
+  /* =========================================================================
+   * ADD NEW ITEM CODE (4th segment, e.g. 10.01.01.003)
+   * Reuses the existing "Request Item Code Creation & Live Duplicate Checker" dialog
+   * (#requestNewCodeModal) so the right-hand live system-wide search works as before.
+   * - Parent codes come from the current 1st/2nd/3rd filters
+   * - Server suggests highest used + 1; user may type any free 000-999
+   * - Code Admins save directly to Master; other users submit a request
+   * ========================================================================= */
+  const P = ItemSearchModuleController.prototype;
+  const pad2 = (n) => String(n).padStart(2, '0');
+
+  P._currentTiers = function () {
+    const get = (n) => {
+      const sel = document.getElementById(`${this.prefix}ItemSearchTier${n}`);
+      const v = sel && sel.value !== '' ? parseInt(sel.value, 10) : 0;
+      return v || 0;
+    };
+    return { t1: get(1), t2: get(2), t3: get(3) };
+  };
+
+  // Footer row: always the last row of the table, button sits in the ACTION column
+  P._addRowHtml = function () {
+    const { t1, t2, t3 } = this._currentTiers();
+    const ready = t1 > 0 && t2 > 0 && t3 > 0;
+    const msg = ready
+      ? `Can't find the item? Add it as a new code under <strong>${pad2(t1)}.${pad2(t2)}.${pad2(t3)}</strong>.`
+      : 'To add a new item, select the 1st, 2nd and 3rd code filters above.';
+    const cell = 'position: sticky; bottom: 0; z-index: 1; background: #fdf2f5; border: 1px solid #cbd5e1; border-top: 2px solid #650b2b; padding: 8px 10px;';
+    return `
+      <tr class="add-item-footer-row">
+        <td colspan="7" style="${cell} text-align: right; font-size: 0.78rem; color: #64748b;">${msg}</td>
+        <td style="${cell} text-align: center; white-space: nowrap;">
+          <button type="button" ${ready ? '' : 'disabled'} onclick="window.itemSearchController['${this.prefix}'].openAddItemModal();"
+            title="${ready ? 'Add a new item under this 1st / 2nd / 3rd code' : 'Select the 1st, 2nd and 3rd code filters first'}"
+            style="font-size: 0.74rem; font-weight: 800; padding: 5px 10px; border-radius: 4px; background: #650b2b; color: #ffffff; border: 1px solid #4a071e; cursor: ${ready ? 'pointer' : 'not-allowed'}; opacity: ${ready ? '1' : '0.45'};">
+            &#43; Add New Item
+          </button>
+        </td>
+      </tr>`;
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  const Flow = window.AddItemFlow = {
+    active: false, canDirect: false, ctrl: null, t: null,
+    seqOk: false, blocked: false, needsConfirm: false, reqId: 0, timer: null, busy: false,
+
+    note(kind, html) {
+      const c = { ok: ['#e4f6ec', '#127a46'], w: ['#fff4de', '#9a5b00'], e: ['#fde8e6', '#b42318'] }[kind];
+      return `<div style="margin-top:6px; padding:7px 10px; border-radius:6px; font-size:0.78rem; background:${c[0]}; color:${c[1]};">${html}</div>`;
+    },
+
+    reset() {
+      this.active = false; this.busy = false;
+      const wrap = $('modalReqSeqWrap'); if (wrap) wrap.style.display = 'none';
+      const badge = $('modalReqAssignBadge'); if (badge) badge.textContent = 'Assigned on Approval';
+      const btn = $('btnSubmitSimpleReq'); if (btn) { btn.textContent = 'Submit Code Request'; btn.disabled = false; btn.style.opacity = '1'; }
+    },
+
+    open(ctrl) {
+      const { t1, t2, t3 } = ctrl._currentTiers();
+      if (!(t1 > 0 && t2 > 0 && t3 > 0)) {
+        App.toast('Select the 1st, 2nd and 3rd code filters first.', 'warning');
+        return;
+      }
+      this.ctrl = ctrl; this.t = { t1, t2, t3 }; this.active = true;
+      this.seqOk = false; this.blocked = false; this.needsConfirm = false; this.canDirect = false;
+
+      const form = $('simpleRequestCodeForm'); if (form) { form.reset(); }
+      $('modalReqTier1').value = t1; $('modalReqTier2').value = t2; $('modalReqTier3').value = t3; $('modalReqTier4').value = '';
+      $('modalReqSeqPrefix').textContent = `${pad2(t1)}.${pad2(t2)}.${pad2(t3)}.`;
+      [1, 2].forEach(n => { if (typeof window.removeAddCodeImage === 'function') window.removeAddCodeImage(n); });
+      $('modalReqItemName').value = '';
+      $('modalReqSeqInput').value = '';
+      $('modalReqConfirm').checked = false;
+      $('modalReqConfirmRow').style.display = 'none';
+      $('modalReqCodeNote').innerHTML = '';
+      $('modalReqSeqSuggest').textContent = 'checking…';
+      $('modalReqSeqWrap').style.display = 'block';
+      $('modalReqFormattedCode').textContent = `${t1}-${pad2(t2)}-${pad2(t3)}-…`;
+      const badge = $('modalReqAssignBadge'); if (badge) badge.textContent = 'Next free code';
+
+      // path labels
+      const tiers = window.APP_DATA?.tierHierarchy || { tier1: [], tier2: {}, tier3: {} };
+      const o1 = (tiers.tier1 || []).find(t => Number(t.code_val) === t1);
+      const o2 = o1 && tiers.tier2 && tiers.tier2[o1.id] ? tiers.tier2[o1.id].find(t => Number(t.code_val) === t2) : null;
+      const o3 = o2 && tiers.tier3 && tiers.tier3[o2.id] ? tiers.tier3[o2.id].find(t => Number(t.code_val) === t3) : null;
+      const setP = (id, v, o) => { const e = $(id); if (e) { e.textContent = o ? `${pad2(v)} - ${o.name}` : `Tier ${v}`; e.title = e.textContent; } };
+      setP('modalReqPathT1', t1, o1); setP('modalReqPathT2', t2, o2); setP('modalReqPathT3', t3, o3);
+
+      this.updateSubmit();
+      window.openModal('requestNewCodeModal');
+      setTimeout(() => {
+        $('modalReqItemName')?.focus();
+        if (typeof window.updateModalSuggestions === 'function') window.updateModalSuggestions();
+      }, 100);
+      this.check(true);
+    },
+
+    onInput() {
+      if (!this.active) return;
+      clearTimeout(this.timer);
+      this.updateSubmit();
+      this.timer = setTimeout(() => this.check(false), 250);
+    },
+
+    async check(applySuggestion) {
+      const id = ++this.reqId;
+      const seqEl = $('modalReqSeqInput');
+      const { t1, t2, t3 } = this.t;
+      const qs = new URLSearchParams({
+        action: 'check_new_item', tier1: t1, tier2: t2, tier3: t3,
+        seq: applySuggestion ? '' : seqEl.value.trim(), name: $('modalReqItemName').value.trim()
+      });
+      const res = await App.request('/api/code_management.php?' + qs.toString());
+      if (!this.active || id !== this.reqId) return; // stale
+      const d = res.data || {};
+      const notes = $('modalReqCodeNote');
+      if (!res.ok || d.success === false) {
+        notes.innerHTML = this.note('e', escapeHtml(d.message || 'Could not check the code. Please try again.'));
+        this.seqOk = false; this.updateSubmit(); return;
+      }
+      this.canDirect = !!d.can_direct_save;
+      const btn = $('btnSubmitSimpleReq');
+      if (btn && !this.busy) btn.textContent = this.canDirect ? 'Save to Master' : 'Submit Code Request';
+      const badge = $('modalReqAssignBadge'); if (badge) badge.textContent = this.canDirect ? 'Saved directly to Master' : 'Next free code';
+
+      if (applySuggestion) {
+        if (d.suggested_seq === null) {
+          notes.innerHTML = this.note('e', 'All 1000 codes (000-999) are used in this category.');
+          this.seqOk = false; $('modalReqSeqSuggest').textContent = ''; this.updateSubmit(); return;
+        }
+        seqEl.value = d.suggested_seq_formatted;
+        return this.check(false);
+      }
+
+      const seq = seqEl.value === '' ? '' : seqEl.value.padStart(3, '0');
+      $('modalReqFormattedCode').textContent = `${t1}-${pad2(t2)}-${pad2(t3)}-${seq || '…'}`;
+      $('modalReqTier4').value = seq === '' ? '' : String(parseInt(seq, 10));
+      $('modalReqSeqSuggest').textContent = d.suggested_seq_formatted ? `next free: ${d.suggested_seq_formatted}` : '';
+
+      const out = [];
+      this.seqOk = false; this.blocked = false; this.needsConfirm = false;
+      if (seq === '') {
+        out.push(this.note('w', 'Enter a code number (000-999).'));
+      } else if (d.seq_status === 'FREE') {
+        this.seqOk = true;
+        out.push(this.note('ok', `✓ Code ${d.tier_prefix}${seq} is available.`));
+        if (d.skips) out.push(this.note('w', `This skips ${String(d.skips[0]).padStart(3, '0')}${d.skips[1] > d.skips[0] ? '–' + String(d.skips[1]).padStart(3, '0') : ''}. Next free code is ${d.suggested_seq_formatted}.`));
+      } else if (d.seq_status === 'TAKEN') {
+        const useNext = d.suggested_seq_formatted ? ` <button type="button" onclick="window.AddItemFlow.useSeq('${d.suggested_seq_formatted}')" style="margin-left:6px; border:1px solid #b42318; background:#fff; color:#b42318; border-radius:4px; padding:1px 8px; font-size:0.72rem; font-weight:700; cursor:pointer;">Use ${d.suggested_seq_formatted}</button>` : '';
+        if (d.seq_blocking) out.push(this.note('e', '✕ ' + escapeHtml(d.seq_message) + useNext));
+        else { this.seqOk = true; out.push(this.note('w', '⚠ ' + escapeHtml(d.seq_message) + ' The Code Admin will assign the final code on approval.')); }
+      } else if (d.seq_status === 'INVALID') {
+        out.push(this.note('e', escapeHtml(d.seq_message)));
+      }
+
+      if ($('modalReqItemName').value.trim()) {
+        if (d.exact_duplicate) {
+          this.blocked = true;
+          out.push(this.note('e', `✕ This item already exists as <b>${escapeHtml(d.exact_duplicate.code)}</b> (${escapeHtml(d.exact_duplicate.name)}). Duplicates cannot be added.`));
+        } else if (d.similar_items && d.similar_items.length) {
+          this.needsConfirm = true;
+          out.push(this.note('w', '⚠ Looks similar to:<ul style="margin:3px 0 0 16px; padding:0;">' +
+            d.similar_items.map(x => `<li><span style="font-family:monospace;">${escapeHtml(x.code)}</span> ${escapeHtml(x.name)} (${x.match}%)</li>`).join('') + '</ul>'));
+        }
+      }
+      notes.innerHTML = out.join('');
+      $('modalReqConfirmRow').style.display = this.needsConfirm ? 'block' : 'none';
+      if (!this.needsConfirm) $('modalReqConfirm').checked = false;
+      this.updateSubmit();
+    },
+
+    useSeq(v) { $('modalReqSeqInput').value = v; this.check(false); },
+
+    updateSubmit() {
+      if (!this.active) return;
+      const btn = $('btnSubmitSimpleReq'); if (!btn) return;
+      const nameOk = $('modalReqItemName').value.trim().length > 0;
+      const confirmed = !this.needsConfirm || $('modalReqConfirm').checked;
+      const ok = nameOk && this.seqOk && !this.blocked && confirmed && !this.busy;
+      btn.disabled = !ok; btn.style.opacity = ok ? '1' : '0.5';
+    },
+
+    async post(fd) {
+      const token = (window.APP_DATA && window.APP_DATA.csrfToken) || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+      fd.append('_csrf_token', token);
+      return App.request('/api/code_management.php', { method: 'POST', body: fd });
+    },
+
+    async submit(e) {
+      e.preventDefault();
+      if (this.busy) return;
+      const form = e.target;
+      const { t1, t2, t3 } = this.t;
+      const seq = parseInt($('modalReqSeqInput').value, 10);
+      const code = `${pad2(t1)}.${pad2(t2)}.${pad2(t3)}.${String(seq).padStart(3, '0')}`;
+      this.busy = true; this.updateSubmit();
+      const btn = $('btnSubmitSimpleReq'); const old = btn.textContent; btn.textContent = 'Saving…';
+      try {
+        let res;
+        if (this.canDirect) {
+          const fd = new FormData();
+          fd.append('action', 'save_master_code');
+          fd.append('tier1', t1); fd.append('tier2', t2); fd.append('tier3', t3); fd.append('tier4_seq', String(seq));
+          fd.append('item_name', $('modalReqItemName').value.trim());
+          fd.append('specifications', ''); fd.append('uom', $('modalReqUom').value);
+          res = await this.post(fd);
+          const d0 = res.data || {};
+          if (res.ok && d0.success && d0.master_id) {
+            // price + photos go through the existing media endpoint
+            const price = ($('modalReqUnitPrice')?.value || '').trim();
+            const f1 = $('modalReqImg1Input')?.files?.[0], f2 = $('modalReqImg2Input')?.files?.[0];
+            if (price !== '' || f1 || f2) {
+              const m = new FormData();
+              m.append('action', 'upload_item_media'); m.append('master_id', d0.master_id);
+              if (price !== '') m.append('unit_price', price);
+              if (f1) m.append('image_1', f1); if (f2) m.append('image_2', f2);
+              const mr = await this.post(m);
+              if (!(mr.ok && mr.data && mr.data.success)) App.toast('Item saved, but price/photos could not be saved.', 'warning');
+            }
+          }
+        } else {
+          const fd = new FormData(form);
+          fd.set('action', 'create_request');
+          fd.set('suggested_tier4_seq', String(seq));
+          res = await this.post(fd);
+        }
+        const d = res.data || {};
+        if (res.ok && (d.success || (d.data && d.data.id))) {
+          App.toast(this.canDirect ? `Item ${code} created in Master.` : (d.message || 'Request submitted for approval.'), 'success', 4500);
+          const ctrl = this.ctrl;
+          form.reset();
+          [1, 2].forEach(n => window.removeAddCodeImage && window.removeAddCodeImage(n));
+          window.closeModal('requestNewCodeModal');
+          this.reset();
+          if (ctrl) await ctrl.reload();
+          if (typeof window.loadStationRequests === 'function') window.loadStationRequests();
+          if (typeof window.loadAdminRequestsQueue === 'function') window.loadAdminRequestsQueue();
+        } else {
+          // e.g. code taken by another user meanwhile: show message and refresh suggestion
+          $('modalReqCodeNote').innerHTML = this.note('e', escapeHtml(d.message || 'Could not save the item.'));
+          this.seqOk = false;
+          setTimeout(() => this.check(false), 50);
+        }
+      } finally {
+        this.busy = false; btn.textContent = old; this.updateSubmit();
+      }
+    }
+  };
+
+  P.openAddItemModal = function () { Flow.open(this); };
+
   window.itemSearchController['user'] = new ItemSearchModuleController('user');
   window.itemSearchController['admin'] = new ItemSearchModuleController('admin');
 
@@ -1033,7 +1292,7 @@
 
     try {
       App.toast(`Uploading Image ${slot}...`, 'info');
-      const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php', {
+      const res = await fetch(resolveImg('/api/code_management.php'), {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData
@@ -1074,7 +1333,7 @@
     formData.append('_csrf_token', csrfToken);
 
     try {
-      const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php', {
+      const res = await fetch(resolveImg('/api/code_management.php'), {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData
@@ -1132,7 +1391,7 @@
     formData.append('_csrf_token', csrfToken);
 
     try {
-      const res = await fetch((document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '') + '/api/code_management.php', {
+      const res = await fetch(resolveImg('/api/code_management.php'), {
         method: 'POST',
         headers: { 'X-CSRF-Token': csrfToken },
         body: formData
@@ -1157,14 +1416,11 @@
 
   // Sub-tab Switchers
   window.switchUserCodeSubTab = function (subTab) {
-    if (subTab === 'search') {
-      const trigger = document.querySelector('[data-user-tab="tab-user-code-item-search"]');
-      if (trigger) trigger.click();
-      window.itemSearchController['user']?.init();
-    } else {
-      const trigger = document.querySelector('[data-user-tab="tab-user-code-roles"]');
-      if (trigger) trigger.click();
-    }
+    // Only the Item Search sub-tab remains for the user portal (Add Code tab removed);
+    // any legacy caller asking for 'add' lands on Item Search.
+    const trigger = document.querySelector('[data-user-tab="tab-user-code-item-search"]');
+    if (trigger) trigger.click();
+    window.itemSearchController['user']?.init();
   };
 
   window.switchAdminCodeSubTab = function (subTab) {
