@@ -6302,12 +6302,8 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
             <section id="tab-define-code"
               class="admin-tab-pane <?= ($defaultActiveTab === 'tab-define-code') ? 'active' : '' ?>">
 
-              <!-- Sub-tab Navigation: Item Search & Add Code -->
+              <!-- Sub-tab Navigation: Add Code -->
               <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #cbd5e1; padding-bottom: 10px;">
-                <button type="button" id="adminCodeSubBtnSearch" onclick="switchAdminCodeSubTab('search');" class="btn btn-sm"
-                  style="font-size: 0.88rem; font-weight: 700; padding: 7px 20px; border-radius: 4px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; cursor: pointer;">
-                  Item Search
-                </button>
                 <button type="button" id="adminCodeSubBtnAdd" onclick="switchAdminCodeSubTab('add');" class="btn btn-sm"
                   style="font-size: 0.88rem; font-weight: 800; padding: 7px 20px; border-radius: 4px; border: 1px solid #4a071e; background: #650b2b; color: #ffffff; cursor: pointer;">
                   Add Code
