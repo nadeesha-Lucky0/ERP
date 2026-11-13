@@ -1725,6 +1725,9 @@ const Desk = {
     document.querySelectorAll('#pvWorkflowPills .pv-pill-btn').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-pv-btn') === subTabId);
     });
+    if (subTabId === 'pv-sub-freeze' || subTabId === 'pv-sub-unfreeze') {
+      this.loadWarehouseFreezeTables();
+    }
 
     document.querySelectorAll('.sidebar-sub-item[data-parent-tab="tab-pv-workflow"]').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-pv-sub') === subTabId);

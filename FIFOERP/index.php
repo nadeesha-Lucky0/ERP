@@ -1670,32 +1670,6 @@ require_once __DIR__ . '/views/layouts/header.php';
             </table>
           </div>
         </div>
-
-        <div class="desk-card">
-          <div class="desk-card-header">
-            <div class="desk-card-title">Batches Subject to Freeze Control</div>
-            <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.loadBatches()">
-              <?= Icon::get('refresh', 13) ?> Refresh Batches
-            </button>
-          </div>
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
-              <thead>
-                <tr>
-                  <th>Batch Lot #</th>
-                  <th>Material Code</th>
-                  <th>Item Description</th>
-                  <th>Bin Location</th>
-                  <th>Available QOH</th>
-                  <th>Unit Cost (LKR)</th>
-                  <th>Total Valuation (LKR)</th>
-                  <th>Lock Status</th>
-                </tr>
-              </thead>
-              <tbody id="freezeBatchesTableBody"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       <!-- SUB-PANE 2: GENERATE SHEET -->
