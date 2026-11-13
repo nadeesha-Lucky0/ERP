@@ -622,7 +622,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <span class="frappe-badge-not-saved" id="grnStatusBadge">Not Saved</span>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
               <div class="dropdown-wrapper" style="position: relative;">
                 <button type="button" class="frappe-btn" id="grnCreateBtn"
                   onclick="Desk.toggleSeDropdown('grnCreateDropdown')">
@@ -630,7 +630,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="grnCreateDropdown" class="frappe-dropdown-menu"
-                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="GRN"
                     onclick="Desk.createDocType('grn', 'GRN')">
                     <span>GRN</span>
@@ -656,7 +656,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="grnGetItemsDropdown" class="frappe-dropdown-menu"
-                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 190px; padding: 6px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Purchase Order"
                     onclick="Desk.openPoSelectionModal('grn')">
                     <span>Purchase Order</span>
@@ -1137,7 +1137,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <span class="frappe-badge-not-saved" id="issueStatusBadge">Not Saved</span>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
               <!-- 1. Document Profile (TV-ISSUE, ISSUE, MAT-REQ) -->
               <div class="dropdown-wrapper" style="position: relative;">
                 <button type="button" class="frappe-btn" id="issueCreateBtn"
@@ -1146,7 +1146,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueCreateDropdown" class="frappe-dropdown-menu"
-                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 50; min-width: 170px; padding: 4px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="TV-ISSUE"
                     onclick="Desk.createDocType('issue', 'TV-ISSUE')">
                     <span>TV-ISSUE</span>
@@ -1173,7 +1173,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                     style="font-size: 9px; margin-left: 4px;">&#9662;</span>
                 </button>
                 <div id="issueGetItemsDropdown" class="frappe-dropdown-menu"
-                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 230px; padding: 6px 0;">
+                  style="display: none; position: absolute; right: 0; top: 100%; margin-top: 6px; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 50; min-width: 230px; padding: 6px 0;">
                   <a href="javascript:void(0)" class="frappe-dropdown-item" data-value="Project"
                     onclick="Desk.selectIssueToDestination('Project')">
                     <span>Project</span>
