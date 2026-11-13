@@ -1253,6 +1253,7 @@ function initUserPortalNavigation() {
   function switchUserTab(targetPaneId) {
     if (targetPaneId === 'tab-user-receipts') targetPaneId = 'tab-user-receipts-entry';
     if (targetPaneId === 'tab-user-physical-verification') targetPaneId = 'tab-user-pv-entry';
+    if (targetPaneId === 'tab-user-code-roles') targetPaneId = 'tab-user-code-item-search'; // Add Code tab removed (old bookmarks / hashes)
     if (targetPaneId === 'tab-user-code-item-search' && window.itemSearchController?.['user']) {
       window.itemSearchController['user'].init();
     }
@@ -1310,15 +1311,10 @@ function initUserPortalNavigation() {
           window.updateReceiptCurrentDocDetails(docVal, 'issue');
         }
       }
-    } else if (targetPaneId === 'tab-user-code-roles') {
-      if (typeof window.loadStationInventory === 'function') {
-        window.loadStationInventory();
-      }
+    } else if (targetPaneId === 'tab-user-code-item-search') {
+      // "Add Code" tab was removed: the station's code-request tracker now lives on Item Search
       if (typeof window.loadStationRequests === 'function') {
         window.loadStationRequests();
-      }
-      if (typeof window.updateSimpleCode === 'function') {
-        window.updateSimpleCode();
       }
     }
   }
@@ -4040,6 +4036,8 @@ function renderCategoryExplorer(t1, t2, t3, t4Num, items, nextSeq) {
 }
 
 window.updateSimpleCode = function () {
+  // Legacy "Add Code" lookup form was removed; nothing to update if it is not on the page
+  if (!document.getElementById('simpleTier1')) return;
   clearTimeout(simpleCodeDebounce);
   simpleCodeDebounce = setTimeout(async () => {
     const t1El = document.getElementById('simpleTier1');
@@ -4146,6 +4144,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 window.openSimpleRequestModal = async function () {
+  if (window.AddItemFlow) window.AddItemFlow.reset();
   const t1Val = document.getElementById('simpleTier1')?.value;
   const t2Val = document.getElementById('simpleTier2')?.value;
   const t3Val = document.getElementById('simpleTier3')?.value;
@@ -4236,6 +4235,7 @@ window.onModalReqNameInput = function () {
   _modalReqDebounce = setTimeout(() => {
     window.updateModalSuggestions();
   }, 90);
+  if (window.AddItemFlow) window.AddItemFlow.onInput();
 };
 
 window.updateModalSuggestions = async function () {
@@ -4298,7 +4298,9 @@ window.updateModalSuggestions = async function () {
       uom: it.orig_uom || it.uom || 'Nos',
       is_master: Number(it.is_added_to_master) > 0,
       status: Number(it.is_added_to_master) > 0 ? 'MASTER' : 'STAGED',
-      station_name: ''
+      station_name: '',
+      image1: it.image_url_1 || '',
+      image2: it.image_url_2 || ''
     });
   });
 
@@ -4318,7 +4320,9 @@ window.updateModalSuggestions = async function () {
         uom: r.uom || 'Nos',
         is_master: Number(r.is_added_to_master) > 0,
         status: Number(r.is_added_to_master) > 0 ? 'MASTER' : (r.status === 'APPROVED' ? 'STAGED' : 'PENDING'),
-        station_name: r.station_name || ''
+        station_name: r.station_name || '',
+        image1: r.image_url_1 || '',
+        image2: r.image_url_2 || ''
       });
     }
   });
@@ -4339,6 +4343,8 @@ window.updateModalSuggestions = async function () {
         </td>
       </tr>
     `;
+    window._modalSuggestionItems = [];
+    if (typeof renderModalPreview === 'function') renderModalPreview('empty');
     if (alertBox) alertBox.style.display = 'none';
     if (countBadge) {
       countBadge.textContent = 'Live System Search';
@@ -4390,6 +4396,8 @@ window.updateModalSuggestions = async function () {
       countBadge.style.color = '#15803d';
       countBadge.style.borderColor = '#86efac';
     }
+    window._modalSuggestionItems = [];
+    if (typeof renderModalPreview === 'function') renderModalPreview('none');
     tbody.innerHTML = `
       <tr>
         <td colspan="6" style="text-align: center; padding: 42px 20px;">
@@ -4404,10 +4412,11 @@ window.updateModalSuggestions = async function () {
     return;
   }
 
-  tbody.innerHTML = filtered.map(it => {
+  window._modalSuggestionItems = filtered;
+  tbody.innerHTML = filtered.map((it, rowIdx) => {
     let statusBadge = '';
     if (it.status === 'MASTER') {
-      statusBadge = `<span style="font-size:0.71rem; font-weight:700; color:#c2410c; background:#fff7ed; border:1px solid #fed7aa; padding:2px 6px; border-radius:3px; white-space:nowrap;">MASTER ADDED</span>`;
+      statusBadge = `<span style="font-size:0.71rem; font-weight:700; color:#c2410c; background:#fff7ed; border:1px solid #fed7aa; padding:2px 6px; border-radius:3px; white-space:nowrap;">MASTER</span>`;
     } else if (it.status === 'STAGED') {
       statusBadge = `<span style="font-size:0.71rem; font-weight:700; color:#0284c7; background:#e0f2fe; border:1px solid #bae6fd; padding:2px 6px; border-radius:3px; white-space:nowrap;">STAGED (PENDING MASTER)</span>`;
     } else {
@@ -4430,27 +4439,17 @@ window.updateModalSuggestions = async function () {
       });
     }
 
-    let actionBtn = '';
-    if (it.is_master) {
-      actionBtn = `
-        <button type="button" class="btn btn-sm" onclick="addSuggestedMasterToStation(${it.id}, '${escapeHtml(it.code)}', '${encodeURIComponent(it.name)}');"
-          style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:3px; background:#650b2b; color:#ffffff; border:1px solid #4a071e; cursor:pointer; white-space:nowrap;"
-          title="Item is already in Master Database! Click to add directly to power station table">
-          + Add to Station
-        </button>
-      `;
-    } else {
-      actionBtn = `
-        <button type="button" class="btn btn-sm" onclick="useSuggestedItemName('${escapeHtml(it.name)}');"
-          style="font-size:0.72rem; font-weight:600; padding:3px 8px; border-radius:3px; background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; cursor:pointer; white-space:nowrap;"
-          title="Use this item name for your request">
-          Use Text
-        </button>
-      `;
-    }
+    const addDescBtn = `
+      <button type="button" class="btn btn-sm" onclick="event.stopPropagation(); addSuggestedToDescription(${rowIdx});"
+        style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:3px; background:#ecfdf5; color:#047857; border:1px solid #6ee7b7; cursor:pointer; white-space:nowrap;"
+        title="Add this item's description to the description box on the left, then edit it as needed">
+        &#9998; Add to Description
+      </button>
+    `;
 
     return `
-      <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;"
+      <tr class="mp-row" data-idx="${rowIdx}"
+          style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s;"
           onmouseenter="this.style.backgroundColor='#f8fafc';" onmouseleave="this.style.backgroundColor='transparent';">
         <td style="padding: 6px 8px; white-space: nowrap;">${codeBadge}</td>
         <td style="padding: 6px 8px; text-align: center; font-family: monospace; font-size: 0.74rem; color: #64748b; white-space: nowrap;">${branchText}</td>
@@ -4461,10 +4460,48 @@ window.updateModalSuggestions = async function () {
         </td>
         <td style="padding: 6px 8px; text-align: center; font-size: 0.76rem; color: #475569;">${escapeHtml(it.uom)}</td>
         <td style="padding: 6px 8px; text-align: center; white-space: nowrap;">${statusBadge}</td>
-        <td style="padding: 6px 8px; text-align: center; white-space: nowrap;">${actionBtn}</td>
+        <td style="padding: 6px 8px; text-align: center; white-space: nowrap;">
+          ${addDescBtn}
+        </td>
       </tr>
     `;
   }).join('');
+
+  // Preview card follows the best match (or the item the user just added to the description)
+  let startIdx = 0;
+  const pin = window._modalPreviewPin;
+  if (pin) {
+    const curVal = String(document.getElementById('modalReqItemName')?.value || '').trim().toUpperCase();
+    const pinned = curVal === pin.name ? filtered.findIndex(x => x.code === pin.code) : -1;
+    if (pinned >= 0) startIdx = pinned; else window._modalPreviewPin = null;
+  }
+  window._modalPreviewState = { idx: startIdx, photo: 0 };
+  if (typeof hideModalThumbZoom === 'function') hideModalThumbZoom();
+  if (typeof renderModalPreview === 'function') renderModalPreview();
+  if (typeof markModalSuggestionRow === 'function') markModalSuggestionRow(false);
+};
+
+/**
+ * "Add to Description": put the clicked suggestion's description into the request's
+ * Item Description box. The box always shows the LAST item clicked (it replaces the
+ * previous text, it never accumulates), and stays editable for the user to refine.
+ */
+window.addSuggestedToDescription = function (idx) {
+  const it = (window._modalSuggestionItems || [])[idx];
+  const input = document.getElementById('modalReqItemName');
+  if (!it || !input) return;
+
+  const name = String(it.name || '').replace(/\s+/g, ' ').trim().toUpperCase();
+  if (!name) return;
+
+  const next = name;
+
+  window._modalPreviewPin = { code: it.code, name: next };
+  input.value = next;
+  if (typeof onModalReqNameInput === 'function') onModalReqNameInput();
+  input.focus();
+  try { input.setSelectionRange(next.length, next.length); } catch (e) {}
+  if (typeof App !== 'undefined' && App.toast) App.toast('Added to description - edit as needed.', 'success', 1800);
 };
 
 window.addSuggestedMasterToStation = function (masterId, code, encodedName) {
@@ -4521,6 +4558,7 @@ window.removeAddCodeImage = function (slot) {
 
 window.executeSimpleCodeRequest = async function (e) {
   e.preventDefault();
+  if (window.AddItemFlow && window.AddItemFlow.active) return window.AddItemFlow.submit(e);
   const form = e.target;
   const btn = document.getElementById('btnSubmitSimpleReq');
   const originalText = btn ? btn.innerHTML : 'Submit Code Request';
@@ -7282,3 +7320,266 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+
+
+/* ===========================================================================
+ * Item photos in the Request Item Code dialog
+ *  - thumbnail column + hover zoom in the related-codes table
+ *  - live preview card (left panel) for the selected / best-matching item
+ * Photos come from the master catalogue (image_url_1 = product photo,
+ * image_url_2 = technical drawing). Items without photos get a "no photo" tile.
+ * =========================================================================== */
+window._modalPreviewState = { idx: 0, photo: 0 };
+window._modalPreviewPin = null;
+
+(function injectModalPhotoStyles() {
+  if (document.getElementById('mpPhotoStyles')) return;
+  const st = document.createElement('style');
+  st.id = 'mpPhotoStyles';
+  st.textContent = '.mp-row.mp-row-sel{outline:2px solid #2563eb;outline-offset:-2px;background:#eff6ff !important;}';
+  document.head.appendChild(st);
+})();
+
+const MP_NOPHOTO_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 9"/><path d="M3 3l18 18" stroke="#cbd5e1"/></svg>';
+
+
+/* Resolve a stored image path to a URL the browser can load.
+ * DB stores "/uploads/items/x.jpg" (root-absolute). When the app lives in a sub-folder
+ * (e.g. http://localhost/FIFO) that path must be prefixed with the base URL, otherwise
+ * the browser asks http://localhost/uploads/... and gets 404 -> "no photo" tile. */
+window.itemImgUrl = function (u) {
+  u = String(u || '').trim();
+  if (!u) return '';
+  if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u)) return u;
+  let base = '';
+  try { base = (document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '').replace(/\/+$/, ''); } catch (e) {}
+  // meta base may be a full URL (http://host/FIFO) - keep only its path part
+  base = base.replace(/^https?:\/\/[^\/]+/i, '');
+  u = u.replace(/^\.?\/+/, '');
+  if (base && (('/' + u) === base || ('/' + u).indexOf(base + '/') === 0)) return '/' + u;
+  return (base || '') + '/' + u;
+};
+
+window.mpImgFail = function (img) {
+  const box = img.parentNode;
+  if (!box) return;
+  box.removeAttribute('onmouseenter');
+  box.style.cursor = 'default';
+  box.style.border = '1px dashed #cbd5e1';
+  box.innerHTML = MP_NOPHOTO_SVG;
+};
+
+function mpThumbHtml(it, idx) {
+  const url = it.image1 || it.image2 || '';
+  if (!url) {
+    return `<div title="No photo on file" style="width:44px;height:44px;border:1px dashed #cbd5e1;border-radius:6px;background:#f8fafc;display:flex;align-items:center;justify-content:center;">${MP_NOPHOTO_SVG}</div>`;
+  }
+  return `<div onmouseenter="showModalThumbZoom(this, ${idx})" onmouseleave="hideModalThumbZoom()"
+      style="width:44px;height:44px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;background:#f8fafc;display:flex;align-items:center;justify-content:center;cursor:zoom-in;">
+      <img src="${escapeHtml(itemImgUrl(url))}" alt="" loading="lazy" onerror="mpImgFail(this)" style="width:100%;height:100%;object-fit:cover;display:block;"></div>`;
+}
+
+window.showModalThumbZoom = function (el, idx) {
+  const it = (window._modalSuggestionItems || [])[idx];
+  const url = it && (it.image1 || it.image2);
+  if (!url) return;
+  let z = document.getElementById('modalThumbZoom');
+  if (!z) {
+    z = document.createElement('div');
+    z.id = 'modalThumbZoom';
+    z.style.cssText = 'position:fixed;z-index:200000;background:#ffffff;border:1px solid #94a3b8;border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,0.25);pointer-events:none;display:none;';
+    document.body.appendChild(z);
+  }
+  z.innerHTML = `<img src="${escapeHtml(itemImgUrl(url))}" alt="" style="display:block;width:240px;height:240px;object-fit:contain;border-radius:6px;background:#f8fafc;">
+    <div style="font-size:0.72rem;font-weight:700;color:#0f172a;margin-top:5px;max-width:240px;">${escapeHtml(it.name)}</div>`;
+  const r = el.getBoundingClientRect();
+  let left = r.right + 10;
+  if (left + 262 > window.innerWidth) left = Math.max(8, r.left - 262);
+  const top = Math.min(Math.max(8, r.top - 90), Math.max(8, window.innerHeight - 300));
+  z.style.left = left + 'px';
+  z.style.top = top + 'px';
+  z.style.display = 'block';
+};
+
+window.hideModalThumbZoom = function () {
+  const z = document.getElementById('modalThumbZoom');
+  if (z) z.style.display = 'none';
+};
+
+window.markModalSuggestionRow = function (scrollIntoView) {
+  const tbody = document.getElementById('modalReqSuggestionsBody');
+  if (!tbody) return;
+  const idx = (window._modalPreviewState || {}).idx;
+  tbody.querySelectorAll('tr.mp-row').forEach(tr => {
+    const on = Number(tr.getAttribute('data-idx')) === idx;
+    tr.classList.toggle('mp-row-sel', on);
+    if (on && scrollIntoView) tr.scrollIntoView({ block: 'nearest' });
+  });
+};
+
+window.selectModalSuggestion = function (idx) {
+  const list = window._modalSuggestionItems || [];
+  if (!list[idx]) return;
+  window._modalPreviewState = { idx: idx, photo: 0 };
+  renderModalPreview();
+  markModalSuggestionRow(false);
+};
+
+window.stepModalPreview = function (delta) {
+  const list = window._modalSuggestionItems || [];
+  if (!list.length) return;
+  const st = window._modalPreviewState || { idx: 0, photo: 0 };
+  window._modalPreviewState = { idx: (st.idx + delta + list.length) % list.length, photo: 0 };
+  renderModalPreview();
+  markModalSuggestionRow(true);
+};
+
+window.setModalPreviewPhoto = function (n) {
+  const st = window._modalPreviewState || { idx: 0, photo: 0 };
+  st.photo = n;
+  renderModalPreview();
+};
+
+window.renderModalPreview = function (mode) {
+  const box = document.getElementById('modalReqPreviewCard');
+  if (!box) return;
+  const head = (right) => `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:0.72rem;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.5px;">Item Preview</span>${right || ''}</div>`;
+
+  if (mode === 'empty') {
+    box.innerHTML = head('') + `<div style="font-size:0.78rem;color:#64748b;line-height:1.5;">Start typing the item name. The closest existing item and its photo will appear here so you can confirm it is the same item.</div>`;
+    return;
+  }
+  if (mode === 'none') {
+    box.innerHTML = head('') + `<div style="display:flex;gap:10px;align-items:center;">
+      <div style="width:84px;height:84px;flex:none;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc;display:flex;align-items:center;justify-content:center;">${MP_NOPHOTO_SVG}</div>
+      <div style="font-size:0.78rem;color:#166534;line-height:1.5;"><strong>No similar item found.</strong> This looks like a new item. Add clear photos below so others can recognise it.</div></div>`;
+    return;
+  }
+
+  const list = window._modalSuggestionItems || [];
+  const st = window._modalPreviewState || { idx: 0, photo: 0 };
+  const it = list[st.idx];
+  if (!it) { renderModalPreview('empty'); return; }
+
+  const photos = [it.image1, it.image2].filter(Boolean);
+  const photoIdx = Math.min(st.photo || 0, Math.max(photos.length - 1, 0));
+  const url = photos[photoIdx] || '';
+  const photoLabels = (it.image1 && it.image2) ? ['Photo', 'Drawing'] : ['Photo'];
+
+  const imgHtml = url
+    ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><img src="${escapeHtml(itemImgUrl(url))}" alt="${escapeHtml(it.name)}" onerror="mpImgFail(this)" style="width:100%;height:100%;object-fit:contain;display:block;"></div>`
+    : `<div style="text-align:center;font-size:0.66rem;color:#94a3b8;">${MP_NOPHOTO_SVG}<div style="margin-top:2px;">No photo</div></div>`;
+
+  const photoTabs = photos.length > 1
+    ? `<div style="display:flex;gap:4px;margin-top:5px;">${photos.map((_, i) => `<button type="button" onclick="setModalPreviewPhoto(${i})" style="flex:1;font-size:0.64rem;font-weight:700;padding:1px 0;border-radius:3px;cursor:pointer;border:1px solid ${i === photoIdx ? '#2563eb' : '#cbd5e1'};background:${i === photoIdx ? '#eff6ff' : '#ffffff'};color:${i === photoIdx ? '#1d4ed8' : '#475569'};">${photoLabels[i] || 'Photo'}</button>`).join('')}</div>`
+    : '';
+
+  const statusTxt = it.status === 'MASTER' ? 'Master' : (it.status === 'STAGED' ? 'Staged' : 'Pending review');
+  const nav = list.length > 1
+    ? `<span style="display:inline-flex;align-items:center;gap:6px;font-size:0.7rem;color:#475569;">
+         <button type="button" onclick="stepModalPreview(-1)" aria-label="Previous match" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 6px;cursor:pointer;line-height:1.3;">&#8249;</button>
+         Match ${st.idx + 1} of ${list.length}
+         <button type="button" onclick="stepModalPreview(1)" aria-label="Next match" style="border:1px solid #cbd5e1;background:#fff;border-radius:4px;padding:0 6px;cursor:pointer;line-height:1.3;">&#8250;</button>
+       </span>` : '';
+
+  box.innerHTML = head(nav) + `
+    <div style="display:grid;grid-template-columns:112px 1fr;gap:10px;align-items:start;">
+      <div>
+        <div style="width:112px;height:112px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;display:flex;align-items:center;justify-content:center;overflow:hidden;">${imgHtml}</div>
+        ${photoTabs}
+      </div>
+      <div style="min-width:0;">
+        <div style="font-size:0.82rem;font-weight:800;color:#0f172a;line-height:1.3;word-break:break-word;">${escapeHtml(it.name)}</div>
+        ${it.specs ? `<div style="font-size:0.7rem;color:#64748b;margin-top:2px;">${escapeHtml(it.specs)}</div>` : ''}
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+          <span style="font-family:monospace;font-size:0.74rem;font-weight:700;color:#650b2b;background:#fdf2f5;border:1px solid #fbcfe8;padding:1px 6px;border-radius:3px;">${escapeHtml(it.code)}</span>
+          <span style="font-size:0.72rem;color:#475569;">${escapeHtml(it.uom)}</span>
+          <span style="font-size:0.68rem;font-weight:700;color:#c2410c;">${statusTxt}</span>
+        </div>
+        <button type="button" onclick="addSuggestedToDescription(${st.idx});"
+          style="margin-top:8px;font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:4px;background:#ecfdf5;color:#047857;border:1px solid #6ee7b7;cursor:pointer;">
+          &#9998; Add to Description
+        </button>
+      </div>
+    </div>`;
+};
+
+
+
+/* ===========================================================================
+ * "Search images of this item" (Request Item Code dialog)
+ * Injected under the description box by JS (no PHP change needed). Appears once
+ * 3+ characters are typed. Opens Google Images in a new tab - no API key.
+ *  - "Search images"      -> the description as typed
+ *  - "Drawings"           -> description + "drawing dimensions" (technical sheets)
+ * The query is cleaned (extra spaces/dots removed) and the link is rebuilt on every
+ * click, so it always matches what is in the box right now.
+ * =========================================================================== */
+window._siQuery = function (extra) {
+  const v = String(document.getElementById('modalReqItemName')?.value || '');
+  let q = v.replace(/[‘’“”]/g, '').replace(/\s+/g, ' ').trim();
+  if (extra) q += ' ' + extra;
+  return q;
+};
+window._siUrl = function (extra) {
+  return 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(window._siQuery(extra));
+};
+window.openItemImageSearch = function (extra) {
+  if (window._siQuery().length < 2) return;
+  window.open(window._siUrl(extra), '_blank', 'noopener,noreferrer');
+};
+window.updateSearchImagesOption = function () {
+  const input = document.getElementById('modalReqItemName');
+  if (!input) return;
+  const q = window._siQuery();
+  const ok = q.length >= 2;
+
+  // 1) bar directly under the description box (always visible; button enabled once text is typed)
+  let box = document.getElementById('modalReqSearchImages');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'modalReqSearchImages';
+    box.style.cssText = 'display:flex;margin-top:8px;align-items:center;gap:8px;background:#ffffff;border:1px solid #93c5fd;border-radius:8px;padding:8px 10px;';
+    box.innerHTML =
+      '<div style="flex:none;width:30px;height:30px;border-radius:8px;background:#eff6ff;display:flex;align-items:center;justify-content:center;">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div style="font-size:0.76rem;font-weight:700;color:#0f172a;">See images of this item</div>' +
+        '<div id="modalReqSearchImagesText" style="font-size:0.68rem;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>' +
+      '</div>' +
+      '<button type="button" id="modalReqSearchDrawBtn" onclick="openItemImageSearch(\'drawing dimensions\')" title="Search technical drawings / dimensions" style="flex:none;background:#ffffff;color:#1d4ed8;border:1px solid #93c5fd;font-size:0.7rem;font-weight:700;border-radius:6px;padding:6px 8px;cursor:pointer;">Drawings</button>' +
+      '<button type="button" id="modalReqSearchImagesBtn" onclick="openItemImageSearch()" style="flex:none;background:#2563eb;color:#ffffff;border:none;font-size:0.74rem;font-weight:700;border-radius:6px;padding:7px 10px;cursor:pointer;">View images &#8599;</button>';
+    input.insertAdjacentElement('afterend', box);
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:0.64rem;color:#64748b;margin-top:3px;';
+    hint.textContent = 'Opens Google Images in a new tab. Save the picture, then add it under Item Photos below.';
+    box.insertAdjacentElement('afterend', hint);
+  }
+  box.querySelectorAll('button').forEach(b => { b.disabled = !ok; b.style.opacity = ok ? '1' : '0.5'; b.style.cursor = ok ? 'pointer' : 'not-allowed'; });
+  const txt = document.getElementById('modalReqSearchImagesText');
+  const want = ok ? '“' + q + '”' : 'Type the item name to search';
+  if (txt && txt.textContent !== want) txt.textContent = want;
+
+  // 2) shortcut link in the "Item Photos" header (where the user adds Image 1 / Image 2)
+  const form = input.closest('form');
+  if (form && !document.getElementById('modalReqPhotosGoogleLink')) {
+    const lab = Array.from(form.querySelectorAll('label')).find(l => /item photos/i.test(l.textContent));
+    if (lab) {
+      const a = document.createElement('button');
+      a.type = 'button';
+      a.id = 'modalReqPhotosGoogleLink';
+      a.textContent = 'Find images on Google ↗';
+      a.style.cssText = 'background:none;border:none;color:#1d4ed8;font-size:0.68rem;font-weight:700;cursor:pointer;padding:0;text-transform:none;';
+      a.onclick = function () { window.openItemImageSearch(); };
+      lab.appendChild(a);
+    }
+  }
+  const pl = document.getElementById('modalReqPhotosGoogleLink');
+  if (pl) { pl.disabled = !ok; pl.style.opacity = ok ? '1' : '0.45'; pl.style.cursor = ok ? 'pointer' : 'not-allowed'; }
+};
+document.addEventListener('input', function (e) {
+  if (e.target && e.target.id === 'modalReqItemName') window.updateSearchImagesOption();
+});
+// catches the dialog opening and text filled by code (Add to Description, Auto-Fix, reset)
+setInterval(function () { try { window.updateSearchImagesOption(); } catch (e) {} }, 500);
