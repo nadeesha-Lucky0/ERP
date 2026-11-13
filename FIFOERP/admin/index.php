@@ -6717,6 +6717,12 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                       <option value="">All 2nd</option>
                     </select>
                   </div>
+                  <div style="width: 140px;">
+                    <select id="masterCodeFilterTier3" class="form-select" onchange="onMasterCodeTier3FilterChange();" disabled
+                      style="width: 100%; height: 34px; font-size: 0.82rem; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; background: #f1f5f9; opacity: 0.7;">
+                      <option value="">All 3rd</option>
+                    </select>
+                  </div>
                   <div>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="resetMasterCodeFilters();"
                       style="font-size: 0.78rem; height: 34px; padding: 0 12px; border: 1px solid #cbd5e1; background: #f8fafc; cursor: pointer; border-radius: 4px;">

@@ -5246,6 +5246,7 @@ window.onMasterCodeSearchInput = function () {
 window.onMasterCodeTier1FilterChange = function () {
   const t1Select = document.getElementById('masterCodeFilterTier1');
   const t2Select = document.getElementById('masterCodeFilterTier2');
+  const t3Select = document.getElementById('masterCodeFilterTier3');
   if (!t1Select || !t2Select) return;
 
   const t1Val = t1Select.value;
@@ -5254,10 +5255,17 @@ window.onMasterCodeTier1FilterChange = function () {
   const t1DbId = selectedOption ? selectedOption.getAttribute('data-db-id') : null;
 
   t2Select.innerHTML = '<option value="">All 2nd</option>';
+  if (t3Select) {
+    t3Select.innerHTML = '<option value="">All 3rd</option>';
+    t3Select.disabled = true;
+    t3Select.style.background = '#f1f5f9';
+    t3Select.style.opacity = '0.7';
+  }
   if (t1Val && t1DbId && tiers.tier2 && tiers.tier2[t1DbId]) {
     tiers.tier2[t1DbId].forEach(t2 => {
       const opt = document.createElement('option');
       opt.value = t2.code_val;
+      opt.setAttribute('data-db-id', t2.id);
       opt.textContent = String(t2.code_val).padStart(2, '0');
       t2Select.appendChild(opt);
     });
@@ -5273,6 +5281,35 @@ window.onMasterCodeTier1FilterChange = function () {
 };
 
 window.onMasterCodeTier2FilterChange = function () {
+  const t2Select = document.getElementById('masterCodeFilterTier2');
+  const t3Select = document.getElementById('masterCodeFilterTier3');
+  if (t2Select && t3Select) {
+    const t2Val = t2Select.value;
+    const tiers = window.APP_DATA?.tierHierarchy || { tier1: [], tier2: {}, tier3: {} };
+    const selectedOption = t2Select.options[t2Select.selectedIndex];
+    const t2DbId = selectedOption ? selectedOption.getAttribute('data-db-id') : null;
+
+    t3Select.innerHTML = '<option value="">All 3rd</option>';
+    if (t2Val && t2DbId && tiers.tier3 && tiers.tier3[t2DbId]) {
+      tiers.tier3[t2DbId].forEach(t3 => {
+        const opt = document.createElement('option');
+        opt.value = t3.code_val;
+        opt.textContent = String(t3.code_val).padStart(2, '0');
+        t3Select.appendChild(opt);
+      });
+      t3Select.disabled = false;
+      t3Select.style.background = '#ffffff';
+      t3Select.style.opacity = '1';
+    } else {
+      t3Select.disabled = true;
+      t3Select.style.background = '#f1f5f9';
+      t3Select.style.opacity = '0.7';
+    }
+  }
+  reloadMasterCodesTable();
+};
+
+window.onMasterCodeTier3FilterChange = function () {
   reloadMasterCodesTable();
 };
 
@@ -5284,6 +5321,7 @@ window.resetMasterCodeFilters = function () {
   const sInput = document.getElementById('masterCodeSearchInput');
   const t1 = document.getElementById('masterCodeFilterTier1');
   const t2 = document.getElementById('masterCodeFilterTier2');
+  const t3 = document.getElementById('masterCodeFilterTier3');
   const bothRadio = document.querySelector('input[name="masterCodeStatusRadio"][value="both"]');
   if (sInput) sInput.value = '';
   if (t1) t1.value = '';
@@ -5292,6 +5330,12 @@ window.resetMasterCodeFilters = function () {
     t2.disabled = true;
     t2.style.background = '#f1f5f9';
     t2.style.opacity = '0.7';
+  }
+  if (t3) {
+    t3.innerHTML = '<option value="">All 3rd</option>';
+    t3.disabled = true;
+    t3.style.background = '#f1f5f9';
+    t3.style.opacity = '0.7';
   }
   if (bothRadio) {
     bothRadio.checked = true;
@@ -5525,6 +5569,7 @@ window.reloadMasterCodesTable = async function (keepPage = false, forceRefresh =
   const search = (document.getElementById('masterCodeSearchInput')?.value || '').trim().toLowerCase();
   const t1 = document.getElementById('masterCodeFilterTier1')?.value || '';
   const t2 = document.getElementById('masterCodeFilterTier2')?.value || '';
+  const t3 = document.getElementById('masterCodeFilterTier3')?.value || '';
   const statusRadio = document.querySelector('input[name="masterCodeStatusRadio"]:checked')?.value || 'both';
 
   // 1. Fetch data from server if not cached or forceRefresh requested
@@ -5557,6 +5602,7 @@ window.reloadMasterCodesTable = async function (keepPage = false, forceRefresh =
   masterCodesFilteredItems = masterCodesAllItems.filter(it => {
     if (t1 && String(it.tier1) !== String(t1)) return false;
     if (t2 && String(it.tier2) !== String(t2)) return false;
+    if (t3 && String(it.tier3) !== String(t3)) return false;
 
     const isMaster = Number(it.is_added_to_master) > 0;
     if (statusRadio === 'master_added' && !isMaster) return false;
