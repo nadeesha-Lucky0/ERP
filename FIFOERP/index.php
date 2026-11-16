@@ -1454,9 +1454,10 @@ require_once __DIR__ . '/views/layouts/header.php';
                           onchange="Desk.toggleSelectAllRows('issue', this.checked)"></th>
                       <th style="width: 44px; text-align: center;">No.</th>
                       <th>Item Code <span style="color: #e02424;">*</span></th>
-                      <th style="width: 105px; text-align: right;">Avail Qty</th>
-                      <th style="width: 105px; text-align: right;">Pending Qty</th>
-                      <th style="width: 130px; text-align: right;">Qty <span style="color: #e02424;">*</span></th>
+                      <th style="width: 105px; text-align: right;">Avail Quantity</th>
+                      <th style="width: 100px; text-align: right;">Pending Qty</th>
+                      <th style="width: 120px; text-align: right;">Re Order Qty Level</th>
+                      <th style="width: 130px; text-align: right;">Required Quantity <span style="color: #e02424;">*</span></th>
                       <th style="width: 150px; text-align: right;">Basic Rate (as per ...)</th>
                       <th style="width: 44px; text-align: center; color: #8d99a6;">&#9881;</th>
                     </tr>

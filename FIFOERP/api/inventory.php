@@ -472,6 +472,16 @@ try {
             // 3. True available stock to issue (Free Stock)
             $availableQty = max(0, $physicalQty - $allocatedQty);
 
+            // 4. Reorder level for this station/SKU
+            $reorderLevel = 0;
+            try {
+                $stReord = $db->prepare("SELECT COALESCE(min_reorder_level, 0) FROM station_items WHERE (raw_code = :sku OR formatted_code = :sku) AND location_id = :loc LIMIT 1");
+                $stReord->execute([':sku' => $sku, ':loc' => $locationId]);
+                $reorderLevel = (int)($stReord->fetchColumn() ?: 0);
+            } catch (Exception $e) {
+                $reorderLevel = 0;
+            }
+
             Response::success('Stock availability retrieved', [
                 'sku' => $sku,
                 'item_name' => $itemName,
@@ -479,6 +489,7 @@ try {
                 'physical_on_hand' => $physicalQty,
                 'allocated_reserved' => $allocatedQty,
                 'available_to_issue' => $availableQty,
+                'reorder_level' => $reorderLevel,
                 'pending_doc_count' => $pendingDocsCount
             ]);
             break;
