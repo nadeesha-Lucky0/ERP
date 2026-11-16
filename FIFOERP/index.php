@@ -791,6 +791,18 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
+            <!-- Base on Dropdown (GRN Entry) -->
+            <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 16px;">
+              <div style="max-width: 720px;">
+                <label for="grnBaseOnSelect" class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Base on</label>
+                <select name="base_on" id="grnBaseOnSelect" class="frappe-control frappe-select" style="width: 100%; height: 38px;">
+                  <option value="" selected>-Select Type-</option>
+                  <option value="Invoice">Invoice</option>
+                  <option value="Measurement Report">Measurement Report</option>
+                </select>
+              </div>
+            </div>
+
             <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
               <div style="max-width: 720px;">
