@@ -791,35 +791,33 @@ require_once __DIR__ . '/views/layouts/header.php';
 
 
 
-            <!-- Base on Dropdown (GRN Entry) -->
-            <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 16px;">
-              <div style="max-width: 720px;">
-                <label for="grnBaseOnSelect" class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Base on</label>
-                <select name="base_on" id="grnBaseOnSelect" class="frappe-control frappe-select" style="width: 100%; height: 38px;">
-                  <option value="" selected>-Select Type-</option>
-                  <option value="Invoice">Invoice</option>
-                  <option value="Measurement Report">Measurement Report</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Select Warehouse (Direct Dropdown, No Down Arrow / Accordion) -->
+            <!-- Select Warehouse (Left) & Base on (Right) on One Line -->
             <div style="border-top: 1px solid #f1f3f5; padding-top: 14px; margin-bottom: 20px;">
-              <div style="max-width: 720px;">
-                <label class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Select Warehouse <span style="color: #e02424;">*</span></label>
-                <div id="grnWhSection" style="display: block;">
-                  <div id="grnSourceWhGroup" style="display: none;">
-                    <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('grn')" style="width: 100%; height: 38px;">
-                      <option value="" selected>-- Select Warehouse --</option>
-                    </select>
+              <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: end;">
+                <div>
+                  <label class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Select Warehouse <span style="color: #e02424;">*</span></label>
+                  <div id="grnWhSection" style="display: block;">
+                    <div id="grnSourceWhGroup" style="display: none;">
+                      <select name="default_source_warehouse" id="grnDefSourceWh" class="frappe-control frappe-select"
+                        onchange="Desk.applyDefaultWarehouse('grn')" style="width: 100%; height: 38px;">
+                        <option value="" selected>-- Select Warehouse --</option>
+                      </select>
+                    </div>
+                    <div id="grnTargetWhGroup" style="display: block;">
+                      <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control frappe-select"
+                        onchange="Desk.applyDefaultWarehouse('grn')" style="width: 100%; height: 38px;">
+                        <option value="" selected>-- Select Warehouse --</option>
+                      </select>
+                    </div>
                   </div>
-                  <div id="grnTargetWhGroup" style="display: block;">
-                    <select name="default_target_warehouse" id="grnDefTargetWh" class="frappe-control frappe-select"
-                      onchange="Desk.applyDefaultWarehouse('grn')" style="width: 100%; height: 38px;">
-                      <option value="" selected>-- Select Warehouse --</option>
-                    </select>
-                  </div>
+                </div>
+                <div>
+                  <label for="grnBaseOnSelect" class="frappe-label" style="font-weight: 600; color: #1e293b; margin-bottom: 6px; display: block;">Base on</label>
+                  <select name="base_on" id="grnBaseOnSelect" class="frappe-control frappe-select" style="width: 100%; height: 38px;">
+                    <option value="" selected>-Select Type-</option>
+                    <option value="Invoice">Invoice</option>
+                    <option value="Measurement Report">Measurement Report</option>
+                  </select>
                 </div>
               </div>
             </div>
