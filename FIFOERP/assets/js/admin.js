@@ -2999,7 +2999,7 @@ window.filterAndRenderAdminRequestsQueue = function () {
             <span style="font-family: monospace; font-size: 0.8rem; font-weight: 700; color: #0f172a;">${String(r.tier1).padStart(2, '0')}-${String(r.tier2).padStart(2, '0')}-${String(r.tier3).padStart(2, '0')}</span>
           </td>
           <td style="padding: 4px 8px; white-space: nowrap; font-family: monospace; color: #0284c7; font-weight: 700; font-size: 0.8rem;">
-            ${String(r.assigned_tier4_seq !== null && r.assigned_tier4_seq !== undefined ? r.assigned_tier4_seq : (r.suggested_tier4_seq !== null && r.suggested_tier4_seq !== undefined ? r.suggested_tier4_seq : (r.tier4_seq !== null && r.tier4_seq !== undefined ? r.tier4_seq : 0))).padStart(3, '0')}
+            ${isPending ? '---' : String(r.assigned_tier4_seq !== null && r.assigned_tier4_seq !== undefined ? r.assigned_tier4_seq : (r.suggested_tier4_seq !== null && r.suggested_tier4_seq !== undefined ? r.suggested_tier4_seq : (r.tier4_seq !== null && r.tier4_seq !== undefined ? r.tier4_seq : 0))).padStart(3, '0')}
           </td>
           <td style="padding: 4px 8px;">
             <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
