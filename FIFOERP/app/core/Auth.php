@@ -25,6 +25,10 @@ class Auth {
         return in_array(self::role(), ['super_admin', 'admin']);
     }
 
+    public static function isCodeAdmin(): bool {
+        return in_array(self::role(), ['super_admin', 'admin', 'code_admin']);
+    }
+
     public static function requireLogin(): void {
         if (!self::check()) {
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {

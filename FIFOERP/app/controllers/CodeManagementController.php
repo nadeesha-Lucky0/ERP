@@ -90,7 +90,7 @@ class CodeManagementController {
             $seq = ($seqRaw !== null && trim((string)$seqRaw) !== '' && ctype_digit(trim((string)$seqRaw))) ? (int)$seqRaw : null;
             $name = Request::get('name');
             $info = $this->masterModel->getBranchSequenceInfo($t1, $t2, $t3, $seq, $name !== null ? (string)$name : null);
-            $info['can_direct_save'] = Auth::isAdmin();
+            $info['can_direct_save'] = Auth::isCodeAdmin();
             Response::json(['success' => true] + $info);
         } catch (Exception $e) {
             Response::error($e->getMessage());
@@ -214,7 +214,7 @@ class CodeManagementController {
             $currentUser = Auth::user();
 
             // If station staff, default or filter to their station unless admin
-            $isAdmin = Auth::isAdmin();
+            $isAdmin = Auth::isCodeAdmin();
             if (!$isAdmin && empty($stationId) && !empty($currentUser['location_id'])) {
                 $stationId = (int)$currentUser['location_id'];
             }
@@ -236,7 +236,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators or Super Admins can approve item codes.', [], 403);
                 return;
             }
@@ -281,7 +281,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Administrators can commit codes to Master Database.', [], 403);
                 return;
             }
@@ -315,7 +315,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators or Super Admins can reject requests.', [], 403);
                 return;
             }
@@ -454,7 +454,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators or Super Admins can directly define or update Master Codes.', [], 403);
                 return;
             }
@@ -539,7 +539,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators or Super Admins can delete master codes.', [], 403);
                 return;
             }
@@ -582,7 +582,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators or Super Admins can update master items.', [], 403);
                 return;
             }
@@ -621,7 +621,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators or Super Admins can update item media.', [], 403);
                 return;
             }
@@ -767,7 +767,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators can define or update tier categories.', [], 403);
                 return;
             }
@@ -839,7 +839,7 @@ class CodeManagementController {
                 Response::error('Invalid or expired CSRF security token.', [], 403);
                 return;
             }
-            if (!Auth::isAdmin()) {
+            if (!Auth::isCodeAdmin()) {
                 Response::error('Unauthorized. Only Code Administrators can delete categories.', [], 403);
                 return;
             }
@@ -918,7 +918,7 @@ class CodeManagementController {
             }
 
             // Verify authorization: requester, station member, or admin
-            $isAdmin = Auth::isAdmin();
+            $isAdmin = Auth::isCodeAdmin();
             if (!$isAdmin && (int)$req['requested_by'] !== $userId && (int)$req['origin_station_id'] !== (int)($currentUser['location_id'] ?? 0)) {
                 Response::error('Unauthorized. You can only edit your own station requests.', [], 403);
                 return;
