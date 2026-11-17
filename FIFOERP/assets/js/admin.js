@@ -3110,20 +3110,21 @@ async function openReviewRequestModal(reqOrId) {
   const prefixStr = `${req.tier1}-${String(req.tier2).padStart(2, '0')}-${String(req.tier3).padStart(2, '0')}-`;
   if (branchPrefixEl) branchPrefixEl.textContent = prefixStr;
 
-  let initialSeq = req.assigned_tier4_seq !== null && req.assigned_tier4_seq !== undefined ? Number(req.assigned_tier4_seq) : (req.suggested_tier4_seq !== null && req.suggested_tier4_seq !== undefined ? Number(req.suggested_tier4_seq) : 0);
+  let initialSeq = req.assigned_tier4_seq !== null && req.assigned_tier4_seq !== undefined
+    ? Number(req.assigned_tier4_seq)
+    : (req.suggested_tier4_seq !== null && req.suggested_tier4_seq !== undefined ? Number(req.suggested_tier4_seq) : null);
 
-  if (assignedSeqInput) {
-    assignedSeqInput.value = initialSeq;
+  if (assignedSeqInput && initialSeq !== null && !isNaN(initialSeq)) {
+    assignedSeqInput.value = String(initialSeq).padStart(3, '0');
   }
 
-  // Live query next sequence for the branch if not assigned
-  if (req.assigned_tier4_seq === null || req.assigned_tier4_seq === undefined) {
+  // Live query next sequence for the branch only if neither assigned nor suggested exists
+  if (initialSeq === null || isNaN(initialSeq)) {
     try {
-      const metaBase = document.querySelector('meta[name="base-url"]')?.getAttribute('content') || '';
-      const availRes = await App.request(`/api/code_management.php?action=check_availability&tier1=${req.tier1}&tier2=${req.tier2}&tier3=${req.tier3}`);
+      const availRes = await App.request(`/api/code_management.php?action=check_availability&tier1=${req.tier1}&tier2=${req.tier2}&tier3=${req.tier3}&exclude_request_id=${req.id}`);
       if (availRes.ok && availRes.data && availRes.data.next_sequence !== undefined) {
         initialSeq = Number(availRes.data.next_sequence);
-        if (assignedSeqInput) assignedSeqInput.value = initialSeq;
+        if (assignedSeqInput) assignedSeqInput.value = String(initialSeq).padStart(3, '0');
       }
     } catch (seqErr) {
       console.warn('Seq check error:', seqErr);
