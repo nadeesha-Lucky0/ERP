@@ -448,14 +448,14 @@ class MasterItem {
             }
         }
 
-        // Return smallest available gap slot (001 to 999; legacy 000 records remain untouched)
-        for ($seq = 1; $seq <= 999; $seq++) {
+        // Return smallest available gap slot (000 to 999)
+        for ($seq = 0; $seq <= 999; $seq++) {
             if (!isset($usedSeqs[$seq])) {
                 return $seq;
             }
         }
 
-        throw new Exception("All 999 sequence slots (001-999) are fully taken for branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . ".");
+        throw new Exception("All 1000 sequence slots (000-999) are fully taken for branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . ".");
     }
 
     /**
@@ -595,7 +595,7 @@ class MasterItem {
 
         $max = empty($used) ? -1 : max(array_keys($used));
         $suggested = null;
-        for ($i = 1; $i <= 999; $i++) {
+        for ($i = 0; $i <= 999; $i++) {
             if (!isset($used[$i])) { $suggested = $i; break; }
         }
 
@@ -1240,17 +1240,17 @@ class MasterItem {
             $reassignedStaged = [];
             if ($assignedSeq !== null && $assignedSeq >= 0) {
                 $finalSeq = (int)$assignedSeq;
-                if ($finalSeq < 1 || $finalSeq > 999) {
-                    throw new Exception("Sequence slot must be between 001 and 999.");
+                if ($finalSeq < 0 || $finalSeq > 999) {
+                    throw new Exception("Sequence slot must be between 000 and 999.");
                 }
                 if ($this->isMasterSlotOccupied($t1, $t2, $t3, $finalSeq)) {
                     $nextFree = $this->getNextAvailableSequence($t1, $t2, $t3, $requestId);
                     throw new Exception("Sequence slot " . sprintf('%03d', $finalSeq) . " ({$t1}-" . sprintf('%02d-%02d-%03d', $t2, $t3, $finalSeq) . ") is already in Master Database. Next available slot is " . sprintf('%03d', $nextFree) . ".");
                 }
                 $reassignedStaged = $this->reassignDisplacedStagedRequests($t1, $t2, $t3, $finalSeq, $requestId);
-            } elseif ($req['assigned_tier4_seq'] !== null && $req['assigned_tier4_seq'] >= 1 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['assigned_tier4_seq'], $requestId)) {
+            } elseif ($req['assigned_tier4_seq'] !== null && $req['assigned_tier4_seq'] >= 0 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['assigned_tier4_seq'], $requestId)) {
                 $finalSeq = (int)$req['assigned_tier4_seq'];
-            } elseif ($req['suggested_tier4_seq'] !== null && $req['suggested_tier4_seq'] >= 1 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['suggested_tier4_seq'], $requestId)) {
+            } elseif ($req['suggested_tier4_seq'] !== null && $req['suggested_tier4_seq'] >= 0 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['suggested_tier4_seq'], $requestId)) {
                 $finalSeq = (int)$req['suggested_tier4_seq'];
             } else {
                 $finalSeq = $this->getNextAvailableSequence($t1, $t2, $t3, $requestId);
