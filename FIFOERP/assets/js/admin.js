@@ -6317,6 +6317,7 @@ window.onExcelTreeSearchInput = function () {
  */
 window.switchTierCreationOption = function (opt) {
   const optAForm = document.getElementById('tierOptionAForm');
+  const optBForm = document.getElementById('tierOptionBForm');
   const wizForm = document.getElementById('simpleTierForm');
   const lblA = document.getElementById('lblTierOptionA');
   const lblB = document.getElementById('lblTierOptionB');
@@ -6328,6 +6329,7 @@ window.switchTierCreationOption = function (opt) {
     if (lblA) { lblA.style.background = '#0d9488'; lblA.style.color = '#ffffff'; lblA.style.borderColor = '#0f766e'; }
     if (lblB) { lblB.style.background = '#ffffff'; lblB.style.color = '#334155'; lblB.style.borderColor = '#cbd5e1'; }
     if (optAForm) optAForm.style.display = 'block';
+    if (optBForm) optBForm.style.display = 'none';
     if (wizForm) wizForm.style.display = 'none';
 
     const t1List = (_excelTierCache?.tier1 && _excelTierCache.tier1.length ? _excelTierCache.tier1 : null)
@@ -6351,8 +6353,246 @@ window.switchTierCreationOption = function (opt) {
     if (lblB) { lblB.style.background = '#0d9488'; lblB.style.color = '#ffffff'; lblB.style.borderColor = '#0f766e'; }
     if (lblA) { lblA.style.background = '#ffffff'; lblA.style.color = '#334155'; lblA.style.borderColor = '#cbd5e1'; }
     if (optAForm) optAForm.style.display = 'none';
-    if (wizForm) wizForm.style.display = 'block';
-    switchTierAddMode(3);
+    if (optBForm) optBForm.style.display = 'block';
+    if (wizForm) wizForm.style.display = 'none';
+
+    const tiers = (_excelTierCache?.tier1 && _excelTierCache.tier1.length ? _excelTierCache : null)
+      || window.APP_DATA?.tierHierarchy || { tier1: [], tier2: {}, tier3: {} };
+    const s1 = document.getElementById('optB1stSelect');
+    const s2 = document.getElementById('optB2ndSelect');
+    const s3 = document.getElementById('optB3rdSelect');
+    if (s1) {
+      s1.innerHTML = '<option value="">-- Select 1st Main Topic --</option>';
+      (tiers.tier1 || []).forEach(t => {
+        const optEl = document.createElement('option');
+        optEl.value = t.id;
+        optEl.setAttribute('data-code', t.code_val);
+        optEl.textContent = `${String(t.code_val).padStart(2, '0')}. ${t.name}`;
+        s1.appendChild(optEl);
+      });
+    }
+    if (s2) { s2.innerHTML = '<option value="">-- Select or Add New 2nd --</option>'; s2.disabled = true; s2.style.background = '#f8fafc'; }
+    if (s3) { s3.innerHTML = '<option value="__NEW__">+ Add New 3rd Category...</option>'; s3.disabled = true; s3.style.background = '#f8fafc'; }
+    const n2 = document.getElementById('optB2ndNewName'); if (n2) { n2.style.display = 'none'; n2.value = ''; }
+    const n3 = document.getElementById('optB3rdNewName'); if (n3) { n3.style.display = 'none'; n3.value = ''; }
+    const b2 = document.getElementById('optB2ndBadge'); if (b2) b2.textContent = '--';
+    const b3 = document.getElementById('optB3rdBadge'); if (b3) b3.textContent = '--';
+  }
+};
+
+window.onOptB1stChange = function () {
+  const s1 = document.getElementById('optB1stSelect');
+  const s2 = document.getElementById('optB2ndSelect');
+  const s3 = document.getElementById('optB3rdSelect');
+  const n2 = document.getElementById('optB2ndNewName');
+  const n3 = document.getElementById('optB3rdNewName');
+  const b2 = document.getElementById('optB2ndBadge');
+  const b3 = document.getElementById('optB3rdBadge');
+  if (!s1 || !s2) return;
+
+  const t1Id = s1.value;
+  if (n2) { n2.style.display = 'none'; n2.value = ''; }
+  if (n3) { n3.style.display = 'none'; n3.value = ''; }
+  if (b2) b2.textContent = '--';
+  if (b3) b3.textContent = '--';
+  if (s3) { s3.innerHTML = '<option value="__NEW__">+ Add New 3rd Category...</option>'; s3.disabled = true; s3.style.background = '#f8fafc'; }
+
+  if (!t1Id) {
+    s2.innerHTML = '<option value="">-- Select or Add New 2nd --</option>';
+    s2.disabled = true; s2.style.background = '#f8fafc';
+    return;
+  }
+
+  const tiers = (_excelTierCache?.tier1 && _excelTierCache.tier1.length ? _excelTierCache : null)
+    || window.APP_DATA?.tierHierarchy || { tier1: [], tier2: {}, tier3: {} };
+  const t1Code = parseInt(s1.options[s1.selectedIndex]?.getAttribute('data-code') || '1', 10);
+  const pad1 = String(t1Code).padStart(2, '0');
+  const list2 = (tiers.tier2 && tiers.tier2[t1Id]) ? tiers.tier2[t1Id] : [];
+  let max2 = 0;
+  list2.forEach(t => { const v = parseInt(t.code_val, 10) || 0; if (v > max2) max2 = v; });
+  const next2 = max2 + 1;
+  const next2El = document.getElementById('optB2ndNextVal');
+  if (next2El) next2El.value = String(next2);
+
+  s2.innerHTML = '<option value="">-- Select 2nd Sub Topic --</option>';
+  list2.forEach(t => {
+    const optEl = document.createElement('option');
+    optEl.value = t.id;
+    optEl.setAttribute('data-code', t.code_val);
+    optEl.textContent = `${pad1}.${String(t.code_val).padStart(2, '0')}. ${t.name}`;
+    s2.appendChild(optEl);
+  });
+  const addNew2 = document.createElement('option');
+  addNew2.value = '__NEW__';
+  addNew2.textContent = `+ Add New 2nd (${pad1}.${String(next2).padStart(2, '0')}.)`;
+  s2.appendChild(addNew2);
+
+  s2.disabled = false;
+  s2.style.background = '#ffffff';
+};
+
+window.onOptB2ndChange = function () {
+  const s1 = document.getElementById('optB1stSelect');
+  const s2 = document.getElementById('optB2ndSelect');
+  const s3 = document.getElementById('optB3rdSelect');
+  const n2 = document.getElementById('optB2ndNewName');
+  const n3 = document.getElementById('optB3rdNewName');
+  const b2 = document.getElementById('optB2ndBadge');
+  const b3 = document.getElementById('optB3rdBadge');
+  if (!s1 || !s2 || !s3) return;
+
+  const t1Code = parseInt(s1.options[s1.selectedIndex]?.getAttribute('data-code') || '1', 10);
+  const pad1 = String(t1Code).padStart(2, '0');
+  const val2 = s2.value;
+
+  if (!val2) {
+    if (n2) { n2.style.display = 'none'; n2.value = ''; }
+    if (n3) { n3.style.display = 'none'; n3.value = ''; }
+    if (b2) b2.textContent = '--';
+    if (b3) b3.textContent = '--';
+    s3.innerHTML = '<option value="__NEW__">+ Add New 3rd Category...</option>';
+    s3.disabled = true; s3.style.background = '#f8fafc';
+    return;
+  }
+
+  if (val2 === '__NEW__') {
+    const next2 = parseInt(document.getElementById('optB2ndNextVal')?.value || '1', 10);
+    const pad2 = String(next2).padStart(2, '0');
+    if (b2) b2.textContent = `${pad1}.${pad2}.`;
+    if (n2) { n2.style.display = 'block'; n2.focus(); }
+
+    const next3El = document.getElementById('optB3rdNextVal');
+    if (next3El) next3El.value = '1';
+    s3.innerHTML = `<option value="__NEW__">+ Add New 3rd (${pad1}.${pad2}.01.)</option>`;
+    s3.value = '__NEW__';
+    s3.disabled = false; s3.style.background = '#ffffff';
+    if (b3) b3.textContent = `${pad1}.${pad2}.01.`;
+    if (n3) n3.style.display = 'block';
+    return;
+  }
+
+  // Existing 2nd selected
+  if (n2) { n2.style.display = 'none'; n2.value = ''; }
+  const t2Code = parseInt(s2.options[s2.selectedIndex]?.getAttribute('data-code') || '1', 10);
+  const pad2 = String(t2Code).padStart(2, '0');
+  if (b2) b2.textContent = `${pad1}.${pad2}.`;
+
+  const tiers = (_excelTierCache?.tier1 && _excelTierCache.tier1.length ? _excelTierCache : null)
+    || window.APP_DATA?.tierHierarchy || { tier1: [], tier2: {}, tier3: {} };
+  const list3 = (tiers.tier3 && tiers.tier3[val2]) ? tiers.tier3[val2] : [];
+  let max3 = 0;
+  list3.forEach(t => { const v = parseInt(t.code_val, 10) || 0; if (v > max3) max3 = v; });
+  const next3 = max3 + 1;
+  const next3El = document.getElementById('optB3rdNextVal');
+  if (next3El) next3El.value = String(next3);
+
+  s3.innerHTML = '';
+  const addNew3 = document.createElement('option');
+  addNew3.value = '__NEW__';
+  addNew3.textContent = `+ Add New 3rd (${pad1}.${pad2}.${String(next3).padStart(2, '0')}.)`;
+  s3.appendChild(addNew3);
+  list3.forEach(t => {
+    const optEl = document.createElement('option');
+    optEl.value = t.id;
+    optEl.setAttribute('data-code', t.code_val);
+    optEl.textContent = `${pad1}.${pad2}.${String(t.code_val).padStart(2, '0')}. ${t.name}`;
+    s3.appendChild(optEl);
+  });
+  s3.value = '__NEW__';
+  s3.disabled = false; s3.style.background = '#ffffff';
+  onOptB3rdChange();
+};
+
+window.onOptB3rdChange = function () {
+  const s1 = document.getElementById('optB1stSelect');
+  const s2 = document.getElementById('optB2ndSelect');
+  const s3 = document.getElementById('optB3rdSelect');
+  const n3 = document.getElementById('optB3rdNewName');
+  const b3 = document.getElementById('optB3rdBadge');
+  if (!s1 || !s2 || !s3) return;
+
+  const t1Code = parseInt(s1.options[s1.selectedIndex]?.getAttribute('data-code') || '1', 10);
+  const pad1 = String(t1Code).padStart(2, '0');
+  const pad2 = s2.value === '__NEW__'
+    ? String(parseInt(document.getElementById('optB2ndNextVal')?.value || '1', 10)).padStart(2, '0')
+    : String(parseInt(s2.options[s2.selectedIndex]?.getAttribute('data-code') || '1', 10)).padStart(2, '0');
+
+  if (s3.value === '__NEW__') {
+    const next3 = parseInt(document.getElementById('optB3rdNextVal')?.value || '1', 10);
+    if (b3) b3.textContent = `${pad1}.${pad2}.${String(next3).padStart(2, '0')}.`;
+    if (n3) { n3.style.display = 'block'; n3.focus(); }
+  } else {
+    const c3 = parseInt(s3.options[s3.selectedIndex]?.getAttribute('data-code') || '1', 10);
+    if (b3) b3.textContent = `${pad1}.${pad2}.${String(c3).padStart(2, '0')}.`;
+    if (n3) { n3.style.display = 'none'; n3.value = ''; }
+  }
+};
+
+window.saveTierOptionB = async function (event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const s1 = document.getElementById('optB1stSelect');
+  const s2 = document.getElementById('optB2ndSelect');
+  const s3 = document.getElementById('optB3rdSelect');
+  const n2 = document.getElementById('optB2ndNewName');
+  const n3 = document.getElementById('optB3rdNewName');
+
+  const t1Id = s1?.value || '';
+  const val2 = s2?.value || '';
+  const val3 = s3?.value || '';
+  const newName2 = (n2?.value || '').trim().toUpperCase();
+  const newName3 = (n3?.value || '').trim().toUpperCase();
+
+  if (!t1Id) { App.toast('Please select a 1st Main Topic.', 'warning'); return; }
+  if (!val2) { App.toast('Please select or add a 2nd Sub Topic.', 'warning'); return; }
+  if (val2 === '__NEW__' && !newName2) { App.toast('Please type the new 2nd Sub Topic name.', 'warning'); return; }
+  if (val2 !== '__NEW__' && val3 === '__NEW__' && !newName3) { App.toast('Please type the new 3rd Category name.', 'warning'); return; }
+  if (val2 !== '__NEW__' && val3 !== '__NEW__') {
+    App.toast('Selected 2nd & 3rd categories already exist. Choose "+ Add New 3rd" to add a new one.', 'info');
+    return;
+  }
+
+  const btn = document.getElementById('btnSaveOptB');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  const csrf = window.APP_DATA?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  const postTier = async (level, parentId, codeVal, name) => {
+    const fd = new FormData();
+    fd.append('action', 'save_tier_category');
+    fd.append('_csrf_token', csrf);
+    fd.append('level', String(level));
+    fd.append('parent_id', parentId ? String(parentId) : '');
+    fd.append('code_val', String(codeVal));
+    fd.append('name', name);
+    return App.request('/api/code_management.php', { method: 'POST', body: fd });
+  };
+
+  try {
+    let parent2Id = val2;
+    if (val2 === '__NEW__') {
+      const next2 = parseInt(document.getElementById('optB2ndNextVal')?.value || '1', 10);
+      const r2 = await postTier(2, t1Id, next2, newName2);
+      if (!r2.ok || !r2.data?.success) {
+        App.toast(r2.data?.message || 'Failed to save new 2nd Sub Topic.', 'error');
+        return;
+      }
+      parent2Id = r2.data.id;
+    }
+    if (val3 === '__NEW__' && newName3 && parent2Id) {
+      const next3 = parseInt(document.getElementById('optB3rdNextVal')?.value || '1', 10);
+      const r3 = await postTier(3, parent2Id, next3, newName3);
+      if (!r3.ok || !r3.data?.success) {
+        App.toast(r3.data?.message || 'Failed to save new 3rd Category.', 'error');
+        return;
+      }
+    }
+    await refreshTierCache();
+    loadExcelHierarchyTree();
+    App.toast('New category code saved successfully!', 'success');
+    hideSimpleAddTierBar();
+  } catch (err) {
+    App.toast('Network error saving Option B: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save Option B'; }
   }
 };
 
@@ -6478,9 +6718,11 @@ window.editTierNode = async function (id) {
 
     const optBar = document.getElementById('tierOptionSelectorBar');
     const optAForm = document.getElementById('tierOptionAForm');
+    const optBForm = document.getElementById('tierOptionBForm');
     const wizForm = document.getElementById('simpleTierForm');
     if (optBar) optBar.style.display = 'none';
     if (optAForm) optAForm.style.display = 'none';
+    if (optBForm) optBForm.style.display = 'none';
     if (wizForm) wizForm.style.display = 'block';
 
     const level = parseInt(cat.level || 1, 10);

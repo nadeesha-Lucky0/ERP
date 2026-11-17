@@ -6466,6 +6466,57 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                     </div>
                   </form>
 
+                  <!-- OPTION B: Select existing 1st (dropdown only), choose or type new 2nd & 3rd (auto next available number) -->
+                  <form id="tierOptionBForm" onsubmit="saveTierOptionB(event);" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px;">
+                      <!-- 1st Main Topic: Dropdown ONLY -->
+                      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">1st Main Topic <span style="color:#dc2626;">*</span></span>
+                          <span style="font-size: 0.68rem; font-weight: 700; color: #64748b;">Select Existing</span>
+                        </div>
+                        <select id="optB1stSelect" required onchange="onOptB1stChange();" class="form-select"
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff;">
+                          <option value="">-- Select 1st Main Topic --</option>
+                        </select>
+                      </div>
+
+                      <!-- 2nd Sub Topic: Choose existing OR type new (auto next number) -->
+                      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">2nd Sub Topic <span style="color:#dc2626;">*</span></span>
+                          <span id="optB2ndBadge" style="font-family: monospace; font-size: 0.78rem; font-weight: 800; color: #0d9488; background: #f0fdfa; border: 1px solid #99f6e4; padding: 1px 7px; border-radius: 4px;">--</span>
+                        </div>
+                        <select id="optB2ndSelect" onchange="onOptB2ndChange();" class="form-select" disabled
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;">
+                          <option value="">-- Select or Add New 2nd --</option>
+                        </select>
+                        <input type="hidden" id="optB2ndNextVal" value="1">
+                        <input type="text" id="optB2ndNewName" placeholder="Type new 2nd Sub Topic name..." oninput="this.value=this.value.toUpperCase();"
+                          style="display: none; margin-top: 8px; width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #0d9488; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                      </div>
+
+                      <!-- 3rd Category Item: Choose existing OR type new (auto next number) -->
+                      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">3rd Category Item</span>
+                          <span id="optB3rdBadge" style="font-family: monospace; font-size: 0.78rem; font-weight: 800; color: #0d9488; background: #f0fdfa; border: 1px solid #99f6e4; padding: 1px 7px; border-radius: 4px;">--</span>
+                        </div>
+                        <select id="optB3rdSelect" onchange="onOptB3rdChange();" class="form-select" disabled
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;">
+                          <option value="__NEW__">+ Add New 3rd Category...</option>
+                        </select>
+                        <input type="hidden" id="optB3rdNextVal" value="1">
+                        <input type="text" id="optB3rdNewName" placeholder="Type new 3rd Category name..." oninput="this.value=this.value.toUpperCase();"
+                          style="display: none; margin-top: 8px; width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #0d9488; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                      <button type="button" onclick="hideSimpleAddTierBar();" class="btn btn-secondary btn-sm" style="padding: 6px 14px; font-weight: 600;">Cancel</button>
+                      <button type="submit" id="btnSaveOptB" class="btn btn-primary btn-sm" style="padding: 6px 18px; font-weight: 700;">Save Option B</button>
+                    </div>
+                  </form>
+
                   <form id="simpleTierForm" onsubmit="handleWizardSaveCurrentStep(event);" style="display: none;">
                     <input type="hidden" id="tierNodeId" name="id" value="">
                     <input type="hidden" id="tierNodeLevel" name="level" value="1">
