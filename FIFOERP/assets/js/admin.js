@@ -6315,24 +6315,127 @@ window.onExcelTreeSearchInput = function () {
 /**
  * Show Simple Add Bar
  */
+window.switchTierCreationOption = function (opt) {
+  const optAForm = document.getElementById('tierOptionAForm');
+  const wizForm = document.getElementById('simpleTierForm');
+  const lblA = document.getElementById('lblTierOptionA');
+  const lblB = document.getElementById('lblTierOptionB');
+  const rA = document.getElementById('radioTierOptionA');
+  const rB = document.getElementById('radioTierOptionB');
+
+  if (opt === 'A') {
+    if (rA) rA.checked = true;
+    if (lblA) { lblA.style.background = '#0d9488'; lblA.style.color = '#ffffff'; lblA.style.borderColor = '#0f766e'; }
+    if (lblB) { lblB.style.background = '#ffffff'; lblB.style.color = '#334155'; lblB.style.borderColor = '#cbd5e1'; }
+    if (optAForm) optAForm.style.display = 'block';
+    if (wizForm) wizForm.style.display = 'none';
+
+    const t1List = (_excelTierCache?.tier1 && _excelTierCache.tier1.length ? _excelTierCache.tier1 : null)
+      || window.APP_DATA?.tierHierarchy?.tier1 || [];
+    let max1 = 0;
+    t1List.forEach(t => { const v = parseInt(t.code_val, 10) || 0; if (v > max1) max1 = v; });
+    const next1 = max1 + 1;
+    const pad1 = String(next1).padStart(2, '0');
+    const cInput = document.getElementById('optA1stCodeVal');
+    const b1 = document.getElementById('optA1stNumBadge');
+    const b2 = document.getElementById('optA2ndNumBadge');
+    const b3 = document.getElementById('optA3rdNumBadge');
+    if (cInput) cInput.value = String(next1);
+    if (b1) b1.textContent = `${pad1}.`;
+    if (b2) b2.textContent = `${pad1}.01.`;
+    if (b3) b3.textContent = `${pad1}.01.01.`;
+    const n1 = document.getElementById('optA1stName');
+    if (n1) setTimeout(() => n1.focus(), 50);
+  } else {
+    if (rB) rB.checked = true;
+    if (lblB) { lblB.style.background = '#0d9488'; lblB.style.color = '#ffffff'; lblB.style.borderColor = '#0f766e'; }
+    if (lblA) { lblA.style.background = '#ffffff'; lblA.style.color = '#334155'; lblA.style.borderColor = '#cbd5e1'; }
+    if (optAForm) optAForm.style.display = 'none';
+    if (wizForm) wizForm.style.display = 'block';
+    switchTierAddMode(3);
+  }
+};
+
+window.saveTierOptionA = async function (event) {
+  if (event && event.preventDefault) event.preventDefault();
+  const code1 = parseInt(document.getElementById('optA1stCodeVal')?.value || '1', 10);
+  const name1 = (document.getElementById('optA1stName')?.value || '').trim().toUpperCase();
+  const name2 = (document.getElementById('optA2ndName')?.value || '').trim().toUpperCase();
+  const name3 = (document.getElementById('optA3rdName')?.value || '').trim().toUpperCase();
+  if (!name1) {
+    App.toast('Please enter the 1st Main Topic Name.', 'warning');
+    return;
+  }
+  if (name3 && !name2) {
+    App.toast('Please enter a 2nd Sub Topic Name before adding a 3rd Category.', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnSaveOptA');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+  const csrf = window.APP_DATA?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+  const postTier = async (level, parentId, codeVal, name) => {
+    const fd = new FormData();
+    fd.append('action', 'save_tier_category');
+    fd.append('_csrf_token', csrf);
+    fd.append('level', String(level));
+    fd.append('parent_id', parentId ? String(parentId) : '');
+    fd.append('code_val', String(codeVal));
+    fd.append('name', name);
+    return App.request('/api/code_management.php', { method: 'POST', body: fd });
+  };
+
+  try {
+    const r1 = await postTier(1, '', code1, name1);
+    if (!r1.ok || !r1.data?.success) {
+      App.toast(r1.data?.message || 'Failed to save 1st Main Topic.', 'error');
+      return;
+    }
+    const id1 = r1.data.id;
+    if (name2 && id1) {
+      const r2 = await postTier(2, id1, 1, name2);
+      if (!r2.ok || !r2.data?.success) {
+        App.toast(r2.data?.message || 'Saved 1st code, but failed to save 2nd Sub Topic.', 'warning');
+      } else if (name3 && r2.data.id) {
+        const r3 = await postTier(3, r2.data.id, 1, name3);
+        if (!r3.ok || !r3.data?.success) {
+          App.toast(r3.data?.message || 'Saved 1st & 2nd, but failed to save 3rd Category.', 'warning');
+        }
+      }
+    }
+    await refreshTierCache();
+    loadExcelHierarchyTree();
+    App.toast(`Code ${String(code1).padStart(2, '0')} hierarchy saved successfully!`, 'success');
+    hideSimpleAddTierBar();
+  } catch (err) {
+    App.toast('Network error saving hierarchy: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Save New Code Hierarchy'; }
+  }
+};
+
 window.showSimpleAddTierBar = function (level = 1, parentId = null) {
   const bar = document.getElementById('simpleTierEditBar');
   const form = document.getElementById('simpleTierForm');
+  const optAForm = document.getElementById('tierOptionAForm');
+  const optBar = document.getElementById('tierOptionSelectorBar');
   const idInput = document.getElementById('tierNodeId');
   const saveBtn = document.getElementById('btnSaveTierNode');
 
   if (!bar || !form) return;
 
   form.reset();
+  if (optAForm) optAForm.reset();
   if (idInput) idInput.value = '';
   if (saveBtn) saveBtn.innerHTML = 'Save Code';
-
-  switchTierAddMode(level);
+  if (optBar) optBar.style.display = 'flex';
 
   bar.style.display = 'block';
-  const nameInput = document.getElementById('tierNodeName');
-  if (nameInput) {
-    nameInput.focus();
+  if (level === 3) {
+    switchTierCreationOption('B');
+  } else {
+    switchTierCreationOption('A');
   }
 };
 
@@ -6372,6 +6475,13 @@ window.editTierNode = async function (id) {
     const submitAllBtn = document.getElementById('btnSubmitAllDone');
 
     if (!bar) return;
+
+    const optBar = document.getElementById('tierOptionSelectorBar');
+    const optAForm = document.getElementById('tierOptionAForm');
+    const wizForm = document.getElementById('simpleTierForm');
+    if (optBar) optBar.style.display = 'none';
+    if (optAForm) optAForm.style.display = 'none';
+    if (wizForm) wizForm.style.display = 'block';
 
     const level = parseInt(cat.level || 1, 10);
     switchTierAddMode(level);

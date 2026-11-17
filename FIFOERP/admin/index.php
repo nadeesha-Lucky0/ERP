@@ -6435,9 +6435,60 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                   </div>
                 </div>
 
-                <!-- Simple Inline Add / Edit Form Bar with 3-Step Progressive Wizard -->
+                <!-- Simple Inline Add / Edit Form Bar with Option A / Option B Selector -->
                 <div id="simpleTierEditBar" style="display: none; margin-top: 14px; padding: 18px 20px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);">
-                  <form id="simpleTierForm" onsubmit="handleWizardSaveCurrentStep(event);">
+                  <!-- Option A / Option B Radio Toggle -->
+                  <div id="tierOptionSelectorBar" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #cbd5e1;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                      <span style="font-size: 0.78rem; font-weight: 800; color: #334155; text-transform: uppercase;">Creation Mode:</span>
+                      <label id="lblTierOptionA" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 700; color: #ffffff; background: #0d9488; border: 1px solid #0f766e; padding: 6px 14px; border-radius: 6px;">
+                        <input type="radio" name="tierCreationOption" id="radioTierOptionA" value="A" checked onchange="switchTierCreationOption('A');" style="accent-color: #0d9488; cursor: pointer;">
+                        <span>Option A: New 1st, 2nd &amp; 3rd Code</span>
+                      </label>
+                      <label id="lblTierOptionB" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.82rem; font-weight: 700; color: #334155; background: #ffffff; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 6px;">
+                        <input type="radio" name="tierCreationOption" id="radioTierOptionB" value="B" onchange="switchTierCreationOption('B');" style="accent-color: #0d9488; cursor: pointer;">
+                        <span>Option B: Existing 1st &amp; 2nd → Add New 3rd</span>
+                      </label>
+                    </div>
+                    <button type="button" onclick="hideSimpleAddTierBar();" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; color: #475569; cursor: pointer;">Close</button>
+                  </div>
+
+                  <!-- OPTION A: Brand-new 1st Main Topic (auto next number) + 2nd Sub Topic + 3rd Category -->
+                  <form id="tierOptionAForm" onsubmit="saveTierOptionA(event);" style="display: block;">
+                    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px;">
+                      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">1st Main Topic <span style="color:#dc2626;">*</span></span>
+                          <span id="optA1stNumBadge" style="font-family: monospace; font-size: 0.82rem; font-weight: 800; color: #0d9488; background: #f0fdfa; border: 1px solid #99f6e4; padding: 1px 8px; border-radius: 4px;">01.</span>
+                        </div>
+                        <input type="hidden" id="optA1stCodeVal" value="1">
+                        <input type="text" id="optA1stName" required placeholder="Enter new 1st Main Topic..." oninput="this.value=this.value.toUpperCase();"
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                      </div>
+                      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">2nd Sub Topic</span>
+                          <span id="optA2ndNumBadge" style="font-family: monospace; font-size: 0.82rem; font-weight: 800; color: #475569; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 1px 8px; border-radius: 4px;">01.01.</span>
+                        </div>
+                        <input type="text" id="optA2ndName" placeholder="Optional: Enter 2nd Sub Topic..." oninput="this.value=this.value.toUpperCase();"
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                      </div>
+                      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">3rd Category Item</span>
+                          <span id="optA3rdNumBadge" style="font-family: monospace; font-size: 0.82rem; font-weight: 800; color: #475569; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 1px 8px; border-radius: 4px;">01.01.01.</span>
+                        </div>
+                        <input type="text" id="optA3rdName" placeholder="Optional: Enter 3rd Category..." oninput="this.value=this.value.toUpperCase();"
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                      </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                      <button type="button" onclick="hideSimpleAddTierBar();" class="btn btn-secondary btn-sm" style="padding: 6px 14px; font-weight: 600;">Cancel</button>
+                      <button type="submit" id="btnSaveOptA" class="btn btn-primary btn-sm" style="padding: 6px 18px; font-weight: 700;">Save New Code Hierarchy</button>
+                    </div>
+                  </form>
+
+                  <form id="simpleTierForm" onsubmit="handleWizardSaveCurrentStep(event);" style="display: none;">
                     <input type="hidden" id="tierNodeId" name="id" value="">
                     <input type="hidden" id="tierNodeLevel" name="level" value="1">
                     <input type="hidden" id="tierNodeParent" name="parent_id" value="">
