@@ -6397,17 +6397,6 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                     <h2 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">1st, 2nd &amp; 3rd Code Hierarchy Manager</h2>
                   </div>
                   <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <!-- Filter by 1st Code -->
-                    <select id="excelTreeTier1Filter" onchange="onExcelTreeFilterChange();" class="form-select"
-                      style="font-size: 0.8rem; font-weight: 600; height: 32px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff;">
-                      <option value="">All 1st Categories</option>
-                      <?php foreach ($allTiersGrouped['tier1'] ?? [] as $t1): ?>
-                        <option value="<?= (int)$t1['code_val'] ?>">
-                          <?= sprintf('%02d.', (int)$t1['code_val']) ?> <?= htmlspecialchars($t1['name']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-
                     <!-- Quick Search Filter -->
                     <input type="text" id="excelTreeSearchInput" placeholder="Search code or description..." oninput="onExcelTreeSearchInput();"
                       style="font-size: 0.8rem; height: 32px; padding: 4px 10px; width: 220px; border: 1px solid #cbd5e1; border-radius: 4px; outline: none;">
