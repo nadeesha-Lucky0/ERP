@@ -4676,8 +4676,9 @@ window.populateEditCodeRequestForm = function (r) {
   const t1 = String(r.tier1 || 1).padStart(2, '0');
   const t2 = String(r.tier2 || 1).padStart(2, '0');
   const t3 = String(r.tier3 || 1).padStart(2, '0');
+  const isApproved = (r.status === 'APPROVED' || Number(r.is_added_to_master || 0) > 0);
   const rawSeq = r.assigned_tier4_seq !== null && r.assigned_tier4_seq !== undefined ? r.assigned_tier4_seq : (r.suggested_tier4_seq !== null && r.suggested_tier4_seq !== undefined ? r.suggested_tier4_seq : (r.tier4_seq !== null && r.tier4_seq !== undefined ? r.tier4_seq : 0));
-  const t4 = String(rawSeq).padStart(3, '0');
+  const t4 = isApproved ? String(rawSeq).padStart(3, '0') : '---';
   const codeEl = document.getElementById('editReqDisplayCode');
   if (codeEl) codeEl.textContent = `${t1}-${t2}-${t3}-${t4}`;
 
