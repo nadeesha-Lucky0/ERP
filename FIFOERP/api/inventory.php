@@ -110,21 +110,32 @@ try {
                 $suppliers = $central->query("SELECT name FROM erp_predefined_suppliers WHERE status = 'active' ORDER BY name ASC")->fetchAll(PDO::FETCH_COLUMN);
             } catch (\Throwable $e) {}
 
-            // Warehouses from Admin Panel (Operational Departments & Warehouses)
+            // Warehouses from Admin Panel (Operational Departments & Warehouses), excluding frozen ones
             $warehouses = [];
             try {
+                $frozenKeys = [];
+                try {
+                    $stFrozen = $central->query("SELECT department_code, department_name FROM erp_warehouse_freeze WHERE is_frozen = 1");
+                    foreach ($stFrozen->fetchAll() as $fr) {
+                        $fc = strtolower(trim((string)($fr['department_code'] ?? '')));
+                        $fn = strtolower(trim((string)($fr['department_name'] ?? '')));
+                        if ($fc !== '') $frozenKeys[$fc] = true;
+                        if ($fn !== '') $frozenKeys[$fn] = true;
+                        if ($fc !== '' && $fn !== '') $frozenKeys[$fc . ' -- ' . $fn] = true;
+                    }
+                } catch (\Throwable $e) {}
+
                 $stWh = $central->query("SELECT code, name FROM departments WHERE status = 'active' ORDER BY name ASC");
                 $depts = $stWh->fetchAll();
                 foreach ($depts as $d) {
                     $code = trim((string)($d['code'] ?? ''));
                     $name = trim((string)($d['name'] ?? ''));
-                    if ($code !== '' && $name !== '') {
-                        $warehouses[] = $code . ' -- ' . $name;
-                    } elseif ($name !== '') {
-                        $warehouses[] = $name;
-                    } elseif ($code !== '') {
-                        $warehouses[] = $code;
+                    $label = ($code !== '' && $name !== '') ? ($code . ' -- ' . $name) : ($name !== '' ? $name : $code);
+                    if ($label === '') continue;
+                    if (isset($frozenKeys[strtolower($label)]) || ($code !== '' && isset($frozenKeys[strtolower($code)])) || ($name !== '' && isset($frozenKeys[strtolower($name)]))) {
+                        continue;
                     }
+                    $warehouses[] = $label;
                 }
             } catch (\Throwable $e) {}
 
