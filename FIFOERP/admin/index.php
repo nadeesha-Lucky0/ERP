@@ -6489,11 +6489,11 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                         </div>
                         <select id="optB2ndSelect" onchange="onOptB2ndChange();" class="form-select" disabled
                           style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;">
-                          <option value="">-- Select or Add New 2nd --</option>
+                          <option value="">-- Select Existing 2nd --</option>
                         </select>
                         <input type="hidden" id="optB2ndNextVal" value="1">
-                        <input type="text" id="optB2ndNewName" placeholder="Type new 2nd Sub Topic name..." oninput="this.value=this.value.toUpperCase();"
-                          style="display: none; margin-top: 8px; width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #0d9488; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                        <input type="text" id="optB2ndNewName" placeholder="Or type new 2nd Sub Topic name..." oninput="this.value=this.value.toUpperCase(); onOptB2ndTypeInput();"
+                          style="display: block; margin-top: 8px; width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; text-transform: uppercase; background: #ffffff;">
                       </div>
 
                       <!-- 3rd Category Item: Type box + auto next available number only -->
