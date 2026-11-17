@@ -2724,9 +2724,13 @@ async function loadStationRequests() {
             const t1 = String(r.tier1 || 1).padStart(2, '0');
             const t2 = String(r.tier2 || 1).padStart(2, '0');
             const t3 = String(r.tier3 || 1).padStart(2, '0');
-            const rawSeq = r.assigned_tier4_seq !== null && r.assigned_tier4_seq !== undefined ? r.assigned_tier4_seq : (r.suggested_tier4_seq !== null && r.suggested_tier4_seq !== undefined ? r.suggested_tier4_seq : (r.tier4_seq !== null && r.tier4_seq !== undefined ? r.tier4_seq : 0));
-            const t4 = String(rawSeq).padStart(3, '0');
-            displayCode = `${t1}-${t2}-${t3}-${t4}`;
+            if (r.status === 'APPROVED' || isAddedToMaster) {
+              const rawSeq = r.assigned_tier4_seq !== null && r.assigned_tier4_seq !== undefined ? r.assigned_tier4_seq : (r.suggested_tier4_seq !== null && r.suggested_tier4_seq !== undefined ? r.suggested_tier4_seq : (r.tier4_seq !== null && r.tier4_seq !== undefined ? r.tier4_seq : 0));
+              const t4 = String(rawSeq).padStart(3, '0');
+              displayCode = `${t1}-${t2}-${t3}-${t4}`;
+            } else {
+              displayCode = `${t1}-${t2}-${t3}-XXX`;
+            }
           }
 
           const codeCol = (isAddedToMaster || isApprovedCode)
