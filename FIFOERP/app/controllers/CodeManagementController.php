@@ -123,7 +123,7 @@ class CodeManagementController {
             if ($tier4Post === null || $tier4Post === '') {
                 $tier4Post = Request::post('tier4');
             }
-            $tier4 = ($tier4Post !== null && $tier4Post !== '') ? (int)$tier4Post : 0;
+            $tier4 = ($tier4Post !== null && $tier4Post !== '' && is_numeric($tier4Post)) ? (int)$tier4Post : null;
 
             $itemNameRaw = Request::post('item_name');
             $itemName = !empty($itemNameRaw) ? mb_strtoupper(trim((string)$itemNameRaw), 'UTF-8') : '';

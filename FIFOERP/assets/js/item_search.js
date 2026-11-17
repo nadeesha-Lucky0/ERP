@@ -1183,8 +1183,9 @@
       if (this.busy) return;
       const form = e.target;
       const { t1, t2, t3 } = this.t;
-      const seq = parseInt($('modalReqSeqInput').value, 10);
-      const code = `${pad2(t1)}.${pad2(t2)}.${pad2(t3)}.${String(seq).padStart(3, '0')}`;
+      const rawSeqVal = ($('modalReqSeqInput')?.value || '').trim();
+      const seq = rawSeqVal !== '' ? parseInt(rawSeqVal, 10) : null;
+      const code = seq !== null && !isNaN(seq) ? `${pad2(t1)}.${pad2(t2)}.${pad2(t3)}.${String(seq).padStart(3, '0')}` : `${pad2(t1)}.${pad2(t2)}.${pad2(t3)}.XXX`;
       this.busy = true; this.updateSubmit();
       const btn = $('btnSubmitSimpleReq'); const old = btn.textContent; btn.textContent = 'Saving…';
       try {
@@ -1192,7 +1193,8 @@
         if (this.canDirect) {
           const fd = new FormData();
           fd.append('action', 'save_master_code');
-          fd.append('tier1', t1); fd.append('tier2', t2); fd.append('tier3', t3); fd.append('tier4_seq', String(seq));
+          fd.append('tier1', t1); fd.append('tier2', t2); fd.append('tier3', t3);
+          if (seq !== null && !isNaN(seq)) fd.append('tier4_seq', String(seq));
           fd.append('item_name', $('modalReqItemName').value.trim());
           fd.append('specifications', ''); fd.append('uom', $('modalReqUom').value);
           res = await this.post(fd);
@@ -1213,16 +1215,22 @@
         } else {
           const fd = new FormData(form);
           fd.set('action', 'create_request');
-          fd.set('suggested_tier4_seq', String(seq));
+          if (seq !== null && !isNaN(seq)) {
+            fd.set('suggested_tier4_seq', String(seq));
+          } else {
+            fd.delete('suggested_tier4_seq');
+          }
           res = await this.post(fd);
         }
         const d = res.data || {};
         if (res.ok && (d.success || (d.data && d.data.id))) {
-          App.toast(this.canDirect ? `Item ${code} created in Master.` : (d.message || 'Request submitted for approval.'), 'success', 4500);
+          App.toast(this.canDirect ? `Item ${d.raw_code || code} created in Master.` : (d.message || 'Request submitted for approval.'), 'success', 4500);
           const ctrl = this.ctrl;
           form.reset();
           [1, 2].forEach(n => window.removeAddCodeImage && window.removeAddCodeImage(n));
           window.closeModal('requestNewCodeModal');
+          if (typeof window.loadStationRequests === 'function') window.loadStationRequests();
+          if (typeof window.loadAdminRequestsQueue === 'function') window.loadAdminRequestsQueue();
           this.reset();
           if (ctrl) await ctrl.reload();
           if (typeof window.loadStationRequests === 'function') window.loadStationRequests();
