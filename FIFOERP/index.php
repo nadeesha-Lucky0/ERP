@@ -4526,6 +4526,18 @@ require_once __DIR__ . '/views/layouts/header.php';
 <?php include __DIR__ . '/views/components/view_item_details_modal.php'; ?>
 
 <style>
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  align-items: center;
+  justify-content: center;
+  z-index: 10050;
+}
+.modal-backdrop.active {
+  display: flex !important;
+}
 #toast-container, .toast-container {
   position: fixed;
   top: 18px;
