@@ -877,7 +877,7 @@ class MasterItem {
         $this->db->beginTransaction();
         try {
             // Lock branch node to prevent concurrent sequence collisions
-            $lockStmt = $this->db->prepare("SELECT id FROM tier_categories WHERE level = 3 AND code_val = :t3 LIMIT 1 FOR UPDATE");
+            $lockStmt = $this->db->prepare("SELECT id FROM tier_categories WHERE tier_level = 3 AND code_val = :t3 LIMIT 1 FOR UPDATE");
             $lockStmt->execute([':t3' => $tier3]);
 
             // Duplicate check in Master DB
@@ -1232,7 +1232,7 @@ class MasterItem {
             }
 
             // Lock branch node to prevent concurrent approval collisions
-            $lockStmt = $this->db->prepare("SELECT id FROM tier_categories WHERE level = 3 AND code_val = :t3 LIMIT 1 FOR UPDATE");
+            $lockStmt = $this->db->prepare("SELECT id FROM tier_categories WHERE tier_level = 3 AND code_val = :t3 LIMIT 1 FOR UPDATE");
             $lockStmt->execute([':t3' => $t3]);
 
             // Determine sequence: Admin assigned seq takes precedence.

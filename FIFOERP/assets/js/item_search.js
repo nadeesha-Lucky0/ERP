@@ -1236,7 +1236,8 @@
           if (typeof window.loadStationRequests === 'function') window.loadStationRequests();
           if (typeof window.loadAdminRequestsQueue === 'function') window.loadAdminRequestsQueue();
         } else {
-          // e.g. code taken by another user meanwhile: show message and refresh suggestion
+          // Show visible error toast and refresh suggestion
+          App.toast(d.message || 'Could not save the item.', 'error');
           $('modalReqCodeNote').innerHTML = this.note('e', escapeHtml(d.message || 'Could not save the item.'));
           this.seqOk = false;
           setTimeout(() => this.check(false), 50);
