@@ -6496,19 +6496,15 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                           style="display: none; margin-top: 8px; width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #0d9488; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
                       </div>
 
-                      <!-- 3rd Category Item: Choose existing OR type new (auto next number) -->
+                      <!-- 3rd Category Item: Type box + auto next available number only -->
                       <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                           <span style="font-size: 0.72rem; font-weight: 800; color: #0f172a; text-transform: uppercase;">3rd Category Item</span>
                           <span id="optB3rdBadge" style="font-family: monospace; font-size: 0.78rem; font-weight: 800; color: #0d9488; background: #f0fdfa; border: 1px solid #99f6e4; padding: 1px 7px; border-radius: 4px;">--</span>
                         </div>
-                        <select id="optB3rdSelect" onchange="onOptB3rdChange();" class="form-select" disabled
-                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;">
-                          <option value="__NEW__">+ Add New 3rd Category...</option>
-                        </select>
                         <input type="hidden" id="optB3rdNextVal" value="1">
                         <input type="text" id="optB3rdNewName" placeholder="Type new 3rd Category name..." oninput="this.value=this.value.toUpperCase();"
-                          style="display: none; margin-top: 8px; width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #0d9488; border-radius: 4px; padding: 4px 10px; text-transform: uppercase;">
+                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 700; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 10px; text-transform: uppercase; background: #ffffff;">
                       </div>
                     </div>
                     <div style="display: flex; justify-content: flex-end; gap: 8px;">

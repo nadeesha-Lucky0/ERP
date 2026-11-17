@@ -6372,9 +6372,8 @@ window.switchTierCreationOption = function (opt) {
       });
     }
     if (s2) { s2.innerHTML = '<option value="">-- Select or Add New 2nd --</option>'; s2.disabled = true; s2.style.background = '#f8fafc'; }
-    if (s3) { s3.innerHTML = '<option value="__NEW__">+ Add New 3rd Category...</option>'; s3.disabled = true; s3.style.background = '#f8fafc'; }
     const n2 = document.getElementById('optB2ndNewName'); if (n2) { n2.style.display = 'none'; n2.value = ''; }
-    const n3 = document.getElementById('optB3rdNewName'); if (n3) { n3.style.display = 'none'; n3.value = ''; }
+    const n3 = document.getElementById('optB3rdNewName'); if (n3) { n3.value = ''; }
     const b2 = document.getElementById('optB2ndBadge'); if (b2) b2.textContent = '--';
     const b3 = document.getElementById('optB3rdBadge'); if (b3) b3.textContent = '--';
   }
@@ -6463,11 +6462,7 @@ window.onOptB2ndChange = function () {
 
     const next3El = document.getElementById('optB3rdNextVal');
     if (next3El) next3El.value = '1';
-    s3.innerHTML = `<option value="__NEW__">+ Add New 3rd (${pad1}.${pad2}.01.)</option>`;
-    s3.value = '__NEW__';
-    s3.disabled = false; s3.style.background = '#ffffff';
     if (b3) b3.textContent = `${pad1}.${pad2}.01.`;
-    if (n3) n3.style.display = 'block';
     return;
   }
 
@@ -6485,71 +6480,26 @@ window.onOptB2ndChange = function () {
   const next3 = max3 + 1;
   const next3El = document.getElementById('optB3rdNextVal');
   if (next3El) next3El.value = String(next3);
-
-  s3.innerHTML = '';
-  const addNew3 = document.createElement('option');
-  addNew3.value = '__NEW__';
-  addNew3.textContent = `+ Add New 3rd (${pad1}.${pad2}.${String(next3).padStart(2, '0')}.)`;
-  s3.appendChild(addNew3);
-  list3.forEach(t => {
-    const optEl = document.createElement('option');
-    optEl.value = t.id;
-    optEl.setAttribute('data-code', t.code_val);
-    optEl.textContent = `${pad1}.${pad2}.${String(t.code_val).padStart(2, '0')}. ${t.name}`;
-    s3.appendChild(optEl);
-  });
-  s3.value = '__NEW__';
-  s3.disabled = false; s3.style.background = '#ffffff';
-  onOptB3rdChange();
-};
-
-window.onOptB3rdChange = function () {
-  const s1 = document.getElementById('optB1stSelect');
-  const s2 = document.getElementById('optB2ndSelect');
-  const s3 = document.getElementById('optB3rdSelect');
-  const n3 = document.getElementById('optB3rdNewName');
-  const b3 = document.getElementById('optB3rdBadge');
-  if (!s1 || !s2 || !s3) return;
-
-  const t1Code = parseInt(s1.options[s1.selectedIndex]?.getAttribute('data-code') || '1', 10);
-  const pad1 = String(t1Code).padStart(2, '0');
-  const pad2 = s2.value === '__NEW__'
-    ? String(parseInt(document.getElementById('optB2ndNextVal')?.value || '1', 10)).padStart(2, '0')
-    : String(parseInt(s2.options[s2.selectedIndex]?.getAttribute('data-code') || '1', 10)).padStart(2, '0');
-
-  if (s3.value === '__NEW__') {
-    const next3 = parseInt(document.getElementById('optB3rdNextVal')?.value || '1', 10);
-    if (b3) b3.textContent = `${pad1}.${pad2}.${String(next3).padStart(2, '0')}.`;
-    if (n3) { n3.style.display = 'block'; n3.focus(); }
-  } else {
-    const c3 = parseInt(s3.options[s3.selectedIndex]?.getAttribute('data-code') || '1', 10);
-    if (b3) b3.textContent = `${pad1}.${pad2}.${String(c3).padStart(2, '0')}.`;
-    if (n3) { n3.style.display = 'none'; n3.value = ''; }
-  }
+  if (b3) b3.textContent = `${pad1}.${pad2}.${String(next3).padStart(2, '0')}.`;
+  if (n3) setTimeout(() => n3.focus(), 50);
 };
 
 window.saveTierOptionB = async function (event) {
   if (event && event.preventDefault) event.preventDefault();
   const s1 = document.getElementById('optB1stSelect');
   const s2 = document.getElementById('optB2ndSelect');
-  const s3 = document.getElementById('optB3rdSelect');
   const n2 = document.getElementById('optB2ndNewName');
   const n3 = document.getElementById('optB3rdNewName');
 
   const t1Id = s1?.value || '';
   const val2 = s2?.value || '';
-  const val3 = s3?.value || '';
   const newName2 = (n2?.value || '').trim().toUpperCase();
   const newName3 = (n3?.value || '').trim().toUpperCase();
 
   if (!t1Id) { App.toast('Please select a 1st Main Topic.', 'warning'); return; }
   if (!val2) { App.toast('Please select or add a 2nd Sub Topic.', 'warning'); return; }
   if (val2 === '__NEW__' && !newName2) { App.toast('Please type the new 2nd Sub Topic name.', 'warning'); return; }
-  if (val2 !== '__NEW__' && val3 === '__NEW__' && !newName3) { App.toast('Please type the new 3rd Category name.', 'warning'); return; }
-  if (val2 !== '__NEW__' && val3 !== '__NEW__') {
-    App.toast('Selected 2nd & 3rd categories already exist. Choose "+ Add New 3rd" to add a new one.', 'info');
-    return;
-  }
+  if (val2 !== '__NEW__' && !newName3) { App.toast('Please type the new 3rd Category name.', 'warning'); return; }
 
   const btn = document.getElementById('btnSaveOptB');
   if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
@@ -6577,7 +6527,7 @@ window.saveTierOptionB = async function (event) {
       }
       parent2Id = r2.data.id;
     }
-    if (val3 === '__NEW__' && newName3 && parent2Id) {
+    if (newName3 && parent2Id) {
       const next3 = parseInt(document.getElementById('optB3rdNextVal')?.value || '1', 10);
       const r3 = await postTier(3, parent2Id, next3, newName3);
       if (!r3.ok || !r3.data?.success) {
