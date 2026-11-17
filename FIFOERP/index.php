@@ -4572,6 +4572,7 @@ require_once __DIR__ . '/views/layouts/header.php';
 <!-- Item Search Module Script -->
 <script>
 window.APP_DATA = window.APP_DATA || {};
+window.APP_DATA.userStationId = <?= (int)($currentUser['location_id'] ?? 1) ?>;
 window.APP_DATA.tierHierarchy = <?= json_encode((new \App\Models\MasterItem())->getAllTiersGrouped(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 </script>
 <script src="<?= BASE_PATH ?>/assets/js/app.js?v=<?= time() ?>"></script>
@@ -4600,6 +4601,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
   if (window.itemSearchController && window.itemSearchController['user']) {
     window.itemSearchController['user'].init();
+  }
+  if (typeof window.loadStationRequests === 'function') {
+    window.loadStationRequests();
   }
 });
 </script>

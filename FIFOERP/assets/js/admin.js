@@ -2776,9 +2776,9 @@ async function loadStationRequests() {
                   ✏️ Edit
                 </button>
                 <button type="button" class="btn btn-sm" onclick="deleteStationCodeRequest(${r.id});"
-                  style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:3px; background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; cursor:pointer; display:inline-flex; align-items:center;"
+                  style="font-size:0.72rem; font-weight:700; padding:3px 9px; border-radius:3px; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; cursor:pointer; display:inline-flex; align-items:center;"
                   title="Cancel and delete this pending request">
-                  🗑️
+                  Delete
                 </button>
               </div>
             `;
