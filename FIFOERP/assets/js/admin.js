@@ -2718,18 +2718,19 @@ async function loadStationRequests() {
             statusBadge = `<span style="font-size:0.72rem; font-weight:700; color:#991b1b; background:#fee2e2; border:1px solid #fecaca; padding:2px 8px; border-radius:3px; display:inline-block;">REJECTED</span>`;
           }
 
-          let displayCode = r.approved_formatted_code;
+          const isApprovedStatus = (r.status === 'APPROVED' || isAddedToMaster);
+          let displayCode = isApprovedStatus ? (r.approved_formatted_code || '') : '';
           let isApprovedCode = Boolean(displayCode);
           if (!displayCode) {
             const t1 = String(r.tier1 || 1).padStart(2, '0');
             const t2 = String(r.tier2 || 1).padStart(2, '0');
             const t3 = String(r.tier3 || 1).padStart(2, '0');
-            if (r.status === 'APPROVED' || isAddedToMaster) {
+            if (isApprovedStatus) {
               const rawSeq = r.assigned_tier4_seq !== null && r.assigned_tier4_seq !== undefined ? r.assigned_tier4_seq : (r.suggested_tier4_seq !== null && r.suggested_tier4_seq !== undefined ? r.suggested_tier4_seq : (r.tier4_seq !== null && r.tier4_seq !== undefined ? r.tier4_seq : 0));
               const t4 = String(rawSeq).padStart(3, '0');
               displayCode = `${t1}-${t2}-${t3}-${t4}`;
             } else {
-              displayCode = `${t1}-${t2}-${t3}-XXX`;
+              displayCode = `${t1}-${t2}-${t3}----`;
             }
           }
 
