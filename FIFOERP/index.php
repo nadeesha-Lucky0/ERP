@@ -4522,6 +4522,7 @@ require_once __DIR__ . '/views/layouts/header.php';
 <?php require_once __DIR__ . '/views/components/modals.php'; ?>
 
 <?php include __DIR__ . '/views/components/request_new_code_modal.php'; ?>
+<?php include __DIR__ . '/views/components/view_item_details_modal.php'; ?>
 
 <style>
 #toast-container, .toast-container {
