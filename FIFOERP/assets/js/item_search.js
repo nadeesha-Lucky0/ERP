@@ -444,13 +444,6 @@
             <!-- Action Buttons -->
             <td style="padding: 6px 10px; text-align: center; border: 1px solid #cbd5e1; white-space: nowrap;">
               <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: center;">
-                <button type="button" onclick="window.itemSearchController['${this.prefix}'].openViewItemModal(${idx});"
-                  style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #1e3a8a; color: #ffffff; border: 1px solid #172554; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: background 0.15s ease;"
-                  onmouseover="this.style.background='#1e40af';" onmouseout="this.style.background='#1e3a8a';"
-                  title="View full item specifications, photo images, and unit price">
-                  View
-                </button>
-
                 ${this.prefix !== 'user' ? `
                   <button type="button" onclick="window.itemSearchController['${this.prefix}'].openGoogle('${escapeHtml(desc)}');"
                     style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; cursor: pointer;"
