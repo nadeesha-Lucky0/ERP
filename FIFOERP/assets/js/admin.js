@@ -6372,7 +6372,7 @@ window.switchTierCreationOption = function (opt) {
       });
     }
     if (s2) { s2.innerHTML = '<option value="">-- Select Existing 2nd --</option>'; s2.disabled = true; s2.style.background = '#f8fafc'; }
-    const n2 = document.getElementById('optB2ndNewName'); if (n2) { n2.value = ''; }
+    const n2 = document.getElementById('optB2ndNewName'); if (n2) { n2.value = ''; n2.disabled = true; n2.style.background = '#f8fafc'; }
     const n3 = document.getElementById('optB3rdNewName'); if (n3) { n3.value = ''; }
     const b2 = document.getElementById('optB2ndBadge'); if (b2) b2.textContent = '--';
     const b3 = document.getElementById('optB3rdBadge'); if (b3) b3.textContent = '--';
@@ -6397,6 +6397,7 @@ window.onOptB1stChange = function () {
   if (!t1Id) {
     s2.innerHTML = '<option value="">-- Select Existing 2nd --</option>';
     s2.disabled = true; s2.style.background = '#f8fafc';
+    if (n2) { n2.disabled = true; n2.style.background = '#f8fafc'; }
     return;
   }
 
@@ -6422,6 +6423,7 @@ window.onOptB1stChange = function () {
 
   s2.disabled = false;
   s2.style.background = '#ffffff';
+  if (n2) { n2.disabled = false; n2.style.background = '#ffffff'; }
   if (b2) b2.textContent = `${pad1}.${String(next2).padStart(2, '0')}.`;
   if (b3) b3.textContent = `${pad1}.${String(next2).padStart(2, '0')}.01.`;
   const next3El = document.getElementById('optB3rdNextVal');
@@ -6444,10 +6446,12 @@ window.onOptB2ndTypeInput = function () {
   const pad2 = String(next2).padStart(2, '0');
 
   if (typed) {
-    if (s2) s2.value = '';
+    if (s2) { s2.value = ''; s2.disabled = true; s2.style.background = '#f1f5f9'; }
     if (b2) b2.textContent = `${pad1}.${pad2}.`;
     if (b3) b3.textContent = `${pad1}.${pad2}.01.`;
     if (next3El) next3El.value = '1';
+  } else {
+    if (s2) { s2.disabled = false; s2.style.background = '#ffffff'; }
   }
 };
 
@@ -6465,6 +6469,7 @@ window.onOptB2ndChange = function () {
   const val2 = s2.value;
 
   if (!val2) {
+    if (n2) { n2.disabled = false; n2.style.background = '#ffffff'; }
     const next2 = parseInt(document.getElementById('optB2ndNextVal')?.value || '1', 10);
     const pad2 = String(next2).padStart(2, '0');
     if (b2) b2.textContent = `${pad1}.${pad2}.`;
@@ -6474,8 +6479,8 @@ window.onOptB2ndChange = function () {
     return;
   }
 
-  // Existing 2nd selected
-  if (n2) { n2.value = ''; }
+  // Existing 2nd selected -> lock text box
+  if (n2) { n2.value = ''; n2.disabled = true; n2.style.background = '#f1f5f9'; }
   const t2Code = parseInt(s2.options[s2.selectedIndex]?.getAttribute('data-code') || '1', 10);
   const pad2 = String(t2Code).padStart(2, '0');
   if (b2) b2.textContent = `${pad1}.${pad2}.`;
