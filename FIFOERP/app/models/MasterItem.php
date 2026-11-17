@@ -1304,13 +1304,20 @@ class MasterItem {
                 return $this->addToMaster($requestId, $adminId);
             }
 
+            $msg = "Request #{$req['request_no']} approved as {$formattedCode}.";
+            if (!empty($reassignedStaged)) {
+                $moved = array_map(fn($x) => "{$x['request_no']} ({$x['old_seq']} -> {$x['new_seq']})", $reassignedStaged);
+                $msg .= " Reassigned staged: " . implode(', ', $moved) . ".";
+            }
+
             return [
                 'success' => true,
-                'message' => "Request #{$req['request_no']} approved successfully. Click '+ Add to Master' to officially commit to Master DB.",
+                'message' => $msg,
                 'request_id' => $requestId,
                 'formatted_code' => $formattedCode,
                 'raw_code' => $rawCode,
-                'is_added_to_master' => 0
+                'is_added_to_master' => 0,
+                'reassigned' => $reassignedStaged
             ];
         } catch (Exception $e) {
             if ($this->db->inTransaction()) {
