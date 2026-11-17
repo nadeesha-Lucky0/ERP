@@ -3620,6 +3620,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           </table>
         </div>
       </div>
+      </div>
     </div>
 
     <?php if ($isAdmin): ?>
