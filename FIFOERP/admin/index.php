@@ -6476,7 +6476,7 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                           <span style="font-size: 0.68rem; font-weight: 700; color: #64748b;">Select Existing</span>
                         </div>
                         <select id="optB1stSelect" required onchange="onOptB1stChange();" class="form-select"
-                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff;">
+                          style="width: 100%; height: 38px; padding: 4px 10px; line-height: 1.4; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #ffffff;">
                           <option value="">-- Select 1st Main Topic --</option>
                         </select>
                       </div>
@@ -6488,7 +6488,7 @@ $base = defined('BASE_PATH') ? BASE_PATH : '';
                           <span id="optB2ndBadge" style="font-family: monospace; font-size: 0.78rem; font-weight: 800; color: #0d9488; background: #f0fdfa; border: 1px solid #99f6e4; padding: 1px 7px; border-radius: 4px;">--</span>
                         </div>
                         <select id="optB2ndSelect" onchange="onOptB2ndChange();" class="form-select" disabled
-                          style="width: 100%; height: 34px; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;">
+                          style="width: 100%; height: 38px; padding: 4px 10px; line-height: 1.4; font-size: 0.82rem; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;">
                           <option value="">-- Select Existing 2nd --</option>
                         </select>
                         <input type="hidden" id="optB2ndNextVal" value="1">
