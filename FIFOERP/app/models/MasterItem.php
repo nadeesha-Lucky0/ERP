@@ -409,8 +409,11 @@ class MasterItem {
      * Compute next uniquely available 3-digit sequence slot (000 to 999) for a (Tier1, Tier2, Tier3) branch.
      * Guarantees that different items can never receive the same 3-digit sequence.
      */
-    public function getNextAvailableSequence(int $tier1, int $tier2, int $tier3, ?int $excludeRequestId = null): int {
+    public function getNextAvailableSequence(int $tier1, int $tier2, int $tier3, ?int $excludeRequestId = null, array $extraReservedSeqs = []): int {
         $usedSeqs = [];
+        foreach ($extraReservedSeqs as $es) {
+            $usedSeqs[(int)$es] = true;
+        }
 
         // 1. All sequences in Master Database
         $stmt = $this->db->prepare("
@@ -423,13 +426,14 @@ class MasterItem {
             $usedSeqs[(int)$row['tier4_seq']] = true;
         }
 
-        // 2. All sequences in active / staged code requests (only approved sequences assigned by Code Admin)
+        // 2. All sequences reserved by PENDING or APPROVED (Not yet in Master) code requests
         $reqSql = "
-            SELECT DISTINCT assigned_tier4_seq as req_seq
+            SELECT DISTINCT COALESCE(assigned_tier4_seq, suggested_tier4_seq) as req_seq
             FROM code_requests 
             WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 
-              AND status = 'APPROVED'
-              AND assigned_tier4_seq IS NOT NULL
+              AND status IN ('PENDING', 'APPROVED')
+              AND (is_added_to_master IS NULL OR is_added_to_master = 0)
+              AND COALESCE(assigned_tier4_seq, suggested_tier4_seq) IS NOT NULL
         ";
         $params = [':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3];
         if ($excludeRequestId) {
@@ -444,37 +448,96 @@ class MasterItem {
             }
         }
 
-        // Return first unassigned slot (000 to 999)
-        for ($seq = 0; $seq <= 999; $seq++) {
+        // Return smallest available gap slot (001 to 999; legacy 000 records remain untouched)
+        for ($seq = 1; $seq <= 999; $seq++) {
             if (!isset($usedSeqs[$seq])) {
                 return $seq;
             }
         }
 
-        throw new Exception("All 1000 sequence slots (000-999) are fully taken for branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . ".");
+        throw new Exception("All 999 sequence slots (001-999) are fully taken for branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . ".");
+    }
+
+    /**
+     * Check if a specific 3-digit sequence slot is already occupied in Master DB
+     */
+    public function isMasterSlotOccupied(int $tier1, int $tier2, int $tier3, int $seq, ?int $excludeMasterId = null): bool {
+        $sql = "SELECT COUNT(*) FROM fifo_master_items WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 AND tier4_seq = :seq";
+        $params = [':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $seq];
+        if ($excludeMasterId) {
+            $sql .= " AND id != :ex_mid";
+            $params[':ex_mid'] = $excludeMasterId;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Reassign any PENDING / APPROVED (not yet in Master) requests currently holding $targetSeq
+     * to the next available gap-filled 3-digit slot (001-999) in the same 1st/2nd/3rd branch.
+     * Never changes tier1, tier2, or tier3.
+     */
+    public function reassignDisplacedStagedRequests(int $tier1, int $tier2, int $tier3, int $targetSeq, ?int $excludeRequestId = null): array {
+        $sql = "
+            SELECT id, request_no, item_name, status, suggested_tier4_seq, assigned_tier4_seq, review_remarks
+            FROM code_requests
+            WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3
+              AND status IN ('PENDING', 'APPROVED')
+              AND (is_added_to_master IS NULL OR is_added_to_master = 0)
+              AND COALESCE(assigned_tier4_seq, suggested_tier4_seq) = :seq
+        ";
+        $params = [':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $targetSeq];
+        if ($excludeRequestId) {
+            $sql .= " AND id != :ex_id";
+            $params[':ex_id'] = $excludeRequestId;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $displaced = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        if (empty($displaced)) {
+            return [];
+        }
+
+        $reserved = [$targetSeq];
+        $reassigned = [];
+        foreach ($displaced as $row) {
+            $newSeq = $this->getNextAvailableSequence($tier1, $tier2, $tier3, (int)$row['id'], $reserved);
+            $reserved[] = $newSeq;
+            $note = sprintf(" [3-digit code %03d reassigned to %03d on approval]", $targetSeq, $newSeq);
+            $newRemarks = trim((string)($row['review_remarks'] ?? '')) . $note;
+
+            if ($row['status'] === 'APPROVED') {
+                $up = $this->db->prepare("UPDATE code_requests SET assigned_tier4_seq = :nseq, review_remarks = :rem WHERE id = :id");
+            } else {
+                $up = $this->db->prepare("UPDATE code_requests SET suggested_tier4_seq = :nseq, review_remarks = :rem WHERE id = :id");
+            }
+            $up->execute([':nseq' => $newSeq, ':rem' => $newRemarks, ':id' => (int)$row['id']]);
+            $reassigned[] = [
+                'request_id' => (int)$row['id'],
+                'request_no' => $row['request_no'],
+                'old_seq' => sprintf('%03d', $targetSeq),
+                'new_seq' => sprintf('%03d', $newSeq)
+            ];
+        }
+        return $reassigned;
     }
 
     /**
      * Check if a specific 3-digit sequence slot is available in branch (Tier1, Tier2, Tier3)
      */
     public function isSequenceSlotAvailable(int $tier1, int $tier2, int $tier3, int $seq, ?int $excludeRequestId = null): bool {
-        // Check Master DB
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*) FROM fifo_master_items 
-            WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 AND tier4_seq = :seq
-        ");
-        $stmt->execute([':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $seq]);
-        if ((int)$stmt->fetchColumn() > 0) {
+        if ($this->isMasterSlotOccupied($tier1, $tier2, $tier3, $seq)) {
             return false;
         }
 
-        // Check Requests (only approved sequences assigned by Code Admin)
+        // Check Requests (PENDING or APPROVED not yet in Master)
         $reqSql = "
             SELECT COUNT(*) FROM code_requests 
             WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 
-              AND assigned_tier4_seq = :seq
-              AND status = 'APPROVED'
-              AND assigned_tier4_seq IS NOT NULL
+              AND COALESCE(assigned_tier4_seq, suggested_tier4_seq) = :seq
+              AND status IN ('PENDING', 'APPROVED')
+              AND (is_added_to_master IS NULL OR is_added_to_master = 0)
         ";
         $params = [':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $seq];
         if ($excludeRequestId) {
@@ -531,12 +594,9 @@ class MasterItem {
         }
 
         $max = empty($used) ? -1 : max(array_keys($used));
-        $suggested = $max + 1;
-        if ($suggested > 999) {
-            $suggested = null;
-            for ($i = 0; $i <= 999; $i++) {
-                if (!isset($used[$i])) { $suggested = $i; break; }
-            }
+        $suggested = null;
+        for ($i = 1; $i <= 999; $i++) {
+            if (!isset($used[$i])) { $suggested = $i; break; }
         }
 
         $out = [
@@ -814,39 +874,56 @@ class MasterItem {
             throw new Exception("Item Description / Name is required.");
         }
 
-        // Duplicate check in Master DB
-        $dupStmt = $this->db->prepare("SELECT id, formatted_code FROM fifo_master_items WHERE LOWER(TRIM(item_name)) = LOWER(TRIM(:name)) LIMIT 1");
-        $dupStmt->execute([':name' => $itemName]);
-        if ($existing = $dupStmt->fetch(PDO::FETCH_ASSOC)) {
-            throw new Exception("An item with the exact name '{$itemName}' already exists in the Master Database (Code: {$existing['formatted_code']}).");
-        }
+        $this->db->beginTransaction();
+        try {
+            // Lock branch node to prevent concurrent sequence collisions
+            $lockStmt = $this->db->prepare("SELECT id FROM tier_categories WHERE level = 3 AND code_val = :t3 LIMIT 1 FOR UPDATE");
+            $lockStmt->execute([':t3' => $tier3]);
 
-        // Check if requesting an already approved staged code
-        $stagedReq = null;
-        if ($refRequestId) {
-            $stChk = $this->db->prepare("SELECT * FROM code_requests WHERE id = :rid AND status = 'APPROVED' AND (is_added_to_master IS NULL OR is_added_to_master = 0) LIMIT 1");
-            $stChk->execute([':rid' => $refRequestId]);
-            $stagedReq = $stChk->fetch(PDO::FETCH_ASSOC);
-        }
-        if (!$stagedReq && $suggestedSeq !== null) {
-            $stChk = $this->db->prepare("SELECT * FROM code_requests WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 AND COALESCE(assigned_tier4_seq, suggested_tier4_seq) = :seq AND status = 'APPROVED' AND (is_added_to_master IS NULL OR is_added_to_master = 0) LIMIT 1");
-            $stChk->execute([':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $suggestedSeq]);
-            $stagedReq = $stChk->fetch(PDO::FETCH_ASSOC);
-        }
-
-        if ($suggestedSeq !== null) {
-            if ($suggestedSeq < 0 || $suggestedSeq > 999) {
-                throw new Exception("Code number must be between 000 and 999.");
+            // Duplicate check in Master DB
+            $dupStmt = $this->db->prepare("SELECT id, formatted_code FROM fifo_master_items WHERE LOWER(TRIM(item_name)) = LOWER(TRIM(:name)) LIMIT 1");
+            $dupStmt->execute([':name' => $itemName]);
+            if ($existing = $dupStmt->fetch(PDO::FETCH_ASSOC)) {
+                throw new Exception("An item with the exact name '{$itemName}' already exists in the Master Database (Code: {$existing['formatted_code']}).");
             }
-            $slotChk = $this->db->prepare("SELECT item_name FROM fifo_master_items WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 AND tier4_seq = :seq LIMIT 1");
-            $slotChk->execute([':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $suggestedSeq]);
-            if ($taken = $slotChk->fetch(PDO::FETCH_ASSOC)) {
-                $info = $this->getBranchSequenceInfo($tier1, $tier2, $tier3);
-                throw new Exception(sprintf("Code %02d.%02d.%02d.%03d is already used by %s. Next free code is %s.", $tier1, $tier2, $tier3, $suggestedSeq, $taken['item_name'], $info['suggested_seq_formatted'] ?? 'n/a'));
-            }
-        }
 
-        $finalSeq = $suggestedSeq ?? $this->getNextAvailableSequence($tier1, $tier2, $tier3);
+            // Check if requesting an already approved staged code with the same description
+            $stagedReq = null;
+            if ($refRequestId) {
+                $stChk = $this->db->prepare("SELECT * FROM code_requests WHERE id = :rid AND status = 'APPROVED' AND (is_added_to_master IS NULL OR is_added_to_master = 0) LIMIT 1");
+                $stChk->execute([':rid' => $refRequestId]);
+                $stagedReq = $stChk->fetch(PDO::FETCH_ASSOC);
+            }
+            if (!$stagedReq && $suggestedSeq !== null) {
+                $stChk = $this->db->prepare("SELECT * FROM code_requests WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 AND COALESCE(assigned_tier4_seq, suggested_tier4_seq) = :seq AND status = 'APPROVED' AND (is_added_to_master IS NULL OR is_added_to_master = 0) LIMIT 1");
+                $stChk->execute([':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3, ':seq' => $suggestedSeq]);
+                $stagedReq = $stChk->fetch(PDO::FETCH_ASSOC);
+            }
+
+            // If requester submitted a DIFFERENT description than the staged/pending code, treat it as a normal new code approval request
+            if ($stagedReq) {
+                $stagedDesc = mb_strtoupper(trim((string)($stagedReq['master_db_name'] ?: $stagedReq['item_name'])), 'UTF-8');
+                if ($stagedDesc !== $itemName) {
+                    $stagedReq = null;
+                    $suggestedSeq = null;
+                }
+            }
+
+            if ($suggestedSeq !== null) {
+                if ($suggestedSeq < 0 || $suggestedSeq > 999) {
+                    throw new Exception("Code number must be between 000 and 999.");
+                }
+                if ($this->isMasterSlotOccupied($tier1, $tier2, $tier3, $suggestedSeq)) {
+                    $info = $this->getBranchSequenceInfo($tier1, $tier2, $tier3);
+                    throw new Exception(sprintf("Code %02d.%02d.%02d.%03d is already used in Master DB. Next free code is %s.", $tier1, $tier2, $tier3, $suggestedSeq, $info['suggested_seq_formatted'] ?? 'n/a'));
+                }
+                if (!$stagedReq && !$this->isSequenceSlotAvailable($tier1, $tier2, $tier3, $suggestedSeq)) {
+                    // Slot is reserved by another pending/staged request -> auto-assign next available gap
+                    $suggestedSeq = null;
+                }
+            }
+
+            $finalSeq = $suggestedSeq ?? $this->getNextAvailableSequence($tier1, $tier2, $tier3);
 
         // Check if this station already requested this code and it is still pending/staged
         if ($stagedReq) {
@@ -941,12 +1018,21 @@ class MasterItem {
             ]);
         }
 
+        $newReqId = (int)$this->db->lastInsertId();
+        $this->db->commit();
+
         return [
-            'id' => (int)$this->db->lastInsertId(),
+            'id' => $newReqId,
             'request_no' => $requestNo,
             'suggested_code' => sprintf("%d-%02d-%02d-%03d", $tier1, $tier2, $tier3, $stagedReq ? $assignedSeq : $finalSeq),
             'status' => $status
         ];
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -1145,15 +1231,27 @@ class MasterItem {
                 throw new Exception("Item Description / Name cannot be empty.");
             }
 
-            // Determine sequence: Admin assigned seq takes precedence (validated for uniqueness), otherwise fallback to next available sequence
+            // Lock branch node to prevent concurrent approval collisions
+            $lockStmt = $this->db->prepare("SELECT id FROM tier_categories WHERE level = 3 AND code_val = :t3 LIMIT 1 FOR UPDATE");
+            $lockStmt->execute([':t3' => $t3]);
+
+            // Determine sequence: Admin assigned seq takes precedence.
+            // If it's NOT in Master DB but held by a staged/pending request, reassign that staged/pending request's last 3 digits to next free gap.
+            $reassignedStaged = [];
             if ($assignedSeq !== null && $assignedSeq >= 0) {
                 $finalSeq = (int)$assignedSeq;
-                if (!$this->isSequenceSlotAvailable($t1, $t2, $t3, $finalSeq, $requestId)) {
-                    $nextFree = $this->getNextAvailableSequence($t1, $t2, $t3, $requestId);
-                    throw new Exception("Sequence slot " . sprintf('%03d', $finalSeq) . " ({$t1}-" . sprintf('%02d-%02d-%03d', $t2, $t3, $finalSeq) . ") is already taken by another item in this branch. Next available slot is " . sprintf('%03d', $nextFree) . ".");
+                if ($finalSeq < 1 || $finalSeq > 999) {
+                    throw new Exception("Sequence slot must be between 001 and 999.");
                 }
-            } elseif ($req['assigned_tier4_seq'] !== null && $req['assigned_tier4_seq'] >= 0 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['assigned_tier4_seq'], $requestId)) {
+                if ($this->isMasterSlotOccupied($t1, $t2, $t3, $finalSeq)) {
+                    $nextFree = $this->getNextAvailableSequence($t1, $t2, $t3, $requestId);
+                    throw new Exception("Sequence slot " . sprintf('%03d', $finalSeq) . " ({$t1}-" . sprintf('%02d-%02d-%03d', $t2, $t3, $finalSeq) . ") is already in Master Database. Next available slot is " . sprintf('%03d', $nextFree) . ".");
+                }
+                $reassignedStaged = $this->reassignDisplacedStagedRequests($t1, $t2, $t3, $finalSeq, $requestId);
+            } elseif ($req['assigned_tier4_seq'] !== null && $req['assigned_tier4_seq'] >= 1 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['assigned_tier4_seq'], $requestId)) {
                 $finalSeq = (int)$req['assigned_tier4_seq'];
+            } elseif ($req['suggested_tier4_seq'] !== null && $req['suggested_tier4_seq'] >= 1 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['suggested_tier4_seq'], $requestId)) {
+                $finalSeq = (int)$req['suggested_tier4_seq'];
             } else {
                 $finalSeq = $this->getNextAvailableSequence($t1, $t2, $t3, $requestId);
             }
@@ -1789,10 +1887,11 @@ class MasterItem {
                 // Create New Master Code
                 if ($customSeq !== null && $customSeq >= 0) {
                     $seq = $customSeq;
-                    if (!$this->isSequenceSlotAvailable($tier1, $tier2, $tier3, $seq)) {
+                    if ($this->isMasterSlotOccupied($tier1, $tier2, $tier3, $seq)) {
                         $nextFree = $this->getNextAvailableSequence($tier1, $tier2, $tier3);
-                        throw new Exception("Sequence slot " . sprintf('%03d', $seq) . " in branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . " is already occupied. Next available slot is " . sprintf('%03d', $nextFree) . ".");
+                        throw new Exception("Sequence slot " . sprintf('%03d', $seq) . " in branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . " is already occupied in Master DB. Next available slot is " . sprintf('%03d', $nextFree) . ".");
                     }
+                    $this->reassignDisplacedStagedRequests($tier1, $tier2, $tier3, $seq, null);
                 } else {
                     $seq = $this->getNextAvailableSequence($tier1, $tier2, $tier3);
                 }
