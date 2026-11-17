@@ -829,10 +829,10 @@
       if (uomEl) uomEl.textContent = uom.toUpperCase();
 
       // Render Price (Dark type if no price added)
-      this.renderViewItemPrice(it);
+      try { this.renderViewItemPrice(it); } catch (e) { console.error(e); }
 
       // Render Image Slots (Max 2 images, No Image placeholder if empty)
-      this.renderViewItemImages(it);
+      try { this.renderViewItemImages(it); } catch (e) { console.error(e); }
 
       // Setup Google Search
       if (googleBtn) {
@@ -873,6 +873,9 @@
       // Open Modal
       const modal = document.getElementById('viewItemDetailsModal');
       if (modal) {
+        if (modal.parentElement !== document.body) {
+          document.body.appendChild(modal);
+        }
         modal.classList.add('active');
         modal.style.display = 'flex';
         modal.style.opacity = '1';
