@@ -459,6 +459,29 @@ class MasterItem {
     }
 
     /**
+     * Find the smallest 3-digit sequence (000-999) NOT yet in Master DB (fifo_master_items).
+     * Approved (Not in Master) / Pending codes are temporary and can be reassigned if needed.
+     */
+    public function getNextMasterSlot(int $tier1, int $tier2, int $tier3): int {
+        $masterSeqs = [];
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT tier4_seq 
+            FROM fifo_master_items 
+            WHERE tier1 = :t1 AND tier2 = :t2 AND tier3 = :t3 AND tier4_seq IS NOT NULL
+        ");
+        $stmt->execute([':t1' => $tier1, ':t2' => $tier2, ':t3' => $tier3]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $masterSeqs[(int)$row['tier4_seq']] = true;
+        }
+        for ($seq = 0; $seq <= 999; $seq++) {
+            if (!isset($masterSeqs[$seq])) {
+                return $seq;
+            }
+        }
+        throw new Exception("All 1000 Master slots (000-999) are fully taken for branch {$tier1}-" . sprintf('%02d-%02d', $tier2, $tier3) . ".");
+    }
+
+    /**
      * Check if a specific 3-digit sequence slot is already occupied in Master DB
      */
     public function isMasterSlotOccupied(int $tier1, int $tier2, int $tier3, int $seq, ?int $excludeMasterId = null): bool {
@@ -843,6 +866,7 @@ class MasterItem {
             'tier_combination' => "{$t1Str}-{$t2Str}-{$t3Str}",
             'next_seq' => $nextSeq,
             'next_sequence' => $nextSeq,
+            'next_master_slot' => ($tier1 !== null && $tier2 !== null && $tier3 !== null) ? $this->getNextMasterSlot((int)$tier1, (int)$tier2, (int)$tier3) : $nextSeq,
             'suggested_seq_formatted' => $t4Str,
             'preview_formatted_code' => $previewCode,
             'preview_raw_code' => $rawCode,
@@ -1248,12 +1272,12 @@ class MasterItem {
                     throw new Exception("Sequence slot " . sprintf('%03d', $finalSeq) . " ({$t1}-" . sprintf('%02d-%02d-%03d', $t2, $t3, $finalSeq) . ") is already in Master Database. Next available slot is " . sprintf('%03d', $nextFree) . ".");
                 }
                 $reassignedStaged = $this->reassignDisplacedStagedRequests($t1, $t2, $t3, $finalSeq, $requestId);
-            } elseif ($req['assigned_tier4_seq'] !== null && $req['assigned_tier4_seq'] >= 0 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['assigned_tier4_seq'], $requestId)) {
+            } elseif ($req['assigned_tier4_seq'] !== null && $req['assigned_tier4_seq'] >= 0 && !$this->isMasterSlotOccupied($t1, $t2, $t3, (int)$req['assigned_tier4_seq'])) {
                 $finalSeq = (int)$req['assigned_tier4_seq'];
-            } elseif ($req['suggested_tier4_seq'] !== null && $req['suggested_tier4_seq'] >= 0 && $this->isSequenceSlotAvailable($t1, $t2, $t3, (int)$req['suggested_tier4_seq'], $requestId)) {
-                $finalSeq = (int)$req['suggested_tier4_seq'];
+                $reassignedStaged = $this->reassignDisplacedStagedRequests($t1, $t2, $t3, $finalSeq, $requestId);
             } else {
-                $finalSeq = $this->getNextAvailableSequence($t1, $t2, $t3, $requestId);
+                $finalSeq = $this->getNextMasterSlot($t1, $t2, $t3);
+                $reassignedStaged = $this->reassignDisplacedStagedRequests($t1, $t2, $t3, $finalSeq, $requestId);
             }
 
             if ($finalSeq > 999) {
