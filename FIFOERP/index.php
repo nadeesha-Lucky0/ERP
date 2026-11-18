@@ -1671,48 +1671,39 @@ require_once __DIR__ . '/views/layouts/header.php';
 
       <!-- SUB-PANE 2: GENERATE SHEET -->
       <div id="pv-sub-generate" class="pv-sub-pane">
+        <?php
+        $pvActiveWarehouses = [];
+        try {
+          $pvDb = \App\Config\Database::getConnection();
+          $pvActiveWarehouses = $pvDb->query("SELECT code, name FROM departments WHERE status = 'active' ORDER BY name ASC")->fetchAll();
+        } catch (\Throwable $e) {}
+        ?>
         <!-- Filter and Generate Parameters -->
         <div class="desk-card" style="padding: 20px 24px; margin-bottom: 20px;">
           <form id="formGenerateSheet" onsubmit="event.preventDefault(); Desk.generateCountSheet();">
-            <div
-              style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) 160px; gap: 16px; align-items: flex-end;">
-              <div class="desk-form-group" style="margin: 0;">
-                <label class="desk-form-label">Power Station / Facility</label>
-                <select id="sheetStation" class="desk-form-control">
-                  <option value="Victoria Hydro Power Station" selected>Victoria Hydro Power Station</option>
-                  <option value="Kotmale Hydro Power Station">Kotmale Hydro Power Station</option>
-                  <option value="Randenigala Power Station">Randenigala Power Station</option>
-                  <option value="Rantembe Power Station">Rantembe Power Station</option>
-                  <option value="Ukuwela Hydro Station">Ukuwela Hydro Station</option>
-                  <option value="Bowatenna Power Station">Bowatenna Power Station</option>
+            <input type="hidden" id="sheetStation" value="<?= htmlspecialchars($_SESSION['user']['location_name'] ?? 'Victoria Hydro Power Station') ?>">
+            <input type="hidden" id="sheetCostCenter" value="Mechanical">
+            <input type="hidden" id="sheetYear" value="<?= date('Y') ?>">
+
+            <div style="display: flex; gap: 16px; align-items: flex-end; max-width: 520px;">
+              <div class="desk-form-group" style="margin: 0; flex: 1;">
+                <label class="desk-form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">Choose Warehouse / Store</label>
+                <select id="sheetWarehouse" class="desk-form-control" style="height: 38px; font-weight: 600;">
+                  <?php if (!empty($pvActiveWarehouses)): ?>
+                    <?php foreach ($pvActiveWarehouses as $wh): ?>
+                      <?php 
+                        $whLabel = trim(($wh['code'] ? $wh['code'] . ' -- ' : '') . $wh['name']);
+                      ?>
+                      <option value="<?= htmlspecialchars($whLabel) ?>"><?= htmlspecialchars($whLabel) ?></option>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <option value="CS -- Consumer Store">CS -- Consumer Store</option>
+                    <option value="SS -- Spare Store">SS -- Spare Store</option>
+                  <?php endif; ?>
                 </select>
-              </div>
-              <div class="desk-form-group" style="margin: 0;">
-                <label class="desk-form-label">Cost Center / Department</label>
-                <select id="sheetCostCenter" class="desk-form-control">
-                  <option value="Mechanical" selected>Mechanical</option>
-                  <option value="Electrical">Electrical</option>
-                  <option value="Civil">Civil</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Administration">Administration</option>
-                </select>
-              </div>
-              <div class="desk-form-group" style="margin: 0;">
-                <label class="desk-form-label">Warehouse / Store</label>
-                <select id="sheetWarehouse" class="desk-form-control">
-                  <option value="Central Main Store" selected>Central Main Store</option>
-                  <option value="Mechanical Spares Warehouse">Mechanical Spares Warehouse</option>
-                  <option value="Electrical Spares Warehouse">Electrical Spares Warehouse</option>
-                  <option value="Turbine & Heavy Equipment Yard">Turbine & Heavy Equipment Yard</option>
-                  <option value="Fuel & Lubricant Depot">Fuel & Lubricant Depot</option>
-                </select>
-              </div>
-              <div class="desk-form-group" style="margin: 0;">
-                <label class="desk-form-label">Verification Year</label>
-                <input type="number" id="sheetYear" class="desk-form-control" value="<?= date('Y') ?>">
               </div>
               <button type="submit" class="desk-btn desk-btn-primary"
-                style="height: 38px; justify-content: center; font-weight: 600;">
+                style="height: 38px; padding: 0 20px; font-weight: 600; white-space: nowrap;">
                 <?= Icon::get('file-plus', 13) ?> Generate Sheets
               </button>
             </div>

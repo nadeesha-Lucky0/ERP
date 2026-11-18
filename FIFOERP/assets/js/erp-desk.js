@@ -582,6 +582,19 @@ const Desk = {
       if (!data.success || !data.data) return;
       const warehouses = data.data.warehouses || [];
 
+      // Populate sheetWarehouse dropdown with active existing warehouses
+      const sheetWh = document.getElementById('sheetWarehouse');
+      if (sheetWh && warehouses.length > 0) {
+        const curVal = sheetWh.value;
+        sheetWh.innerHTML = warehouses.map(w => {
+          const label = w.code ? `${w.code} -- ${w.name}` : w.name;
+          return `<option value="${this.escapeHtml(label)}">${this.escapeHtml(label)}</option>`;
+        }).join('');
+        if (curVal && Array.from(sheetWh.options).some(o => o.value === curVal)) {
+          sheetWh.value = curVal;
+        }
+      }
+
       if (freezeBody) {
         freezeBody.innerHTML = warehouses.length ? warehouses.map(w => {
           const isFrz = Number(w.is_frozen) === 1;
