@@ -718,7 +718,8 @@ const Desk = {
 
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
-      entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+      const isEditingGrn = !!(this.stockEntryState?.grn?.isEditing);
+      entryCard.style.display = (filter === 'Entry' || (filter === 'Unposted Document Edit' && isEditingGrn)) ? 'block' : 'none';
       if (filter === 'Entry') {
         this.initStockEntryForm('grn');
       }
@@ -1067,6 +1068,10 @@ const Desk = {
 
   async editDraft(docId, context = 'grn', targetFilter = 'Entry') {
     try {
+      const state = this.stockEntryState[context];
+      state.editingDocId = docId;
+      state.isEditing = true;
+
       this.switchTab(context === 'grn' ? 'tab-receipts' : 'tab-issues');
 
       if (context === 'grn') {
