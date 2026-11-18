@@ -554,7 +554,6 @@
       </div>
       <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;">
         <span id="masterItemSearchCount"></span>
-        <span>Item not found? <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.closeModal('modalSearchItemCode'); Desk.openRequestItemCodeModal(Desk.searchItemTargetContext);">+ Request New Code</button></span>
       </div>
     </div>
     <div class="desk-modal-footer">

@@ -5342,8 +5342,8 @@ const Desk = {
       dd.className = 'floating-item-dropdown';
       dd.innerHTML = `
         <!-- Top Search Box -->
-        <div style="padding: 8px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; gap: 6px; align-items: center;">
-          <div style="position: relative; flex: 1;">
+        <div style="padding: 8px 10px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+          <div style="position: relative; width: 100%;">
             <span style="position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #94a3b8; pointer-events: none;">🔍</span>
             <input type="text"
                    id="floatingItemSearchInput"
@@ -5352,12 +5352,6 @@ const Desk = {
                    placeholder="Type keywords to filter (code or name)..."
                    autocomplete="off">
           </div>
-          <button type="button" 
-                  id="floatingItemReqBtn"
-                  class="desk-btn desk-btn-default desk-btn-sm" 
-                  style="font-size: 11px; height: 30px; white-space: nowrap; padding: 0 8px;">
-            + Request Code
-          </button>
         </div>
 
         <!-- Subheader -->
@@ -5378,12 +5372,6 @@ const Desk = {
       });
       searchInput.addEventListener('keydown', (e) => {
         Desk.handleFloatingDropdownKeydown(e);
-      });
-
-      dd.querySelector('#floatingItemReqBtn').addEventListener('click', () => {
-        const query = searchInput.value.trim();
-        Desk.closeFloatingItemDropdown();
-        Desk.openRequestItemCodeModal(Desk.activeFloatingContext, query);
       });
 
       document.addEventListener('click', (e) => {
@@ -5527,10 +5515,7 @@ const Desk = {
         listContainer.innerHTML = `
           <div style="padding: 18px; font-size: 12px; color: #64748b; text-align: center;">
             ${q ? `No station item matches "<strong>${Desk.escapeHtml(q)}</strong>"` : `No items added to this power station yet.`}<br>
-            <span style="display:inline-block; margin-top: 4px; font-size: 11px; color: #94a3b8;">Only items registered in this power station appear here.</span><br>
-            <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 10px; font-size: 11px;" onclick="Desk.closeFloatingItemDropdown(); Desk.openRequestItemCodeModal('${context}', '${Desk.escapeHtml(q)}')">
-              + Request & Add Unlisted Code
-            </button>
+            <span style="display:inline-block; margin-top: 4px; font-size: 11px; color: #94a3b8;">Only items registered in this power station appear here.</span>
           </div>
         `;
       } else {
