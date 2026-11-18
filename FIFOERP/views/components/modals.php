@@ -519,12 +519,12 @@
 </div>
 
 <!-- ==============================================================
-     MODAL: Search & Select Master Item Code
+     MODAL: Search & Select Station Item Code
      ============================================================== -->
 <div id="modalSearchItemCode" class="desk-modal-backdrop">
   <div class="desk-modal" style="max-width: 750px; width: 95%;">
     <div class="desk-modal-header">
-      <h3 id="searchItemModalTitle">Search Master Item Code</h3>
+      <h3 id="searchItemModalTitle">Search Station Item Code</h3>
       <button type="button" class="desk-modal-close" onclick="Desk.closeModal('modalSearchItemCode')">&times;</button>
     </div>
     <div class="desk-modal-body" style="padding: 16px 20px;">
@@ -548,7 +548,7 @@
             </tr>
           </thead>
           <tbody id="masterItemSearchResultsBody">
-            <tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Loading master items...</td></tr>
+            <tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Loading station items...</td></tr>
           </tbody>
         </table>
       </div>

@@ -5362,7 +5362,7 @@ const Desk = {
 
         <!-- Subheader -->
         <div style="padding: 4px 10px; background: #f1f5f9; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #64748b;">
-          <span id="floatingItemCountLabel">All Available Materials</span>
+          <span id="floatingItemCountLabel">Station Items</span>
           <span style="font-size: 10.5px; color: #94a3b8;">Esc to close</span>
         </div>
 
@@ -5520,13 +5520,14 @@ const Desk = {
 
     const renderList = (items) => {
       if (countLabel) {
-        countLabel.textContent = q ? `Found ${items.length} matching item(s)` : `All Available Materials (${items.length})`;
+        countLabel.textContent = q ? `Found ${items.length} matching item(s)` : `Station Added Items (${items.length})`;
       }
 
       if (items.length === 0) {
         listContainer.innerHTML = `
           <div style="padding: 18px; font-size: 12px; color: #64748b; text-align: center;">
-            No material item matches "<strong>${Desk.escapeHtml(q)}</strong>"<br>
+            ${q ? `No station item matches "<strong>${Desk.escapeHtml(q)}</strong>"` : `No items added to this power station yet.`}<br>
+            <span style="display:inline-block; margin-top: 4px; font-size: 11px; color: #94a3b8;">Only items registered in this power station appear here.</span><br>
             <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="margin-top: 10px; font-size: 11px;" onclick="Desk.closeFloatingItemDropdown(); Desk.openRequestItemCodeModal('${context}', '${Desk.escapeHtml(q)}')">
               + Request & Add Unlisted Code
             </button>
@@ -5741,7 +5742,7 @@ const Desk = {
 
     const renderTable = (items) => {
       if (items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 24px;">No master materials found matching "<strong>${Desk.escapeHtml(q)}</strong>".</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 24px;">${q ? `No station materials found matching "<strong>${Desk.escapeHtml(q)}</strong>".` : `No items added to this power station yet.`}</td></tr>`;
         if (countEl) countEl.textContent = '0 items found';
         return;
       }

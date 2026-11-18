@@ -9,7 +9,7 @@ use App\Config\Database;
 header('Content-Type: application/json; charset=utf-8');
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$locationId = (int)($_SESSION['location_id'] ?? 1);
+$locationId = (int)($_GET['location_id'] ?? $_POST['location_id'] ?? $_SESSION['location_id'] ?? ($_SESSION['user']['location_id'] ?? 1));
 
 try {
     $db = Database::getStationConnection($locationId);
@@ -139,10 +139,19 @@ try {
                 }
             } catch (\Throwable $e) {}
 
-            // Common materials
+            // Power station's added items only (from station_items joined with fifo_master_items)
             $materials = [];
             try {
-                $stMat = $central->query("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 500");
+                $stMat = $central->prepare("
+                    SELECT m.formatted_code as sku, m.raw_code, m.item_name, m.uom, m.unit_price, s.local_bay_location, s.min_reorder_level
+                    FROM station_items s
+                    JOIN fifo_master_items m ON s.master_item_id = m.id
+                    WHERE s.station_id = :loc
+                      AND (s.is_active = 1 OR s.is_active IS NULL)
+                      AND m.status = 'ACTIVE'
+                    ORDER BY m.formatted_code ASC
+                ");
+                $stMat->execute([':loc' => $locationId]);
                 $materials = $stMat->fetchAll();
             } catch (\Throwable $e) {}
 
@@ -275,34 +284,51 @@ try {
                 $strippedQ = ltrim($cleanQ, '0');
 
                 $whereParts = [
-                    'formatted_code LIKE :rawQ',
-                    'item_name LIKE :nameQ'
+                    'm.formatted_code LIKE :rawQ',
+                    'm.item_name LIKE :nameQ'
                 ];
                 $params = [
+                    ':loc' => $locationId,
                     ':rawQ' => '%' . $q . '%',
                     ':nameQ' => '%' . $q . '%'
                 ];
 
                 if (!empty($cleanQ)) {
-                    $whereParts[] = "REPLACE(REPLACE(REPLACE(formatted_code, '-', ''), ' ', ''), '.', '') LIKE :cleanQ";
+                    $whereParts[] = "REPLACE(REPLACE(REPLACE(m.formatted_code, '-', ''), ' ', ''), '.', '') LIKE :cleanQ";
                     $params[':cleanQ'] = '%' . $cleanQ . '%';
                 }
 
                 if (!empty($strippedQ)) {
-                    $whereParts[] = "TRIM(LEADING '0' FROM REPLACE(REPLACE(REPLACE(formatted_code, '-', ''), ' ', ''), '.', '')) LIKE :strippedQ";
+                    $whereParts[] = "TRIM(LEADING '0' FROM REPLACE(REPLACE(REPLACE(m.formatted_code, '-', ''), ' ', ''), '.', '')) LIKE :strippedQ";
                     $params[':strippedQ'] = '%' . $strippedQ . '%';
                 }
 
-                $sql = "SELECT formatted_code as sku, item_name, uom, unit_price 
-                        FROM fifo_master_items 
-                        WHERE status = 'ACTIVE' AND (" . implode(' OR ', $whereParts) . ") 
+                $sql = "SELECT m.formatted_code as sku, m.raw_code, m.item_name, m.uom, m.unit_price, s.local_bay_location, s.min_reorder_level 
+                        FROM station_items s
+                        JOIN fifo_master_items m ON s.master_item_id = m.id
+                        WHERE s.station_id = :loc 
+                          AND (s.is_active = 1 OR s.is_active IS NULL)
+                          AND m.status = 'ACTIVE' 
+                          AND (" . implode(' OR ', $whereParts) . ") 
+                        ORDER BY m.formatted_code ASC
                         LIMIT 100";
 
                 $stmt = $central->prepare($sql);
                 $stmt->execute($params);
                 $materials = $stmt->fetchAll();
             } else {
-                $materials = $central->query("SELECT formatted_code as sku, item_name, uom, unit_price FROM fifo_master_items WHERE status = 'ACTIVE' LIMIT 100")->fetchAll();
+                $stmt = $central->prepare("
+                    SELECT m.formatted_code as sku, m.raw_code, m.item_name, m.uom, m.unit_price, s.local_bay_location, s.min_reorder_level 
+                    FROM station_items s
+                    JOIN fifo_master_items m ON s.master_item_id = m.id
+                    WHERE s.station_id = :loc 
+                      AND (s.is_active = 1 OR s.is_active IS NULL)
+                      AND m.status = 'ACTIVE'
+                    ORDER BY m.formatted_code ASC
+                    LIMIT 100
+                ");
+                $stmt->execute([':loc' => $locationId]);
+                $materials = $stmt->fetchAll();
             }
             Response::success('Materials found', ['materials' => $materials]);
             break;
@@ -400,6 +426,19 @@ try {
             ]);
             $newId = (int)$central->lastInsertId();
 
+            // Also provision immediately into station_items for current station
+            try {
+                $stStation = $central->prepare("
+                    INSERT INTO station_items (station_id, master_item_id, local_bay_location, is_active, imported_by)
+                    VALUES (:sid, :mid, 'Bay-A1', 1, :uid)
+                ");
+                $stStation->execute([
+                    ':sid' => $locationId,
+                    ':mid' => $newId,
+                    ':uid' => Auth::id() ?? 1
+                ]);
+            } catch (\Throwable $e) {}
+
             Response::success('New material item code created successfully', [
                 'item' => [
                     'id' => $newId,
@@ -486,7 +525,14 @@ try {
             // 4. Reorder level for this station/SKU
             $reorderLevel = 0;
             try {
-                $stReord = $db->prepare("SELECT COALESCE(min_reorder_level, 0) FROM station_items WHERE (raw_code = :sku OR formatted_code = :sku) AND location_id = :loc LIMIT 1");
+                $stReord = $central->prepare("
+                    SELECT COALESCE(s.min_reorder_level, 0) 
+                    FROM station_items s
+                    JOIN fifo_master_items m ON s.master_item_id = m.id
+                    WHERE (m.raw_code = :sku OR m.formatted_code = :sku) 
+                      AND s.station_id = :loc 
+                    LIMIT 1
+                ");
                 $stReord->execute([':sku' => $sku, ':loc' => $locationId]);
                 $reorderLevel = (int)($stReord->fetchColumn() ?: 0);
             } catch (Exception $e) {
