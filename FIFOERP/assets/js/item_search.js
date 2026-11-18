@@ -453,11 +453,17 @@
                 ` : ''}
 
                 ${isMaster ? `
-                  <button type="button" onclick="window.itemSearchController['${this.prefix}'].handleMasterAdd(${idx});"
-                    style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #650b2b; color: #ffffff; border: 1px solid #4a071e; cursor: pointer;"
-                    title="Add this code to the warehouse (station inventory)">
-                    ➕ Add to Warehouse
-                  </button>
+                  ${Number(it.is_in_station) > 0 ? `
+                    <span style="display: inline-block; font-size: 0.74rem; font-weight: 700; color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 4px;">
+                      ✓ In Station
+                    </span>
+                  ` : `
+                    <button type="button" onclick="window.itemSearchController['${this.prefix}'].handleMasterAdd(${idx}, this);"
+                      style="font-size: 0.74rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; background: #650b2b; color: #ffffff; border: 1px solid #4a071e; cursor: pointer;"
+                      title="Add this code to the warehouse (station inventory)">
+                      ➕ Add to Warehouse
+                    </button>
+                  `}
                 ` : `
                   <button type="button" onclick="window.itemSearchController['${this.prefix}'].openItemRequestModal(${idx});"
                     style="font-size: 0.74rem; font-weight: 700; padding: 4px 12px; border-radius: 4px; background: #0284c7; color: #ffffff; border: 1px solid #0369a1; cursor: pointer;"
@@ -651,7 +657,7 @@
     /**
      * Handle click on ➕ Add to Warehouse button for Master item
      */
-    handleMasterAdd(idx) {
+    async handleMasterAdd(idx, btnEl) {
       const it = this.currentPageItems?.[idx];
       if (!it) return;
 
@@ -663,14 +669,66 @@
       const formattedCode = it.formatted_code || `${t1Str}.${t2Str}.${t3Str}.${t4Str}`;
       const desc = it.master_db_name || it.item_name || it.orig_description || '';
 
-      // If openImportModal is available (Station inventory context), open modal to add directly to station
-      if (typeof window.openImportModal === 'function' && masterId && Number(masterId) > 0) {
-        window.openImportModal(Number(masterId), formattedCode, encodeURIComponent(desc));
+      if (!masterId || Number(masterId) <= 0) {
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast('This code has not been added to the Master Database yet. Only Master Added codes can be added to power stations.', 'warning');
+        }
         return;
       }
 
-      // Otherwise navigate to Add Code sub-tab with categories preselected
-      this.goToAddCode(it.tier1 || 0, it.tier2 || 0, it.tier3 || 0);
+      // Direct reactive add to Power Station inventory
+      const origHtml = btnEl ? btnEl.innerHTML : '';
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '⏳ Adding...';
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('action', 'import_to_station');
+        formData.append('master_item_id', masterId);
+        formData.append('bay_location', 'Bay-A1');
+
+        const res = await App.request('/api/code_management.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok && res.data?.success) {
+          if (typeof App !== 'undefined' && App.toast) {
+            App.toast(`Item ${formattedCode} added to Power Station database successfully!`, 'success');
+          }
+          it.is_in_station = 1;
+          if (btnEl) {
+            btnEl.outerHTML = `<span style="display: inline-block; font-size: 0.74rem; font-weight: 700; color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 4px;">✓ In Station</span>`;
+          }
+
+          // Invalidate Desk stock lookups cache so the new item appears in GRN/Issues dropdown immediately!
+          if (window.Desk) {
+            Desk.cachedStockLookups = null;
+            if (typeof Desk.loadStockEntryLookups === 'function') {
+              Desk.loadStockEntryLookups();
+            }
+          }
+          if (typeof loadStationInventory === 'function') loadStationInventory();
+        } else {
+          if (typeof App !== 'undefined' && App.toast) {
+            App.toast(res.data?.message || 'Failed to add item to station.', 'error');
+          }
+          if (btnEl) {
+            btnEl.disabled = false;
+            btnEl.innerHTML = origHtml;
+          }
+        }
+      } catch (err) {
+        if (typeof App !== 'undefined' && App.toast) {
+          App.toast(`Error: ${err.message}`, 'error');
+        }
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.innerHTML = origHtml;
+        }
+      }
     }
 
     /**

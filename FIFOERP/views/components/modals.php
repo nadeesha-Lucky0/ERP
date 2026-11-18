@@ -993,6 +993,51 @@
   </div>
 </div>
 
+<!-- ==============================================================
+     MODAL: Add Code to Power Station Catalog (importStationModal)
+     ============================================================== -->
+<div id="importStationModal" class="desk-modal-backdrop" style="display: none;">
+  <div class="desk-modal" style="max-width: 500px; width: 95%;">
+    <div class="desk-modal-header" style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h3 class="modal-title" style="font-size: 0.95rem; font-weight: 700; color: #0f172a; margin: 0;">Add Code to Power Station Catalog</h3>
+        <span style="font-size: 0.74rem; color: #64748b;">Save approved item code into Power Station inventory</span>
+      </div>
+      <button type="button" class="desk-modal-close" onclick="Desk.closeModal('importStationModal')">&times;</button>
+    </div>
+
+    <form id="importStationForm" onsubmit="executeImportToStation(event);">
+      <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars(\App\Core\Session::csrfToken()) ?>">
+      <input type="hidden" name="master_item_id" id="modalImportItemId" value="">
+
+      <div class="desk-modal-body" style="padding: 16px 18px; background: #ffffff;">
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 4px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+          <div>
+            <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Approved Item Code</div>
+            <div style="font-family: monospace; font-size: 1.1rem; font-weight: 800; color: #650b2b; background: #fdf2f5; border: 1px solid #fbcfe8; padding: 2px 8px; border-radius: 3px; display: inline-block; margin-top: 2px;" id="modalImportCodeLabel">1-01-01-001</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Item Name</div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-top: 2px;" id="modalImportNameLabel">-</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">Destination Power Station</label>
+          <input type="text" class="desk-form-control" value="<?= htmlspecialchars($_SESSION['user']['location_name'] ?? 'Victoria Power Station (831)') ?>" readonly style="background: #f8fafc; font-size: 0.82rem; font-weight: 600; color: #0f172a;">
+          <input type="hidden" name="station_id" value="<?= (int)($_SESSION['location_id'] ?? 1) ?>">
+          <input type="hidden" name="bay_location" value="Bay-01">
+        </div>
+      </div>
+
+      <div class="desk-modal-footer" style="background: #f8fafc; border-top: 1px solid #cbd5e1; padding: 10px 18px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" class="desk-btn desk-btn-default" onclick="Desk.closeModal('importStationModal')">Cancel</button>
+        <button type="submit" class="desk-btn" id="btnConfirmImportStation" style="background: #650b2b; color: #ffffff; border: 1px solid #4a071e; padding: 6px 16px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">+ Add Code to Station</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 // Modal Form Submit Handlers
 function submitNewGrn() {

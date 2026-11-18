@@ -426,6 +426,15 @@ class CodeManagementController {
      */
     public function listMasterItems(): void {
         try {
+            $currentUser = Auth::user();
+            $stationId = (int)Request::get('station_id');
+            if (!$stationId && !empty($currentUser['location_id'])) {
+                $stationId = (int)$currentUser['location_id'];
+            }
+            if (!$stationId) {
+                $stationId = (int)($_SESSION['location_id'] ?? 1);
+            }
+
             $search = Request::get('q', '');
             $t1Raw = Request::get('tier1');
             $t2Raw = Request::get('tier2');
@@ -437,7 +446,7 @@ class CodeManagementController {
             // Always include both Master Added items and Approved (not yet added to master) items
             $includeUncommitted = true;
 
-            $items = $this->masterModel->getAllMasterItems($search, $t1, $t2, $t3, $limit, $includeUncommitted);
+            $items = $this->masterModel->getAllMasterItems($search, $t1, $t2, $t3, $limit, $includeUncommitted, $stationId);
             Response::json(['items' => $items, 'total' => count($items)]);
         } catch (Exception $e) {
             Response::error($e->getMessage());

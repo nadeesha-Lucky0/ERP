@@ -1614,8 +1614,12 @@ class MasterItem {
      * For Admins: Returns Master Added (Orange) + Uncommitted Requests (Non-Orange with Add to Master button)
      * For Power Stations: Returns ONLY Master Added (Orange) items
      */
-    public function getAllMasterItems(string $search = '', ?int $tier1 = null, ?int $tier2 = null, ?int $tier3 = null, int $limit = 20000, bool $includeUncommitted = true): array {
+    public function getAllMasterItems(string $search = '', ?int $tier1 = null, ?int $tier2 = null, ?int $tier3 = null, int $limit = 20000, bool $includeUncommitted = true, ?int $stationId = null): array {
         // 1. Fetch Official Master Items (is_added_to_master = 1, ORANGE CODE)
+        $stationCol = ($stationId !== null && $stationId > 0)
+            ? "(SELECT COUNT(*) FROM station_items s WHERE s.master_item_id = m.id AND s.station_id = :sid) as is_in_station"
+            : "0 as is_in_station";
+
         $masterSql = "
             SELECT m.id as master_id,
                    COALESCE(m.code_request_id, r.id) as request_id,
@@ -1635,7 +1639,8 @@ class MasterItem {
                    m.image_url_2,
                    1 as is_added_to_master,
                    'APPROVED' as approval_status,
-                   0 as station_count
+                   0 as station_count,
+                   {$stationCol}
             FROM fifo_master_items m
             LEFT JOIN users u ON m.created_by = u.id
             LEFT JOIN locations l_u ON u.location_id = l_u.id
@@ -1645,6 +1650,9 @@ class MasterItem {
             WHERE 1=1
         ";
         $params = [];
+        if ($stationId !== null && $stationId > 0) {
+            $params[':sid'] = $stationId;
+        }
         if ($tier1 !== null && $tier1 !== 0) {
             $masterSql .= " AND m.tier1 = :t1";
             $params[':t1'] = $tier1;
@@ -1704,7 +1712,8 @@ class MasterItem {
                    r.image_url_2,
                    0 as is_added_to_master,
                    r.status as approval_status,
-                   0 as station_count
+                   0 as station_count,
+                   0 as is_in_station
             FROM code_requests r
             LEFT JOIN locations l ON r.origin_station_id = l.id
             WHERE (r.is_added_to_master IS NULL OR r.is_added_to_master = 0)

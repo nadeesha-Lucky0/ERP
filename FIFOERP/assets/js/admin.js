@@ -2819,14 +2819,21 @@ window.loadStationRequests = loadStationRequests;
 // Import to Station Modal
 function openImportModal(masterItemId, code, encodedName) {
   if (!masterItemId || Number(masterItemId) <= 0) {
-    App.toast('This code has not been added to the Master Database yet. Only Master Added (Orange) codes can be added to power stations.', 'warning');
+    if (typeof App !== 'undefined' && App.toast) {
+      App.toast('This code has not been added to the Master Database yet. Only Master Added (Orange) codes can be added to power stations.', 'warning');
+    }
     return;
   }
-  const name = decodeURIComponent(encodedName);
-  document.getElementById('modalImportItemId').value = masterItemId;
-  document.getElementById('modalImportCodeLabel').textContent = code;
-  document.getElementById('modalImportNameLabel').textContent = name;
-  window.openModal('importStationModal');
+  const name = decodeURIComponent(encodedName || '');
+  const idEl = document.getElementById('modalImportItemId');
+  const codeEl = document.getElementById('modalImportCodeLabel');
+  const nameEl = document.getElementById('modalImportNameLabel');
+  if (idEl) idEl.value = masterItemId;
+  if (codeEl) codeEl.textContent = code;
+  if (nameEl) nameEl.textContent = name;
+  if (typeof window.openModal === 'function') {
+    window.openModal('importStationModal');
+  }
 }
 
 window.openImportModal = openImportModal;
@@ -2846,11 +2853,28 @@ async function executeImportToStation(e) {
 
     if (res.ok && res.data?.success) {
       App.toast(res.data.message || 'Item added to Power Station Code Table successfully!', 'success');
-      window.closeModal('importStationModal');
+      if (typeof window.closeModal === 'function') {
+        window.closeModal('importStationModal');
+      }
       if (typeof onCodeGenTier3Change === 'function') onCodeGenTier3Change();
       if (typeof loadStationInventory === 'function') loadStationInventory();
       if (typeof loadStationRequests === 'function') loadStationRequests();
       if (typeof window.updateSimpleCode === 'function') window.updateSimpleCode();
+
+      // Clear Desk cachedStockLookups and reload so dropdown immediately shows the newly added item!
+      if (window.Desk) {
+        Desk.cachedStockLookups = null;
+        if (typeof Desk.loadStockEntryLookups === 'function') {
+          Desk.loadStockEntryLookups();
+        }
+      }
+      if (window.itemSearchController) {
+        Object.values(window.itemSearchController).forEach(ctrl => {
+          if (ctrl && typeof ctrl.fetchItems === 'function') {
+            ctrl.fetchItems();
+          }
+        });
+      }
     } else {
       App.toast(res.data?.message || 'Failed to import item to station.', 'error');
     }
