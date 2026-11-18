@@ -2057,9 +2057,15 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- SUB-PANE 4: VERIFICATION EDIT (Same Official AV/1/A Layout - 21 items/sheet) -->
+      <!-- SUB-PANE 4: VERIFICATION EDIT (Same Official AV/1/A Layout - 21 items/sheet, shown only after Count Entry Submit) -->
       <div id="pv-sub-edit" class="pv-sub-pane">
-        <div class="desk-card"
+        <div id="pvEditEmptyNotice" class="desk-card" style="padding: 40px 24px; text-align: center; color: #64748b;">
+          <div style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">No Submitted Counts Yet</div>
+          <div style="font-size: 12.5px;">Complete all sheets in the <strong>Count Entry</strong> tab and click <strong>Submit</strong> to view and edit verification counts here.</div>
+        </div>
+
+        <div id="pvEditContentWrapper" style="display: none;">
+          <div class="desk-card"
           style="margin-bottom: 16px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
           <div class="filter-pills-bar" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
             <button class="filter-pill active" onclick="Desk.filterPvEdit('all', this)">All Items</button>
@@ -2206,6 +2212,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
 
           <div style="text-align: right; font-size: 11px; margin-top: 10px; padding-right: 24px;" id="pvEditPageBot">Page 1 of 1</div>
+        </div>
         </div>
       </div>
 

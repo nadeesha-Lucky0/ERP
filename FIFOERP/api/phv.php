@@ -189,7 +189,16 @@ try {
                 ]);
             }
 
-            $db->prepare("UPDATE phv_sessions SET status = 'In_Counting' WHERE id = :sid")->execute([':sid' => $sessionId]);
+            $db->prepare("
+                INSERT INTO phv_sessions (id, location_id, session_code, session_title, verification_date, status, created_by)
+                VALUES (:sid, :loc, :code, 'Store Physical Verification', CURDATE(), 'In_Counting', :uid)
+                ON DUPLICATE KEY UPDATE status = 'In_Counting'
+            ")->execute([
+                ':sid' => $sessionId,
+                ':loc' => $locationId,
+                ':code' => 'PHV-' . date('Y') . '-S' . $sessionId,
+                ':uid' => Auth::id() ?? 1
+            ]);
             $db->commit();
 
             $totalItems = count($batches);
@@ -241,12 +250,22 @@ try {
             $entries = phvEnrichItems($db, $entries);
             $curSheet = $sheetPage > 0 ? $sheetPage : 1;
 
+            $sessStatus = 'Draft';
+            try {
+                $stSess = $db->prepare("SELECT status FROM phv_sessions WHERE id = :sid LIMIT 1");
+                $stSess->execute([':sid' => $sessionId]);
+                $sessStatus = (string)($stSess->fetchColumn() ?: 'Draft');
+            } catch (\Throwable $e) {}
+            $isSubmitted = in_array($sessStatus, ['Submitted', 'Validated', 'Approved', 'Posted'], true);
+
             Response::success('PHV entries loaded', [
                 'entries' => $entries,
                 'total_items' => $totalItems,
                 'items_per_sheet' => $perSheet,
                 'total_sheets' => $totalSheets,
                 'current_sheet' => $curSheet,
+                'session_status' => $sessStatus,
+                'is_submitted' => $isSubmitted,
                 'meta' => phvSheetMeta($locationId, $curSheet)
             ]);
             break;
@@ -277,6 +296,19 @@ try {
                 ]);
             }
             $db->commit();
+
+            if (!empty($_POST['submit'])) {
+                $db->prepare("
+                    INSERT INTO phv_sessions (id, location_id, session_code, session_title, verification_date, status, created_by)
+                    VALUES (:sid, :loc, :code, 'Store Physical Verification', CURDATE(), 'Submitted', :uid)
+                    ON DUPLICATE KEY UPDATE status = 'Submitted'
+                ")->execute([
+                    ':sid' => $sessionId,
+                    ':loc' => $locationId,
+                    ':code' => 'PHV-' . date('Y') . '-S' . $sessionId,
+                    ':uid' => Auth::id() ?? 1
+                ]);
+            }
 
             Response::success('Physical counts updated successfully');
             break;

@@ -2271,7 +2271,7 @@ const Desk = {
     return counts;
   },
 
-  saveVerificationCounts(sourceSelector = '#pvEntryTableBody') {
+  saveVerificationCounts(sourceSelector = '#pvEntryTableBody', isSubmit = false) {
     const counts = this.collectCountsFrom(sourceSelector);
     if (!counts.length) return Promise.resolve(false);
 
@@ -2279,6 +2279,7 @@ const Desk = {
     fd.append('action', 'save_counts');
     fd.append('session_id', '1');
     fd.append('counts', JSON.stringify(counts));
+    if (isSubmit) fd.append('submit', '1');
 
     return fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
       .then(res => res.json())
@@ -2301,7 +2302,7 @@ const Desk = {
         return;
       }
     }
-    const ok = await this.saveVerificationCounts('#pvEntryTableBody');
+    const ok = await this.saveVerificationCounts('#pvEntryTableBody', true);
     if (ok) {
       Desk.showToast('Counts submitted to Verification Edit tab');
       const editBtn = document.querySelector('.sidebar-sub-item[data-pv-sub="pv-sub-edit"]');
@@ -2323,6 +2324,17 @@ const Desk = {
       .then(res => {
         if (res.success) {
           const data = res.data || {};
+          const notice = document.getElementById('pvEditEmptyNotice');
+          const wrapper = document.getElementById('pvEditContentWrapper');
+          if (!data.is_submitted) {
+            if (notice) notice.style.display = 'block';
+            if (wrapper) wrapper.style.display = 'none';
+            tbody.innerHTML = '';
+            return;
+          }
+          if (notice) notice.style.display = 'none';
+          if (wrapper) wrapper.style.display = 'block';
+
           const entries = data.entries || [];
           const totalSheets = data.total_sheets || 1;
           const totalItems = data.total_items || 0;
