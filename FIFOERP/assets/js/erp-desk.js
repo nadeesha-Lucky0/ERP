@@ -5645,8 +5645,48 @@ const Desk = {
       window.addEventListener('resize', () => {
         Desk.closeFloatingItemDropdown();
       });
+
+      window.addEventListener('scroll', (e) => {
+        const openDd = document.getElementById('floatingItemSearchDropdown');
+        if (!openDd || openDd.style.display !== 'block') return;
+        if (openDd.contains(e.target)) return; // allow scrolling inside the dropdown list itself
+        Desk.positionFloatingDropdown();
+      }, true);
     }
     return dd;
+  },
+
+  positionFloatingDropdown() {
+    const dd = document.getElementById('floatingItemSearchDropdown');
+    const triggerEl = this.activeFloatingTrigger;
+    if (!dd || !triggerEl || !document.body.contains(triggerEl)) {
+      this.closeFloatingItemDropdown();
+      return;
+    }
+
+    const rect = triggerEl.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      this.closeFloatingItemDropdown();
+      return;
+    }
+
+    const width = Math.max(rect.width, 440);
+    let top = rect.bottom + 4;
+    let left = rect.left;
+
+    if (left + width > window.innerWidth - 10) {
+      left = window.innerWidth - width - 10;
+    }
+    if (left < 10) left = 10;
+
+    const approxHeight = 310;
+    if (top + approxHeight > window.innerHeight && rect.top > approxHeight) {
+      top = rect.top - approxHeight - 4;
+    }
+
+    dd.style.top = `${top}px`;
+    dd.style.left = `${left}px`;
+    dd.style.width = `${width}px`;
   },
 
   toggleFloatingItemDropdown(context, rowId, triggerEl) {
@@ -5667,25 +5707,8 @@ const Desk = {
     document.querySelectorAll('.desk-item-select-trigger').forEach(el => el.classList.remove('active'));
     triggerEl.classList.add('active');
 
-    const rect = triggerEl.getBoundingClientRect();
-    const width = Math.max(rect.width, 440);
-    let top = rect.bottom + 4;
-    let left = rect.left;
-
-    if (left + width > window.innerWidth - 10) {
-      left = window.innerWidth - width - 10;
-    }
-    if (left < 10) left = 10;
-
-    const approxHeight = 310;
-    if (top + approxHeight > window.innerHeight && rect.top > approxHeight) {
-      top = rect.top - approxHeight - 4;
-    }
-
-    dd.style.top = `${top}px`;
-    dd.style.left = `${left}px`;
-    dd.style.width = `${width}px`;
     dd.style.display = 'block';
+    this.positionFloatingDropdown();
 
     const searchInput = dd.querySelector('#floatingItemSearchInput');
     if (searchInput) {
