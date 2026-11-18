@@ -718,8 +718,9 @@ const Desk = {
 
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
-      entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
-      if (filter === 'Entry') {
+      const showGrnForm = (filter === 'Entry' || filter === 'Unposted Document Edit');
+      entryCard.style.display = showGrnForm ? 'block' : 'none';
+      if (showGrnForm) {
         this.initStockEntryForm('grn');
       }
     }
@@ -826,7 +827,7 @@ const Desk = {
           <td>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
-              ${filter === 'Unposted Document Edit' && d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditReceipt(${d.id})" title="Edit unposted consignment details">Edit</button>` : ''}
+              ${filter === 'Unposted Document Edit' && d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'grn', 'Unposted Document Edit')" title="Edit unposted consignment details in full form">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.editDraft(${d.id}, 'grn')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Edit draft details in top form">Edit</button>` : ''}
               ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
               ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
@@ -1065,29 +1066,29 @@ const Desk = {
       });
   },
 
-  async editDraft(docId, context = 'grn') {
+  async editDraft(docId, context = 'grn', targetFilter = 'Entry') {
     try {
       this.switchTab(context === 'grn' ? 'tab-receipts' : 'tab-issues');
 
       if (context === 'grn') {
         if (typeof this.filterReceipts === 'function') {
-          this.filterReceipts('Entry');
+          this.filterReceipts(targetFilter);
         } else {
-          this.currentReceiptFilter = 'Entry';
+          this.currentReceiptFilter = targetFilter;
         }
         const card = document.getElementById('bodyGrnEntryCard');
         if (card) card.style.display = 'block';
       } else {
         if (typeof this.filterIssues === 'function') {
-          this.filterIssues('Entry');
+          this.filterIssues(targetFilter);
         } else {
-          this.currentIssueFilter = 'Entry';
+          this.currentIssueFilter = targetFilter;
         }
         const card = document.getElementById('bodyIssueEntryCard');
         if (card) card.style.display = 'block';
       }
 
-      this.showToast('Loading draft into form...');
+      this.showToast('Loading document into form...');
       const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`).then(r => r.json());
       if (!res.success || !res.data) {
         this.showToast(res.message || 'Failed to load document for editing', true);
@@ -1101,17 +1102,17 @@ const Desk = {
       state.editingDocId = doc.id;
       state.isEditing = true;
       state.docTitle = doc.doc_no;
-      state.status = 'Draft';
+      state.status = doc.status || 'Draft';
 
       // Update Top Bar Breadcrumb & Status Badge
       const titleEl = document.getElementById(`${context}DocTitle`);
       if (titleEl) {
-        titleEl.innerHTML = `Editing Draft: <strong style="color: #2563eb;">${doc.doc_no}</strong>`;
+        titleEl.innerHTML = `Editing: <strong style="color: #2563eb;">${doc.doc_no}</strong>`;
       }
       const badge = document.getElementById(`${context}StatusBadge`);
       if (badge) {
         badge.className = 'desk-badge badge-warning';
-        badge.textContent = 'Draft (Editing)';
+        badge.textContent = `${doc.status || 'Draft'} (Editing)`;
       }
 
       // 1. Create Doc Type Header
@@ -1187,12 +1188,26 @@ const Desk = {
         this.addStockEntryRow(context, false);
       }
       this.renderStockEntryRows(context);
+      if (context === 'grn') {
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? 0; };
+        const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!Number(val || 0); };
+        setVal('grnValNbt', doc.nbt);
+        setChk('grnNbtExclude', doc.nbt_excluded);
+        setVal('grnValVat', doc.vat);
+        setChk('grnVatExclude', doc.vat_excluded);
+        setVal('grnValTransport', doc.transport);
+        setChk('grnTransportExclude', doc.transport_excluded);
+        setVal('grnValOther', doc.other_cost);
+        setChk('grnOtherExclude', doc.other_excluded);
+        setChk('grnSingleMaterial', doc.single_material);
+      }
+      this.calculateStockEntryTotals(context);
 
       // Smooth scroll to form
       const formEl = document.getElementById(context === 'grn' ? 'formStockEntry_grn' : 'formStockEntry_issue');
       if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-      this.showToast(`Draft ${doc.doc_no} loaded! You can now edit and save.`);
+      this.showToast(`Document ${doc.doc_no} loaded! You can now edit and update.`);
     } catch (err) {
       console.error(err);
       this.showToast('Error loading draft: ' + err.message, true);
