@@ -173,7 +173,7 @@ try {
                 INSERT INTO phv_entries 
                 (session_id, batch_id, sku, item_name, bin_location, book_quantity, physical_quantity, unit_cost, remarks)
                 VALUES
-                (:sid, :bid, :sku, :name, :bin, :bqty, :pqty, :cost, 'Auto-generated count sheet')
+                (:sid, :bid, :sku, :name, :bin, :bqty, :pqty, :cost, '')
             ");
 
             foreach ($batches as $b) {
@@ -219,7 +219,7 @@ try {
                 $bStmt = $db->prepare("
                     SELECT id as id, id as batch_id, sku, item_name, location_bin as bin_location, 
                            remaining_quantity as book_quantity, remaining_quantity as physical_quantity,
-                           unit_cost, 'Active Inventory' as remarks
+                           unit_cost, '' as remarks
                     FROM fifo_batches 
                     WHERE location_id = :loc AND remaining_quantity > 0 
                     ORDER BY location_bin ASC, sku ASC
