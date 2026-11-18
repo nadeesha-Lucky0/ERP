@@ -718,9 +718,8 @@ const Desk = {
 
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
-      const showGrnForm = (filter === 'Entry' || filter === 'Unposted Document Edit');
-      entryCard.style.display = showGrnForm ? 'block' : 'none';
-      if (showGrnForm) {
+      entryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
+      if (filter === 'Entry') {
         this.initStockEntryForm('grn');
       }
     }
@@ -7499,10 +7498,15 @@ const Desk = {
       if (el) el.checked = false;
     });
 
-    // Scroll to top of form
+    // Scroll to top of form (or hide if not on Entry sub-tab)
     const card = document.getElementById(context === 'grn' ? 'bodyGrnEntryCard' : 'bodyIssueEntryCard');
     if (card) {
-      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const isEntry = context === 'grn' ? (this.currentReceiptFilter === 'Entry') : (this.currentIssueFilter === 'Entry');
+      if (!isEntry) {
+        card.style.display = 'none';
+      } else {
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     this.showToast('Form cleared.');
