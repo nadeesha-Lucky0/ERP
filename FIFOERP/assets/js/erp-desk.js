@@ -2233,7 +2233,7 @@ const Desk = {
           <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookQty)}</td>
           <td style="border-right: 1px solid #000; padding: 3px 4px; vertical-align: top;">
             <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}" ${disAttr}
-                   style="width: 62px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px; ${roStyle}"
+                   style="width: 100%; min-width: 68px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px; ${roStyle}"
                    oninput="Desk.calcPvEntryRow(this)">
           </td>
           <td class="pv-surplus-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty)}</td>

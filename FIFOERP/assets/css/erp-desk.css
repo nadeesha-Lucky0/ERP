@@ -471,12 +471,33 @@ body.sidebar-collapsed .sidebar-nav-item {
 /* -------------------------------------------------------------
  * Main Workspace Content Area
  * ------------------------------------------------------------- */
+body.sidebar-collapsed .desk-content {
+  padding: 20px 18px 60px;
+}
+
+body.sidebar-collapsed #pv-sub-entry .pv-phys-input,
+body.sidebar-collapsed #pv-sub-edit .pv-phys-input {
+  min-width: 95px !important;
+  height: 28px !important;
+  font-size: 12px !important;
+  padding: 4px 6px !important;
+}
+
+body.sidebar-collapsed #pv-sub-entry .pv-remarks-input,
+body.sidebar-collapsed #pv-sub-edit .pv-remarks-input {
+  min-width: 150px !important;
+  height: 28px !important;
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+}
+
 .desk-content {
   margin-left: var(--sidebar-w);
   flex: 1;
   padding: 24px 32px 60px;
   background-color: var(--bg-page);
   min-width: 0;
+  transition: margin-left 0.18s ease, padding 0.18s ease;
 }
 
 /* Workspace Header */
