@@ -2087,22 +2087,19 @@ const Desk = {
           setTxt('pvEntryPageBadge', `Sheet ${Desk.currentPvEntryPage} of ${totalSheets}`);
           setTxt('pvEntryPageBot', `Page ${Desk.currentPvEntryPage} of ${totalSheets}`);
 
-          // Show/hide Save & Unsave radio buttons, Submit All, and Submitted Locked badge
-          const saveGroup = document.getElementById('pvEntrySaveToggleGroup');
-          const savedRadio = document.getElementById('pvEntrySavedRadio');
-          const unsavedRadio = document.getElementById('pvEntryUnsavedRadio');
+          // Show/hide Save (with tick box), Submit All, and Submitted Locked badge
+          const saveBtn = document.getElementById('btnSavePvEntrySheet');
+          const savedChk = document.getElementById('pvEntrySavedCheck');
           const submitBtn = document.getElementById('btnSubmitPvEntry');
           const lockBadge = document.getElementById('pvEntrySubmittedBadge');
           if (isSubmitted) {
-            if (saveGroup) saveGroup.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'none';
             if (submitBtn) submitBtn.style.display = 'none';
             if (lockBadge) lockBadge.style.display = 'inline-block';
           } else {
             if (lockBadge) lockBadge.style.display = 'none';
-            if (saveGroup) saveGroup.style.display = 'inline-flex';
-            const isSaved = Desk.savedPvEntrySheets.has(Desk.currentPvEntryPage);
-            if (savedRadio) savedRadio.checked = isSaved;
-            if (unsavedRadio) unsavedRadio.checked = !isSaved;
+            if (saveBtn) saveBtn.style.display = 'inline-flex';
+            if (savedChk) savedChk.checked = Desk.savedPvEntrySheets.has(Desk.currentPvEntryPage);
             if (submitBtn) submitBtn.style.display = 'inline-flex';
           }
 
@@ -2132,19 +2129,21 @@ const Desk = {
     if (this.currentPvEntryPage < this.totalPvEntryPages) this.loadPvEntry(this.currentPvEntryPage + 1);
   },
 
-  unsavePvEntrySheet() {
+  toggleSavePvEntrySheet() {
     const page = this.currentPvEntryPage || 1;
-    this.savedPvEntrySheets.delete(page);
-    const savedRadio = document.getElementById('pvEntrySavedRadio');
-    const unsavedRadio = document.getElementById('pvEntryUnsavedRadio');
-    if (savedRadio) savedRadio.checked = false;
-    if (unsavedRadio) unsavedRadio.checked = true;
-    const pageSelect = document.getElementById('pvEntryPageSelect');
-    if (pageSelect && pageSelect.selectedIndex >= 0) {
-      const opt = pageSelect.options[pageSelect.selectedIndex];
-      opt.textContent = opt.textContent.replace(/^●\s*/, '');
+    if (this.savedPvEntrySheets.has(page)) {
+      this.savedPvEntrySheets.delete(page);
+      const chk = document.getElementById('pvEntrySavedCheck');
+      if (chk) chk.checked = false;
+      const pageSelect = document.getElementById('pvEntryPageSelect');
+      if (pageSelect && pageSelect.selectedIndex >= 0) {
+        const opt = pageSelect.options[pageSelect.selectedIndex];
+        opt.textContent = opt.textContent.replace(/^●\s*/, '');
+      }
+      Desk.showToast(`Sheet ${page} unsaved`);
+    } else {
+      this.saveVerificationCounts('#pvEntryTableBody');
     }
-    Desk.showToast(`Sheet ${page} marked as Unsaved`);
   },
 
   recalcPvEntryTotals(tbodyId = 'pvEntryTableBody', prefix = 'pvTotal') {

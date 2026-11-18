@@ -1917,16 +1917,10 @@ require_once __DIR__ . '/views/layouts/header.php';
             <span id="pvEntrySubmittedBadge" style="display: none; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">
               &#10003; Submitted (Locked)
             </span>
-            <div id="pvEntrySaveToggleGroup" style="display: inline-flex; align-items: center; gap: 6px;">
-              <button type="button" id="btnSavePvEntrySheet" class="desk-btn desk-btn-default" onclick="Desk.saveVerificationCounts('#pvEntryTableBody')" style="display: inline-flex; align-items: center; gap: 6px;">
-                <input type="radio" name="pvEntrySaveState" id="pvEntrySavedRadio" style="pointer-events: none; accent-color: #2563eb; margin: 0; width: 14px; height: 14px;">
-                <span>Save</span>
-              </button>
-              <button type="button" id="btnUnsavePvEntrySheet" class="desk-btn desk-btn-default" onclick="Desk.unsavePvEntrySheet()" style="display: inline-flex; align-items: center; gap: 6px;">
-                <input type="radio" name="pvEntrySaveState" id="pvEntryUnsavedRadio" checked style="pointer-events: none; accent-color: #2563eb; margin: 0; width: 14px; height: 14px;">
-                <span>Unsave</span>
-              </button>
-            </div>
+            <button type="button" id="btnSavePvEntrySheet" class="desk-btn desk-btn-default" onclick="Desk.toggleSavePvEntrySheet()" style="display: inline-flex; align-items: center; gap: 6px;">
+              <input type="checkbox" id="pvEntrySavedCheck" style="pointer-events: none; accent-color: #2563eb; margin: 0; width: 14px; height: 14px;">
+              <span>Save</span>
+            </button>
             <button id="btnSubmitPvEntry" class="desk-btn desk-btn-primary" onclick="Desk.submitPvCountEntry()">
               <?= Icon::get('check-circle', 13) ?> Submit All
             </button>
