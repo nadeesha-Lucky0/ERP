@@ -89,7 +89,7 @@ class PhvSheetPdf {
         $cols = [25, 215, 298, 343, 385, 435, 485, 525, 570];
         $tTop = 698;
         $hdrH = 16;
-        $rowH = 20;
+        $rowH = 23;
         $rows = 21;
         $tBot = $tTop - $hdrH - ($rows * $rowH);
 
@@ -141,16 +141,16 @@ class PhvSheetPdf {
 
         // ---------------- FOOTER: VERIFIERS ----------------
         $fTop = $tBot - 10;      // top of footer boxes
-        $fBot = 108;
+        $fBot = 49;
         $lx1 = 30; $lx2 = 390;
         $rect($lx1, $fBot, $lx2 - $lx1, $fTop - $fBot, 0.8);
         $txt($lx1 + 6, $fTop - 13, 'We do hereby clarify the stocks were physically counted as per the given statement', 7.5);
-        $txt($lx1 + 12, $fTop - 27, 'Verifires', 7);
+        $txt($lx1 + 12, $fTop - 26, 'Verifires', 7);
 
         // Verifiers table (header + 3 rows)
         $vx = [$lx1 + 12, $lx1 + 125, $lx1 + 238, $lx2 - 8];
-        $vTop = $fTop - 32;
-        $vHdr = 11; $vRow = 14;
+        $vTop = $fTop - 31;
+        $vHdr = 11; $vRow = 13;
         $vBot = $vTop - $vHdr - 3 * $vRow;
         $rect($vx[0], $vBot, $vx[3] - $vx[0], $vTop - $vBot, 0.8);
         $line($vx[0], $vTop - $vHdr, $vx[3], $vTop - $vHdr, 0.8);
@@ -179,7 +179,7 @@ class PhvSheetPdf {
         $txtC(480, $fTop - 27, '==============', 7);
 
         $aTop = $fTop - 34;
-        $nBoxH = 24;
+        $nBoxH = 22;
         $aBot = $fBot + 2 * $nBoxH;
         $rect($rx1, $fBot, $rx2 - $rx1, $aTop - $fBot, 0.8);
         $txt($rx1 + 6, $aTop - 13, 'Agreed for Above Physical Count', 7);
@@ -206,7 +206,7 @@ class PhvSheetPdf {
         $txt($rx1 + 59, $fBot + $nBoxH - 19, '3.Fuel 4.Spare Parts 5. Goods in transit', 6);
 
         // Page footer
-        $txt(470, 88, "Page $sheetNum of $totalSheets", 8.5);
+        $txt(470, 32, "Page $sheetNum of $totalSheets", 8.5);
 
         // ---------------- WRITE OBJECTS ----------------
         $contentId = $newObj();
