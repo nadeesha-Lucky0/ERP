@@ -2313,6 +2313,7 @@ const Desk = {
 
   currentPvEditPage: 1,
   totalPvEditPages: 1,
+  submittedPvEditPages: [],
 
   loadPvEdit(page = 1) {
     const tbody = document.getElementById('pvEditTableBody');
@@ -2328,17 +2329,21 @@ const Desk = {
           const notice = document.getElementById('pvEditEmptyNotice');
           const wrapper = document.getElementById('pvEditContentWrapper');
           const isAllSubmitted = !!data.is_submitted;
-          const submittedPages = Array.isArray(data.submitted_pages) ? data.submitted_pages.map(Number) : [];
-          const hasAnySubmitted = isAllSubmitted || submittedPages.length > 0;
+          const totalSheets = data.total_sheets || 1;
+          const rawSubmitted = Array.isArray(data.submitted_pages) ? data.submitted_pages.map(Number) : [];
+          const submittedPages = isAllSubmitted
+            ? Array.from({ length: totalSheets }, (_, i) => i + 1)
+            : rawSubmitted.filter(p => p >= 1 && p <= totalSheets).sort((a, b) => a - b);
+          Desk.submittedPvEditPages = submittedPages;
 
-          if (!hasAnySubmitted) {
+          if (submittedPages.length === 0) {
             if (notice) notice.style.display = 'block';
             if (wrapper) wrapper.style.display = 'none';
             tbody.innerHTML = '';
             return;
           }
 
-          if (!isAllSubmitted && !submittedPages.includes(Desk.currentPvEditPage)) {
+          if (!submittedPages.includes(Desk.currentPvEditPage)) {
             Desk.loadPvEdit(submittedPages[0]);
             return;
           }
@@ -2347,7 +2352,6 @@ const Desk = {
           if (wrapper) wrapper.style.display = 'block';
 
           const entries = data.entries || [];
-          const totalSheets = data.total_sheets || 1;
           const totalItems = data.total_items || 0;
           const meta = data.meta || {};
           Desk.totalPvEditPages = totalSheets;
@@ -2358,19 +2362,17 @@ const Desk = {
           setTxt('pvEditWarehouse', selectedWh);
           setTxt('pvEditCostCenter', meta.department_id || meta.station_code || '-');
           setTxt('pvEditSheetNo', meta.sheet_no || '-');
-          setTxt('pvEditPageBadge', `Sheet ${Desk.currentPvEditPage} of ${totalSheets}`);
+          const subIdx = submittedPages.indexOf(Desk.currentPvEditPage) + 1;
+          setTxt('pvEditPageBadge', `Sheet ${Desk.currentPvEditPage} (${subIdx} of ${submittedPages.length} Submitted)`);
           setTxt('pvEditPageBot', `Page ${Desk.currentPvEditPage} of ${totalSheets}`);
 
           const pageSelect = document.getElementById('pvEditPageSelect');
           if (pageSelect) {
-            let opts = '';
-            for (let i = 1; i <= totalSheets; i++) {
-              if (!isAllSubmitted && !submittedPages.includes(i)) continue;
+            pageSelect.innerHTML = submittedPages.map(i => {
               const start = (i - 1) * 21 + 1;
               const end = Math.min(totalItems, i * 21);
-              opts += `<option value="${i}" ${i === Desk.currentPvEditPage ? 'selected' : ''}>✓ Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
-            }
-            pageSelect.innerHTML = opts;
+              return `<option value="${i}" ${i === Desk.currentPvEditPage ? 'selected' : ''}>✓ Sheet ${i} (Items ${start} - ${end})</option>`;
+            }).join('');
           }
 
           tbody.innerHTML = Desk.buildAv1aRowsHtml(entries);
@@ -2380,11 +2382,15 @@ const Desk = {
   },
 
   prevPvEditPage() {
-    if (this.currentPvEditPage > 1) this.loadPvEdit(this.currentPvEditPage - 1);
+    const idx = this.submittedPvEditPages.indexOf(this.currentPvEditPage);
+    if (idx > 0) this.loadPvEdit(this.submittedPvEditPages[idx - 1]);
   },
 
   nextPvEditPage() {
-    if (this.currentPvEditPage < this.totalPvEditPages) this.loadPvEdit(this.currentPvEditPage + 1);
+    const idx = this.submittedPvEditPages.indexOf(this.currentPvEditPage);
+    if (idx >= 0 && idx < this.submittedPvEditPages.length - 1) {
+      this.loadPvEdit(this.submittedPvEditPages[idx + 1]);
+    }
   },
 
   filterPvEdit(filter, btnEl) {
