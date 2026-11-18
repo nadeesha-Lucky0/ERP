@@ -672,7 +672,7 @@ try {
             $deliveryDate = !empty($_POST['delivery_date']) ? date('Y-m-d', strtotime($_POST['delivery_date'])) : date('Y-m-d');
             $accDate = !empty($_POST['acc_date']) ? date('Y-m-d', strtotime($_POST['acc_date'])) : date('Y-m-d');
             $dueDate = !empty($_POST['due_date']) ? date('Y-m-d', strtotime($_POST['due_date'])) : null;
-            $baseOn = trim($_POST['base_on'] ?? 'PO');
+            $baseOn = trim($_POST['base_on'] ?? '');
             $nbt = (float)($_POST['nbt'] ?? 0);
             $nbtExcluded = !empty($_POST['nbt_excluded']) ? 1 : 0;
             $vat = (float)($_POST['vat'] ?? 0);

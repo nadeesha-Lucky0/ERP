@@ -1144,8 +1144,12 @@ const Desk = {
       // 3. Select Warehouse & Base On
       const targetWh = doc.warehouse || '';
       setSelectSafe(context === 'grn' ? 'grnDefTargetWh' : 'issueDefSourceWh', targetWh);
-      if (context === 'grn' && doc.base_on) {
-        setSelectSafe('grnBaseOnSelect', doc.base_on);
+      if (context === 'grn') {
+        const baseOnEl = document.getElementById('grnBaseOnSelect');
+        if (baseOnEl) {
+          const bVal = (doc.base_on && doc.base_on !== 'PO') ? doc.base_on : '';
+          baseOnEl.value = Array.from(baseOnEl.options).some(o => o.value === bVal) ? bVal : '';
+        }
       }
 
       // 4. Dates
@@ -3980,7 +3984,7 @@ const Desk = {
     formData.append('receipt_details', receiptDetails);
     formData.append('source_dept', document.getElementById('grnSourceDept')?.value || '831.00');
     formData.append('warehouse', document.getElementById('grnWarehouse')?.value || 'WH 831.00 --VICTORIA WAREHOUSE');
-    formData.append('base_on', document.getElementById('grnBaseOn')?.value || 'PO');
+    formData.append('base_on', document.getElementById('grnBaseOnSelect')?.value || '');
     formData.append('delivery_date', document.getElementById('grnDeliveryDate')?.value || '');
     formData.append('acc_date', document.getElementById('grnAccDate')?.value || '');
     formData.append('due_date', document.getElementById('grnDueDate')?.value || '');
@@ -6601,6 +6605,7 @@ const Desk = {
       fd.append('other_cost', document.getElementById('grnValOther')?.value || 0);
       fd.append('other_excluded', document.getElementById('grnOtherExclude')?.checked ? 1 : 0);
       fd.append('single_material', document.getElementById('grnSingleMaterial')?.checked ? 1 : 0);
+      fd.append('base_on', document.getElementById('grnBaseOnSelect')?.value || '');
       fd.append('discount_for_all', document.getElementById('grnDiscountForAll')?.value || 0);
       fd.append('is_percentage', document.getElementById('grnDiscountPercentage')?.checked ? 1 : 0);
       fd.append('discount_type', document.getElementById('grnDiscountType')?.value || '');
