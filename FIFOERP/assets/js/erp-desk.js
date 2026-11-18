@@ -2327,12 +2327,22 @@ const Desk = {
           const data = res.data || {};
           const notice = document.getElementById('pvEditEmptyNotice');
           const wrapper = document.getElementById('pvEditContentWrapper');
-          if (!data.is_submitted) {
+          const isAllSubmitted = !!data.is_submitted;
+          const submittedPages = Array.isArray(data.submitted_pages) ? data.submitted_pages.map(Number) : [];
+          const hasAnySubmitted = isAllSubmitted || submittedPages.length > 0;
+
+          if (!hasAnySubmitted) {
             if (notice) notice.style.display = 'block';
             if (wrapper) wrapper.style.display = 'none';
             tbody.innerHTML = '';
             return;
           }
+
+          if (!isAllSubmitted && !submittedPages.includes(Desk.currentPvEditPage)) {
+            Desk.loadPvEdit(submittedPages[0]);
+            return;
+          }
+
           if (notice) notice.style.display = 'none';
           if (wrapper) wrapper.style.display = 'block';
 
@@ -2355,9 +2365,10 @@ const Desk = {
           if (pageSelect) {
             let opts = '';
             for (let i = 1; i <= totalSheets; i++) {
+              if (!isAllSubmitted && !submittedPages.includes(i)) continue;
               const start = (i - 1) * 21 + 1;
               const end = Math.min(totalItems, i * 21);
-              opts += `<option value="${i}" ${i === Desk.currentPvEditPage ? 'selected' : ''}>Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
+              opts += `<option value="${i}" ${i === Desk.currentPvEditPage ? 'selected' : ''}>✓ Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
             }
             pageSelect.innerHTML = opts;
           }
