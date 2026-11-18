@@ -1954,41 +1954,63 @@ const Desk = {
             pageSelect.innerHTML = opts;
           }
 
-          // Populate 21 rows in table
+          // Update official sheet header meta
+          const meta = data.meta || {};
+          const selectedWh = document.getElementById('sheetWarehouse')?.value || 'Central Main Store';
+          const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+          const pageLabel = `Page ${Desk.currentSheetPage} of ${totalSheets}`;
+          setTxt('pvSheetReportId', meta.report_id || 'INPHVRPT01');
+          setTxt('pvSheetGenBy', (meta.generated_by || 'SYSTEM').toUpperCase());
+          setTxt('pvSheetPageTop', pageLabel);
+          setTxt('pvSheetPageBot', pageLabel);
+          setTxt('pvSheetDocProfile', `PHYSICAL VERIFICATION - ${(meta.station_name || 'POWER STATION').toUpperCase()} - ${meta.station_code || '000.00'}`);
+          setTxt('pvSheetDeptId', meta.department_id || meta.station_code || '-');
+          setTxt('pvSheetNo', meta.sheet_no || '-');
+          setTxt('pvSheetWarehouse', selectedWh);
+
+          // Populate 21 rows in official table
           let html = '';
           const entries = data.entries || [];
-          entries.forEach((e, idx) => {
-            const rowInSheet = idx + 1;
-            const globalNum = (Desk.currentSheetPage - 1) * 21 + rowInSheet;
+          entries.forEach((e) => {
+            const codeClean = String(e.sku || '').replace(/[^0-9A-Za-z]/g, '');
+            const itemName = String(e.item_name || '').toUpperCase();
+            const batchNo = e.batch_number || e.batch_no || '-';
+            const grade = String(e.grade || 'NEW').toUpperCase();
+            const uom = String(e.uom || 'NO').toUpperCase();
+            const up = parseFloat(e.unit_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
             html += `
               <tr>
-                <td style="font-weight: 700; color: #475569; width: 45px; text-align: center;">${rowInSheet}</td>
-                <td><strong>${e.bin_location || '-'}</strong></td>
-                <td><code style="font-weight: 700; color: #0284c7;">${e.sku}</code></td>
-                <td><strong>${e.item_name}</strong></td>
-                <td>NOS</td>
-                <td><span style="font-weight: 700; color: #0f172a;">${e.book_quantity}</span></td>
-                <td style="border: 1px dashed #cbd5e1; width: 140px; background: #f8fafc; text-align: center; color: #94a3b8; font-weight: 600;">[ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</td>
-                <td style="border: 1px dashed #cbd5e1; width: 110px; background: #f8fafc; text-align: center; color: #94a3b8;">_______</td>
-                <td style="color: #64748b; font-size: 11px;">#${globalNum}</td>
+                <td style="padding: 6px 8px; border-right: 2px solid #000; vertical-align: top;">
+                  <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <span style="font-family: monospace; min-width: 72px;">${Desk.escapeHtml(codeClean)}</span>
+                    <span>- &nbsp;${Desk.escapeHtml(itemName)}</span>
+                  </div>
+                </td>
+                <td style="padding: 6px 8px; border-right: 1px solid #000; vertical-align: top; white-space: nowrap;">${Desk.escapeHtml(batchNo)}</td>
+                <td style="padding: 6px 6px; border-right: 1px solid #000; vertical-align: top;">${Desk.escapeHtml(grade)}</td>
+                <td style="padding: 6px 6px; border-right: 1px solid #000; vertical-align: top;">${Desk.escapeHtml(uom)}</td>
+                <td style="padding: 6px 8px; border-right: 1px solid #000; vertical-align: top; text-align: right;">${up}</td>
+                <td style="padding: 6px 6px; border-right: 1px solid #000;"></td>
+                <td style="padding: 6px 6px; border-right: 1px solid #000;"></td>
+                <td style="padding: 6px 6px;"></td>
               </tr>
             `;
           });
 
-          // Pad empty rows up to 21 rows to guarantee statutory format
+          // Pad empty rows up to 21 rows to match official 21-row sheet
           if (entries.length < 21) {
             for (let pad = entries.length + 1; pad <= 21; pad++) {
               html += `
-                <tr style="background: #fafafa; opacity: 0.5;">
-                  <td style="font-weight: 700; color: #94a3b8; width: 45px; text-align: center;">${pad}</td>
-                  <td style="color: #cbd5e1;">-</td>
-                  <td style="color: #cbd5e1;">-</td>
-                  <td style="color: #cbd5e1; font-style: italic;">(Blank tally line)</td>
-                  <td style="color: #cbd5e1;">-</td>
-                  <td style="color: #cbd5e1;">-</td>
-                  <td style="border: 1px dashed #e2e8f0; width: 140px; background: #fff; text-align: center; color: #e2e8f0;">[ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]</td>
-                  <td style="border: 1px dashed #e2e8f0; width: 110px; background: #fff; text-align: center; color: #e2e8f0;">_______</td>
-                  <td style="color: #cbd5e1;">-</td>
+                <tr>
+                  <td style="height: 24px; border-right: 2px solid #000;">&nbsp;</td>
+                  <td style="border-right: 1px solid #000;"></td>
+                  <td style="border-right: 1px solid #000;"></td>
+                  <td style="border-right: 1px solid #000;"></td>
+                  <td style="border-right: 1px solid #000;"></td>
+                  <td style="border-right: 1px solid #000;"></td>
+                  <td style="border-right: 1px solid #000;"></td>
+                  <td></td>
                 </tr>
               `;
             }

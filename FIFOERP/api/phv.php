@@ -238,12 +238,16 @@ try {
                 $entries = $allEntries;
             }
 
+            $entries = phvEnrichItems($db, $entries);
+            $curSheet = $sheetPage > 0 ? $sheetPage : 1;
+
             Response::success('PHV entries loaded', [
                 'entries' => $entries,
                 'total_items' => $totalItems,
                 'items_per_sheet' => $perSheet,
                 'total_sheets' => $totalSheets,
-                'current_sheet' => $sheetPage > 0 ? $sheetPage : 1
+                'current_sheet' => $curSheet,
+                'meta' => phvSheetMeta($locationId, $curSheet)
             ]);
             break;
 
