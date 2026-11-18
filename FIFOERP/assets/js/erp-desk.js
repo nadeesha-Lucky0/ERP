@@ -1093,6 +1093,7 @@ const Desk = {
       }
 
       this.showToast('Loading document into form...');
+      await this.loadStockEntryLookups();
       const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_document_detail&id=${docId}`).then(r => r.json());
       if (!res.success || !res.data) {
         this.showToast(res.message || 'Failed to load document for editing', true);
@@ -1126,20 +1127,25 @@ const Desk = {
       const fromVal = doc.order_reference ? 'Purchase Order' : 'Predefined Supplier';
       this.setSelectedGetItemsFrom(context, fromVal);
 
-      // 3. Select Warehouse
-      const targetWh = doc.warehouse || '';
-      if (targetWh) {
-        const whSelect = context === 'grn' ? document.getElementById('grnDefTargetWh') : document.getElementById('issueDefSourceWh');
-        if (whSelect) {
-          whSelect.value = targetWh;
-          if (whSelect.value !== targetWh) {
-            const opt = document.createElement('option');
-            opt.value = targetWh;
-            opt.textContent = targetWh;
-            opt.selected = true;
-            whSelect.appendChild(opt);
-          }
+      // Helper to set select value safely (adds option if missing)
+      const setSelectSafe = (elId, val) => {
+        const el = document.getElementById(elId);
+        if (!el || !val) return;
+        el.value = val;
+        if (el.value !== val) {
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = val;
+          opt.selected = true;
+          el.appendChild(opt);
         }
+      };
+
+      // 3. Select Warehouse & Base On
+      const targetWh = doc.warehouse || '';
+      setSelectSafe(context === 'grn' ? 'grnDefTargetWh' : 'issueDefSourceWh', targetWh);
+      if (context === 'grn' && doc.base_on) {
+        setSelectSafe('grnBaseOnSelect', doc.base_on);
       }
 
       // 4. Dates
@@ -1148,14 +1154,21 @@ const Desk = {
       const accEl = document.getElementById(`${context}AccDate`);
       if (accEl && (doc.acc_date || doc.doc_date)) accEl.value = doc.acc_date || doc.doc_date;
 
-      // 5. Party / Supplier / Department
+      // 5. Party / Supplier / Cost Center / Section
+      const partyVal = doc.receipt_from || doc.department_code || '';
       const partyEl = document.getElementById(`${context}PartyName`);
-      if (partyEl) partyEl.value = doc.receipt_from || doc.department_code || '';
+      if (partyEl) partyEl.value = partyVal;
+      setSelectSafe(`${context}SupplierSelect`, doc.receipt_from || '');
+      setSelectSafe(`${context}CostCenterSelect`, doc.department_code || '');
+      setSelectSafe(`${context}SectionSelect`, doc.destination_code || '');
 
-      // 6. PO Reference
-      if (doc.order_reference) {
-        const poRefEl = document.getElementById(`${context}PoRefInput`) || document.getElementById(`${context}PoRef`);
-        if (poRefEl) poRefEl.value = doc.order_reference;
+      // 6. PO Reference (both top PO box and Reference Data PO box)
+      const poVal = doc.order_reference || '';
+      const poRefInputEl = document.getElementById(`${context}PoRefInput`);
+      if (poRefInputEl) poRefInputEl.value = poVal;
+      const poRefEl = document.getElementById(`${context}PoRef`);
+      if (poRefEl) poRefEl.value = poVal;
+      if (poVal) {
         const poSec = document.getElementById(`${context}PurchaseSection`);
         if (poSec) poSec.style.display = 'block';
       }
@@ -1202,7 +1215,10 @@ const Desk = {
         setChk('grnTransportExclude', doc.transport_excluded);
         setVal('grnValOther', doc.other_cost);
         setChk('grnOtherExclude', doc.other_excluded);
-        setChk('grnSingleMaterial', doc.single_material);
+        setChk('grnSingleMaterial', doc.is_single_material ?? doc.single_material);
+        setVal('grnDiscountForAll', doc.discount_for_all);
+        setChk('grnDiscountPercentage', doc.is_percentage);
+        if (doc.discount_type) setSelectSafe('grnDiscountType', doc.discount_type);
       }
       if (context === 'grn' && typeof this.recalcGrnInvoiceTotal === 'function') {
         this.recalcGrnInvoiceTotal();
