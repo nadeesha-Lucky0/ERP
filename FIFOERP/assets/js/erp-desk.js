@@ -2087,9 +2087,9 @@ const Desk = {
           setTxt('pvEntryPageBadge', `Sheet ${Desk.currentPvEntryPage} of ${totalSheets}`);
           setTxt('pvEntryPageBot', `Page ${Desk.currentPvEntryPage} of ${totalSheets}`);
 
-          // Show/hide Save (with blue dot), Submit All (only on last page), and Submitted Locked badge
+          // Show/hide Save (with blue radio indicator), Submit All, and Submitted Locked badge
           const saveBtn = document.getElementById('btnSavePvEntrySheet');
-          const savedDot = document.getElementById('pvEntrySavedDot');
+          const savedRadio = document.getElementById('pvEntrySavedRadio');
           const submitBtn = document.getElementById('btnSubmitPvEntry');
           const lockBadge = document.getElementById('pvEntrySubmittedBadge');
           if (isSubmitted) {
@@ -2099,8 +2099,8 @@ const Desk = {
           } else {
             if (lockBadge) lockBadge.style.display = 'none';
             if (saveBtn) saveBtn.style.display = 'inline-flex';
-            if (savedDot) savedDot.style.display = Desk.savedPvEntrySheets.has(Desk.currentPvEntryPage) ? 'inline-block' : 'none';
-            if (submitBtn) submitBtn.style.display = (Desk.currentPvEntryPage >= totalSheets) ? 'inline-flex' : 'none';
+            if (savedRadio) savedRadio.checked = Desk.savedPvEntrySheets.has(Desk.currentPvEntryPage);
+            if (submitBtn) submitBtn.style.display = 'inline-flex';
           }
 
           const pageSelect = document.getElementById('pvEntryPageSelect');
