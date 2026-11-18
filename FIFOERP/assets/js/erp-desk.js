@@ -844,7 +844,8 @@ const Desk = {
               ${(filter === 'Posting' || filter === 'All') && sLower === 'approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
               ${sLower === 'posted' ? `<span style="color: #059669; font-weight: 600; font-size: 11.5px;">✓ Live In FIFO</span>` : ''}
               ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Rejected')">&#10005; Reject</button>` : ''}
-              ${sLower === 'draft' || (filter !== 'Entry' && filter !== 'Validation' && sLower === 'validated') ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              ${filter === 'Unposted Cancellation' && sLower !== 'posted' ? `<button type="button" class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.deleteUnpostedDocument(${d.id}, '${Desk.escapeHtml(d.doc_no)}')">Delete</button>` : ''}
+              ${sLower === 'draft' || (filter !== 'Entry' && filter !== 'Validation' && filter !== 'Unposted Cancellation' && sLower === 'validated') ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
               <button type="button" class="desk-acc-btn" id="accBtn_grn_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'grn')" title="Click down arrow to show/hide full items breakdown">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -1034,7 +1035,8 @@ const Desk = {
               ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
               ${(filter === 'Posting' || filter === 'All') && sLower === 'approved' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #16a34a; font-weight: 600;" onclick="Desk.postDocument(${d.id})">🚀 Post to FIFO</button>` : ''}
               ${sLower === 'posted' ? `<button class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.cancelPosted('${d.doc_no}')">Cancel Posted</button>` : ''}
-              ${sLower === 'draft' || (filter !== 'Entry' && canEdit) ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              ${filter === 'Unposted Cancellation' && sLower !== 'posted' ? `<button type="button" class="desk-btn desk-btn-danger desk-btn-sm" onclick="Desk.deleteUnpostedDocument(${d.id}, '${Desk.escapeHtml(d.doc_no)}')">Delete</button>` : ''}
+              ${sLower === 'draft' || (filter !== 'Entry' && filter !== 'Unposted Cancellation' && canEdit) ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
               <button type="button" class="desk-acc-btn" id="accBtn_issue_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'issue')" title="Click down arrow to show/hide full items breakdown">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -1706,6 +1708,25 @@ const Desk = {
   loadDocuments() {
     this.loadReceipts();
     this.loadIssues();
+  },
+
+  deleteUnpostedDocument(docId, docNo) {
+    if (!confirm(`Are you sure you want to permanently delete unposted document ${docNo}?`)) return;
+    const fd = new FormData();
+    fd.append('action', 'delete_document');
+    fd.append('id', docId);
+    fetch(`${this.baseUrl}/api/inventory.php`, { method: 'POST', body: fd })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success) {
+          Desk.showToast(res.message);
+          this.docDetailCache = {};
+          Desk.loadReceipts();
+          Desk.loadIssues();
+        } else {
+          Desk.showToast(res.message, true);
+        }
+      });
   },
 
   updateDocStatus(docId, newStatus) {

@@ -780,6 +780,29 @@ try {
             break;
 
         // -------------------------------------------------------------
+        // Delete Unposted Document (Draft / Pending / Cancelled)
+        // -------------------------------------------------------------
+        case 'delete_document':
+            $docId = (int)($_POST['id'] ?? 0);
+            if ($docId <= 0) Response::error('Invalid document ID');
+
+            $chk = $db->prepare("SELECT doc_no, status FROM unposted_documents WHERE id = :id AND location_id = :loc LIMIT 1");
+            $chk->execute([':id' => $docId, ':loc' => $locationId]);
+            $docRow = $chk->fetch();
+            if (!$docRow) Response::error('Document not found');
+            if (strtolower((string)$docRow['status']) === 'posted') {
+                Response::error('Posted documents cannot be deleted. Use Posted Cancellation instead.');
+            }
+
+            $db->beginTransaction();
+            $db->prepare("DELETE FROM unposted_document_items WHERE document_id = :id")->execute([':id' => $docId]);
+            $db->prepare("DELETE FROM unposted_documents WHERE id = :id AND location_id = :loc")->execute([':id' => $docId, ':loc' => $locationId]);
+            $db->commit();
+
+            Response::success("Document {$docRow['doc_no']} deleted successfully");
+            break;
+
+        // -------------------------------------------------------------
         // Document Status Transition (Validate, Approve, Cancel)
         // -------------------------------------------------------------
         case 'update_status':
