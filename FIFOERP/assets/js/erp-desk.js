@@ -2054,55 +2054,160 @@ const Desk = {
     window.open(`${this.baseUrl}/api/phv.php?action=download_sheet_pdf&session_id=1&sheet_num=${cur}&station=${station}&cost_center=${costCenter}&warehouse=${warehouse}&per_page=${perPage}`, '_blank');
   },
 
-  loadPvEntry() {
+  currentPvEntryPage: 1,
+  totalPvEntryPages: 1,
+
+  loadPvEntry(page = 1) {
     const tbody = document.getElementById('pvEntryTableBody');
     if (!tbody) return;
 
-    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1`)
+    this.currentPvEntryPage = parseInt(page, 10) || 1;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1&sheet=${this.currentPvEntryPage}`)
       .then(res => res.json())
       .then(res => {
         if (res.success) {
+          const data = res.data || {};
+          const entries = data.entries || [];
+          const totalSheets = data.total_sheets || 1;
+          const totalItems = data.total_items || 0;
+          const meta = data.meta || {};
+          Desk.totalPvEntryPages = totalSheets;
+          Desk.currentPvEntryPage = data.current_sheet || 1;
+
+          // Update header meta & pagination
+          const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+          const selectedWh = document.getElementById('sheetWarehouse')?.value || 'Central Main Store';
+          setTxt('pvEntryWarehouse', selectedWh);
+          setTxt('pvEntryCostCenter', meta.department_id || meta.station_code || '-');
+          setTxt('pvEntrySheetNo', meta.sheet_no || '-');
+          setTxt('pvEntryPageBadge', `Sheet ${Desk.currentPvEntryPage} of ${totalSheets}`);
+          setTxt('pvEntryPageBot', `Page ${Desk.currentPvEntryPage} of ${totalSheets}`);
+
+          const pageSelect = document.getElementById('pvEntryPageSelect');
+          if (pageSelect) {
+            let opts = '';
+            for (let i = 1; i <= totalSheets; i++) {
+              const start = (i - 1) * 21 + 1;
+              const end = Math.min(totalItems, i * 21);
+              opts += `<option value="${i}" ${i === Desk.currentPvEntryPage ? 'selected' : ''}>Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
+            }
+            pageSelect.innerHTML = opts;
+          }
+
+          const fmt = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
           let html = '';
-          res.data.entries.forEach(e => {
-            const variance = e.physical_quantity - e.book_quantity;
-            const varVal = variance * parseFloat(e.unit_cost);
+          entries.forEach((e, idx) => {
+            const sno = idx + 1;
+            const codeClean = String(e.sku || '').replace(/[^0-9A-Za-z]/g, '');
+            const itemName = String(e.item_name || '').toUpperCase();
+            const batchNo = e.batch_number || e.batch_no || '-';
+            const grade = String(e.grade || 'NEW').toUpperCase();
+            const uom = String(e.uom || 'NO').toUpperCase();
+            const price = parseFloat(e.unit_cost || 0);
+            const bookQty = parseFloat(e.book_quantity || 0);
+            const physQty = parseFloat(e.physical_quantity || 0);
+            const surplusQty = Math.max(0, physQty - bookQty);
+            const shortageQty = Math.max(0, bookQty - physQty);
+            const bookVal = bookQty * price;
+            const physVal = physQty * price;
+            const surplusVal = surplusQty * price;
+            const shortageVal = shortageQty * price;
+
             html += `
-              <tr data-entry-id="${e.id}" data-book-qty="${e.book_quantity}" data-cost="${e.unit_cost}">
-                <td><code>${e.sku}</code></td>
-                <td><strong>${e.item_name}</strong></td>
-                <td>${e.bin_location}</td>
-                <td>${e.book_quantity}</td>
-                <td>
-                  <input type="number" class="desk-form-control pv-phys-input" value="${e.physical_quantity}" 
-                         style="width: 100px; padding: 4px 8px; font-weight: 700;" onchange="Desk.calcPvEntryRow(this)">
+              <tr data-entry-id="${e.id}" data-book-qty="${bookQty}" data-cost="${price}" style="border-bottom: 1px solid #000;">
+                <td style="border-right: 1px solid #000; padding: 5px 4px; text-align: center; vertical-align: top;">${sno}</td>
+                <td style="border-right: 1px solid #000; padding: 5px 6px; vertical-align: top;">
+                  <div style="font-weight: 700; font-family: monospace;">${Desk.escapeHtml(codeClean)}</div>
+                  <div>${Desk.escapeHtml(itemName)}</div>
                 </td>
-                <td class="pv-variance-cell"><strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong></td>
-                <td class="pv-variance-val-cell">Rs. ${varVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                <td>
-                  <input type="text" class="desk-form-control pv-remarks-input" value="${e.remarks || ''}" placeholder="Tally verified / Note" style="padding: 4px 8px;">
+                <td style="border-right: 1px solid #000; padding: 5px 5px; vertical-align: top; word-break: break-all;">${Desk.escapeHtml(batchNo)}</td>
+                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: center;">${Desk.escapeHtml(grade)}</td>
+                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: center;">${Desk.escapeHtml(uom)}</td>
+                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(price)}</td>
+                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookQty)}</td>
+                <td style="border-right: 1px solid #000; padding: 3px 4px; vertical-align: top;">
+                  <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}"
+                         style="width: 62px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px;"
+                         oninput="Desk.calcPvEntryRow(this)">
+                </td>
+                <td class="pv-surplus-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty)}</td>
+                <td class="pv-shortage-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageQty)}</td>
+                <td class="pv-book-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookVal)}</td>
+                <td class="pv-phys-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(physVal)}</td>
+                <td class="pv-surplus-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusVal)}</td>
+                <td class="pv-shortage-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageVal)}</td>
+                <td style="padding: 3px 4px; vertical-align: top;">
+                  <input type="text" class="desk-form-control pv-remarks-input" value="${Desk.escapeHtml(e.remarks || '')}"
+                         placeholder="Remarks" style="padding: 3px 5px; font-size: 10.5px; height: 24px;">
                 </td>
               </tr>
             `;
           });
           tbody.innerHTML = html;
+          Desk.recalcPvEntryTotals();
         }
       });
   },
 
+  prevPvEntryPage() {
+    if (this.currentPvEntryPage > 1) this.loadPvEntry(this.currentPvEntryPage - 1);
+  },
+
+  nextPvEntryPage() {
+    if (this.currentPvEntryPage < this.totalPvEntryPages) this.loadPvEntry(this.currentPvEntryPage + 1);
+  },
+
+  recalcPvEntryTotals() {
+    let totBook = 0, totPhys = 0, totSur = 0, totShort = 0;
+    document.querySelectorAll('#pvEntryTableBody tr').forEach(r => {
+      const bookQty = parseFloat(r.dataset.bookQty || 0);
+      const price = parseFloat(r.dataset.cost || 0);
+      const physInput = r.querySelector('.pv-phys-input');
+      const physQty = parseFloat(physInput ? physInput.value : 0) || 0;
+      const sur = Math.max(0, physQty - bookQty);
+      const shrt = Math.max(0, bookQty - physQty);
+      totBook += bookQty * price;
+      totPhys += physQty * price;
+      totSur += sur * price;
+      totShort += shrt * price;
+    });
+    const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    setTxt('pvTotalBookVal', fmt(totBook));
+    setTxt('pvTotalPhysVal', fmt(totPhys));
+    setTxt('pvTotalSurplusVal', fmt(totSur));
+    setTxt('pvTotalShortageVal', fmt(totShort));
+  },
+
   calcPvEntryRow(inputEl) {
     const row = inputEl.closest('tr');
-    const bookQty = parseFloat(row.dataset.bookQty);
-    const unitCost = parseFloat(row.dataset.cost);
-    const physQty = parseFloat(inputEl.value || 0);
+    const bookQty = parseFloat(row.dataset.bookQty || 0);
+    const unitCost = parseFloat(row.dataset.cost || 0);
+    const physQty = parseFloat(inputEl.value || 0) || 0;
 
+    // 15-column AV/1/A Count Entry cells
+    const surQtyCell = row.querySelector('.pv-surplus-qty');
+    if (surQtyCell) {
+      const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const surQty = Math.max(0, physQty - bookQty);
+      const shrtQty = Math.max(0, bookQty - physQty);
+      surQtyCell.textContent = fmt(surQty);
+      row.querySelector('.pv-shortage-qty').textContent = fmt(shrtQty);
+      row.querySelector('.pv-phys-val').textContent = fmt(physQty * unitCost);
+      row.querySelector('.pv-surplus-val').textContent = fmt(surQty * unitCost);
+      row.querySelector('.pv-shortage-val').textContent = fmt(shrtQty * unitCost);
+      Desk.recalcPvEntryTotals();
+      return;
+    }
+
+    // Legacy Edit table cells
     const variance = physQty - bookQty;
     const varVal = variance * unitCost;
-
     const varCell = row.querySelector('.pv-variance-cell');
     const valCell = row.querySelector('.pv-variance-val-cell');
-
-    varCell.innerHTML = `<strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong>`;
-    valCell.textContent = 'Rs. ' + varVal.toLocaleString('en-US', {minimumFractionDigits: 2});
+    if (varCell) varCell.innerHTML = `<strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong>`;
+    if (valCell) valCell.textContent = 'Rs. ' + varVal.toLocaleString('en-US', {minimumFractionDigits: 2});
   },
 
   saveVerificationCounts() {
@@ -2133,7 +2238,7 @@ const Desk = {
       .then(res => {
         if (res.success) {
           Desk.showToast(res.message);
-          Desk.loadPvEntry();
+          Desk.loadPvEntry(Desk.currentPvEntryPage || 1);
           Desk.loadPvEdit();
           Desk.loadAV7Report();
         } else {
