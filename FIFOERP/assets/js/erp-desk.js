@@ -808,6 +808,9 @@ const Desk = {
       } else if (sLower === 'cancelled') {
         statusLabel = 'Cancelled';
         badgeStyle = 'background: #fee2e2; color: #991b1b; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
+      } else if (sLower === 'rejected') {
+        statusLabel = 'Rejected';
+        badgeStyle = 'background: #fee2e2; color: #991b1b; font-weight: 600; padding: 4px 10px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px;';
       }
 
       html += `
@@ -829,7 +832,8 @@ const Desk = {
               ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" style="background: #4f46e5; color: #fff; font-weight: 600;" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
               ${(filter === 'Posting' || filter === 'All') && sLower === 'approved' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background:#0f766e; color: #fff; font-weight: 600;" onclick="Desk.postDocument(${d.id})" title="Commit stock into active FIFO inventory">🚀 Post to FIFO</button>` : ''}
               ${sLower === 'posted' ? `<span style="color: #059669; font-weight: 600; font-size: 11.5px;">✓ Live In FIFO</span>` : ''}
-              ${sLower === 'draft' || (filter !== 'Entry' && (sLower === 'pending validation' || sLower === 'validated')) ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
+              ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Rejected')">&#10005; Reject</button>` : ''}
+              ${sLower === 'draft' || (filter !== 'Entry' && filter !== 'Validation' && sLower === 'validated') ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${d.id}, 'Cancelled')">Cancel</button>` : ''}
               <button type="button" class="desk-acc-btn" id="accBtn_grn_${d.id}" onclick="event.stopPropagation(); Desk.toggleDocAccordion(${d.id}, 'grn')" title="Click down arrow to show/hide full items breakdown">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
@@ -1481,6 +1485,7 @@ const Desk = {
     else if (sLower === 'approved') statusBadge = `<span class="desk-badge badge-success" style="background: #d1fae5; color: #065f46; font-weight: 600;">Ready to Post</span>`;
     else if (sLower === 'posted') statusBadge = `<span class="desk-badge badge-posted" style="background: #ecfdf5; color: #047857; font-weight: 600;">Posted to FIFO</span>`;
     else if (sLower === 'cancelled') statusBadge = `<span class="desk-badge badge-cancelled" style="background: #fee2e2; color: #991b1b; font-weight: 600;">Cancelled</span>`;
+    else if (sLower === 'rejected') statusBadge = `<span class="desk-badge badge-cancelled" style="background: #fee2e2; color: #991b1b; font-weight: 600;">Rejected</span>`;
 
     let actionsHtml = '';
     if (sLower === 'draft') {
@@ -1490,7 +1495,11 @@ const Desk = {
       const isEntry = (context === 'grn' && this.currentReceiptFilter === 'Entry') || (context === 'issue' && this.currentIssueFilter === 'Entry');
       if (!isEntry) {
         actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
-        actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
+        if (context === 'grn') {
+          actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Rejected')">&#10005; Reject Document</button>`;
+        } else {
+          actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
+        }
       }
     } else if (sLower === 'validated') {
       const isEntry = (context === 'grn' && this.currentReceiptFilter === 'Entry') || (context === 'issue' && this.currentIssueFilter === 'Entry');
