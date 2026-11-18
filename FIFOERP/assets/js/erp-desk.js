@@ -1101,7 +1101,6 @@ const Desk = {
 
       const doc = res.data.document || {};
       const items = res.data.items || [];
-      const state = this.stockEntryState[context];
 
       state.editingDocId = doc.id;
       state.isEditing = true;
