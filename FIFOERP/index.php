@@ -2067,12 +2067,7 @@ require_once __DIR__ . '/views/layouts/header.php';
         <div id="pvEditContentWrapper" style="display: none;">
           <div class="desk-card"
           style="margin-bottom: 16px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-          <div class="filter-pills-bar" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-            <button class="filter-pill active" onclick="Desk.filterPvEdit('all', this)">All Items</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('discrepancy', this)">Discrepancies Only (Variance &ne; 0)</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('surplus', this)">Surplus Items (+)</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('deficit', this)">Deficit Items (-)</button>
-          </div>
+          <div style="font-weight: 700; font-size: 14px;">Verification Edit (AV/1/A)</div>
           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <select id="pvEditPageSelect" class="desk-form-control"
               style="width: auto; height: 32px; font-size: 12px; font-weight: 600; padding: 2px 8px;"
