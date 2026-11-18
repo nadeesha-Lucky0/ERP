@@ -1545,8 +1545,8 @@ const Desk = {
       actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.editDraft(${doc.id}, '${context}')">Edit</button>`;
       actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626;" onclick="Desk.updateDocStatus(${doc.id}, 'Cancelled')">Cancel Document</button>`;
     } else if (sLower === 'pending validation') {
-      const isEntry = (context === 'grn' && this.currentReceiptFilter === 'Entry') || (context === 'issue' && this.currentIssueFilter === 'Entry');
-      if (!isEntry) {
+      const curFilter = context === 'grn' ? this.currentReceiptFilter : this.currentIssueFilter;
+      if (curFilter === 'Validation' || curFilter === 'All') {
         actionsHtml += `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; color: #fff; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Validated')">✓ Validate Document</button>`;
         if (context === 'grn') {
           actionsHtml += `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #dc2626; font-weight: 600;" onclick="Desk.updateDocStatus(${doc.id}, 'Rejected')">&#10005; Reject Document</button>`;
