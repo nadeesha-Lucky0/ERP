@@ -16,6 +16,25 @@ if (in_array($action, ['download_sheets_zip', 'download_sheet_pdf'])) {
     header_remove('Content-Type');
 }
 
+/**
+ * Build PHV sheet file name: PHV_SHEET_<StationCode>.00_PHV_<YY>_<NNNN>.pdf
+ * e.g. PHV_SHEET_838.00_PHV_26_0001.pdf
+ */
+function phvSheetFileName(int $locationId, int $sheetNum): string {
+    static $stationCode = null;
+    if ($stationCode === null) {
+        $stationCode = '000';
+        try {
+            $st = Database::getConnection()->prepare("SELECT code FROM locations WHERE id = :id LIMIT 1");
+            $st->execute([':id' => $locationId]);
+            $c = trim((string)($st->fetchColumn() ?: ''));
+            if ($c !== '') $stationCode = $c;
+        } catch (\Throwable $e) {}
+    }
+    $codePart = str_contains($stationCode, '.') ? $stationCode : $stationCode . '.00';
+    return sprintf('PHV_SHEET_%s_PHV_%s_%04d.pdf', $codePart, date('y'), $sheetNum);
+}
+
 try {
     $db = Database::getStationConnection($locationId);
 
@@ -518,7 +537,7 @@ try {
                     $warehouse, 
                     date('Y-m-d')
                 );
-                $fileName = sprintf('Count_Sheet_%02d_of_%02d.pdf', $sheetNum, $totalSheets);
+                $fileName = phvSheetFileName($locationId, $sheetNum);
                 $zip->addFromString($fileName, $pdfData);
             }
 
@@ -631,7 +650,7 @@ try {
             }
 
             header('Content-Type: application/pdf');
-            header('Content-Disposition: inline; filename="Count_Sheet_' . sprintf('%02d', $sheetNum) . '_of_' . sprintf('%02d', $totalSheets) . '.pdf"');
+            header('Content-Disposition: inline; filename="' . phvSheetFileName($locationId, $sheetNum) . '"');
             header('Content-Length: ' . strlen($pdfData));
             echo $pdfData;
             exit;
