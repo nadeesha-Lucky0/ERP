@@ -2158,9 +2158,10 @@ const Desk = {
     if (this.currentPvEntryPage < this.totalPvEntryPages) this.loadPvEntry(this.currentPvEntryPage + 1);
   },
 
-  recalcPvEntryTotals() {
+  recalcPvEntryTotals(tbodyId = 'pvEntryTableBody', prefix = 'pvTotal') {
     let totBook = 0, totPhys = 0, totSur = 0, totShort = 0;
-    document.querySelectorAll('#pvEntryTableBody tr').forEach(r => {
+    document.querySelectorAll(`#${tbodyId} tr`).forEach(r => {
+      if (r.style.display === 'none') return;
       const bookQty = parseFloat(r.dataset.bookQty || 0);
       const price = parseFloat(r.dataset.cost || 0);
       const physInput = r.querySelector('.pv-phys-input');
@@ -2174,19 +2175,71 @@ const Desk = {
     });
     const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    setTxt('pvTotalBookVal', fmt(totBook));
-    setTxt('pvTotalPhysVal', fmt(totPhys));
-    setTxt('pvTotalSurplusVal', fmt(totSur));
-    setTxt('pvTotalShortageVal', fmt(totShort));
+    setTxt(`${prefix}BookVal`, fmt(totBook));
+    setTxt(`${prefix}PhysVal`, fmt(totPhys));
+    setTxt(`${prefix}SurplusVal`, fmt(totSur));
+    setTxt(`${prefix}ShortageVal`, fmt(totShort));
+  },
+
+  buildAv1aRowsHtml(entries) {
+    const fmt = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return entries.map((e, idx) => {
+      const sno = idx + 1;
+      const codeClean = String(e.sku || '').replace(/[^0-9A-Za-z]/g, '');
+      const itemName = String(e.item_name || '').toUpperCase();
+      const batchNo = e.batch_number || e.batch_no || '-';
+      const grade = String(e.grade || 'NEW').toUpperCase();
+      const uom = String(e.uom || 'NO').toUpperCase();
+      const price = parseFloat(e.unit_cost || 0);
+      const bookQty = parseFloat(e.book_quantity || 0);
+      const physQty = parseFloat(e.physical_quantity || 0);
+      const surplusQty = Math.max(0, physQty - bookQty);
+      const shortageQty = Math.max(0, bookQty - physQty);
+      const varType = physQty > bookQty ? 'surplus' : (physQty < bookQty ? 'deficit' : 'match');
+
+      return `
+        <tr data-entry-id="${e.id}" data-variance-type="${varType}" data-book-qty="${bookQty}" data-cost="${price}" style="border-bottom: 1px solid #000;">
+          <td style="border-right: 1px solid #000; padding: 5px 4px; text-align: center; vertical-align: top;">${sno}</td>
+          <td style="border-right: 1px solid #000; padding: 5px 6px; vertical-align: top;">
+            <div style="font-weight: 700; font-family: monospace;">${Desk.escapeHtml(codeClean)}</div>
+            <div>${Desk.escapeHtml(itemName)}</div>
+          </td>
+          <td style="border-right: 1px solid #000; padding: 5px 5px; vertical-align: top; word-break: break-all;">${Desk.escapeHtml(batchNo)}</td>
+          <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: center;">${Desk.escapeHtml(grade)}</td>
+          <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: center;">${Desk.escapeHtml(uom)}</td>
+          <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(price)}</td>
+          <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookQty)}</td>
+          <td style="border-right: 1px solid #000; padding: 3px 4px; vertical-align: top;">
+            <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}"
+                   style="width: 62px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px;"
+                   oninput="Desk.calcPvEntryRow(this)">
+          </td>
+          <td class="pv-surplus-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty)}</td>
+          <td class="pv-shortage-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageQty)}</td>
+          <td class="pv-book-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookQty * price)}</td>
+          <td class="pv-phys-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(physQty * price)}</td>
+          <td class="pv-surplus-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty * price)}</td>
+          <td class="pv-shortage-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageQty * price)}</td>
+          <td style="padding: 3px 4px; vertical-align: top;">
+            <input type="text" class="desk-form-control pv-remarks-input" value="${Desk.escapeHtml(e.remarks || '')}"
+                   placeholder="Remarks" style="padding: 3px 5px; font-size: 10.5px; height: 24px;">
+          </td>
+        </tr>
+      `;
+    }).join('');
   },
 
   calcPvEntryRow(inputEl) {
     const row = inputEl.closest('tr');
+    const tbody = row.closest('tbody');
+    const tbodyId = tbody ? tbody.id : 'pvEntryTableBody';
+    const prefix = tbodyId === 'pvEditTableBody' ? 'pvEditTotal' : 'pvTotal';
+
     const bookQty = parseFloat(row.dataset.bookQty || 0);
     const unitCost = parseFloat(row.dataset.cost || 0);
     const physQty = parseFloat(inputEl.value || 0) || 0;
+    row.dataset.varianceType = physQty > bookQty ? 'surplus' : (physQty < bookQty ? 'deficit' : 'match');
 
-    // 15-column AV/1/A Count Entry cells
     const surQtyCell = row.querySelector('.pv-surplus-qty');
     if (surQtyCell) {
       const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2197,98 +2250,124 @@ const Desk = {
       row.querySelector('.pv-phys-val').textContent = fmt(physQty * unitCost);
       row.querySelector('.pv-surplus-val').textContent = fmt(surQty * unitCost);
       row.querySelector('.pv-shortage-val').textContent = fmt(shrtQty * unitCost);
-      Desk.recalcPvEntryTotals();
-      return;
+      Desk.recalcPvEntryTotals(tbodyId, prefix);
     }
-
-    // Legacy Edit table cells
-    const variance = physQty - bookQty;
-    const varVal = variance * unitCost;
-    const varCell = row.querySelector('.pv-variance-cell');
-    const valCell = row.querySelector('.pv-variance-val-cell');
-    if (varCell) varCell.innerHTML = `<strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong>`;
-    if (valCell) valCell.textContent = 'Rs. ' + varVal.toLocaleString('en-US', {minimumFractionDigits: 2});
   },
 
-  saveVerificationCounts() {
-    const rows = document.querySelectorAll('#pvEntryTableBody tr, #pvEditTableBody tr');
-    if (!rows.length) return;
-
+  collectCountsFrom(selector) {
     const counts = [];
-    rows.forEach(r => {
+    document.querySelectorAll(`${selector} tr`).forEach(r => {
       const id = r.dataset.entryId;
       const physInput = r.querySelector('.pv-phys-input');
       const remInput = r.querySelector('.pv-remarks-input');
       if (id && physInput) {
         counts.push({
           id: id,
-          physical_quantity: parseInt(physInput.value || 0),
+          physical_quantity: parseInt(physInput.value || 0, 10),
           remarks: remInput ? remInput.value : ''
         });
       }
     });
+    return counts;
+  },
+
+  saveVerificationCounts(sourceSelector = '#pvEntryTableBody') {
+    const counts = this.collectCountsFrom(sourceSelector);
+    if (!counts.length) return Promise.resolve(false);
 
     const fd = new FormData();
     fd.append('action', 'save_counts');
     fd.append('session_id', '1');
     fd.append('counts', JSON.stringify(counts));
 
-    fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
+    return fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd })
       .then(res => res.json())
       .then(res => {
         if (res.success) {
           Desk.showToast(res.message);
           Desk.loadPvEntry(Desk.currentPvEntryPage || 1);
-          Desk.loadPvEdit();
+          Desk.loadPvEdit(Desk.currentPvEditPage || 1);
           Desk.loadAV7Report();
-        } else {
-          Desk.showToast(res.message, true);
+          return true;
         }
+        Desk.showToast(res.message, true);
+        return false;
       });
   },
 
-  loadPvEdit() {
+  async submitPvCountEntry() {
+    if (this.currentPvEntryPage < this.totalPvEntryPages) {
+      if (!confirm(`You are currently on Sheet ${this.currentPvEntryPage} of ${this.totalPvEntryPages}. Save this sheet and submit counts to Verification Edit?`)) {
+        return;
+      }
+    }
+    const ok = await this.saveVerificationCounts('#pvEntryTableBody');
+    if (ok) {
+      Desk.showToast('Counts submitted to Verification Edit tab');
+      const editBtn = document.querySelector('.sidebar-sub-item[data-pv-sub="pv-sub-edit"]');
+      Desk.navigatePvSub('pv-sub-edit', editBtn);
+    }
+  },
+
+  currentPvEditPage: 1,
+  totalPvEditPages: 1,
+
+  loadPvEdit(page = 1) {
     const tbody = document.getElementById('pvEditTableBody');
     if (!tbody) return;
 
-    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1`)
+    this.currentPvEditPage = parseInt(page, 10) || 1;
+
+    fetch(`${this.baseUrl}/api/phv.php?action=get_entries&session_id=1&sheet=${this.currentPvEditPage}`)
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          let html = '';
-          res.data.entries.forEach(e => {
-            const variance = e.physical_quantity - e.book_quantity;
-            const varVal = variance * parseFloat(e.unit_cost);
-            const varType = variance > 0 ? 'surplus' : (variance < 0 ? 'deficit' : 'match');
-            html += `
-              <tr data-entry-id="${e.id}" data-variance-type="${varType}" data-book-qty="${e.book_quantity}" data-cost="${e.unit_cost}">
-                <td><code>${e.sku}</code></td>
-                <td><strong>${e.item_name}</strong></td>
-                <td>${e.bin_location}</td>
-                <td>${e.book_quantity}</td>
-                <td>
-                  <input type="number" class="desk-form-control pv-phys-input" value="${e.physical_quantity}" 
-                         style="width: 100px; padding: 4px 8px; font-weight: 700;" onchange="Desk.calcPvEntryRow(this)">
-                </td>
-                <td class="pv-variance-cell"><strong style="color: ${variance === 0 ? '#64748b' : (variance > 0 ? '#16a34a' : '#dc2626')};">${variance > 0 ? '+' : ''}${variance}</strong></td>
-                <td class="pv-variance-val-cell">Rs. ${varVal.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-                <td>
-                  <input type="text" class="desk-form-control pv-remarks-input" value="${e.remarks || ''}" placeholder="Explain discrepancy" style="padding: 4px 8px;">
-                </td>
-              </tr>
-            `;
-          });
-          tbody.innerHTML = html;
+          const data = res.data || {};
+          const entries = data.entries || [];
+          const totalSheets = data.total_sheets || 1;
+          const totalItems = data.total_items || 0;
+          const meta = data.meta || {};
+          Desk.totalPvEditPages = totalSheets;
+          Desk.currentPvEditPage = data.current_sheet || 1;
+
+          const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+          const selectedWh = document.getElementById('sheetWarehouse')?.value || 'Central Main Store';
+          setTxt('pvEditWarehouse', selectedWh);
+          setTxt('pvEditCostCenter', meta.department_id || meta.station_code || '-');
+          setTxt('pvEditSheetNo', meta.sheet_no || '-');
+          setTxt('pvEditPageBadge', `Sheet ${Desk.currentPvEditPage} of ${totalSheets}`);
+          setTxt('pvEditPageBot', `Page ${Desk.currentPvEditPage} of ${totalSheets}`);
+
+          const pageSelect = document.getElementById('pvEditPageSelect');
+          if (pageSelect) {
+            let opts = '';
+            for (let i = 1; i <= totalSheets; i++) {
+              const start = (i - 1) * 21 + 1;
+              const end = Math.min(totalItems, i * 21);
+              opts += `<option value="${i}" ${i === Desk.currentPvEditPage ? 'selected' : ''}>Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
+            }
+            pageSelect.innerHTML = opts;
+          }
+
+          tbody.innerHTML = Desk.buildAv1aRowsHtml(entries);
+          Desk.recalcPvEntryTotals('pvEditTableBody', 'pvEditTotal');
         }
       });
   },
 
-  filterPvEdit(filter) {
-    document.querySelectorAll('.filter-pills-bar .filter-pill').forEach(p => p.classList.remove('active'));
-    event.target.classList.add('active');
+  prevPvEditPage() {
+    if (this.currentPvEditPage > 1) this.loadPvEdit(this.currentPvEditPage - 1);
+  },
 
-    const rows = document.querySelectorAll('#pvEditTableBody tr');
-    rows.forEach(r => {
+  nextPvEditPage() {
+    if (this.currentPvEditPage < this.totalPvEditPages) this.loadPvEdit(this.currentPvEditPage + 1);
+  },
+
+  filterPvEdit(filter, btnEl) {
+    document.querySelectorAll('.filter-pills-bar .filter-pill').forEach(p => p.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    document.querySelectorAll('#pvEditTableBody tr').forEach(r => {
       const type = r.dataset.varianceType;
       if (filter === 'all') {
         r.style.display = '';
@@ -2300,6 +2379,7 @@ const Desk = {
         r.style.display = (type === 'deficit') ? '' : 'none';
       }
     });
+    Desk.recalcPvEntryTotals('pvEditTableBody', 'pvEditTotal');
   },
 
   loadPvValidation() {

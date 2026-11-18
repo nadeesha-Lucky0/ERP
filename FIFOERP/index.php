@@ -1913,9 +1913,14 @@ require_once __DIR__ . '/views/layouts/header.php';
             <span id="pvEntryPageBadge" style="font-size: 12px; font-weight: 700; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; color: #334155;">Sheet 1</span>
             <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.nextPvEntryPage()">Next &rarr;</button>
           </div>
-          <button class="desk-btn desk-btn-primary" onclick="Desk.saveVerificationCounts()">
-            <?= Icon::get('edit', 13) ?> Save Counts
-          </button>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="desk-btn desk-btn-default" onclick="Desk.saveVerificationCounts('#pvEntryTableBody')">
+              <?= Icon::get('save', 13) ?> Save Sheet
+            </button>
+            <button id="btnSubmitPvEntry" class="desk-btn desk-btn-primary" onclick="Desk.submitPvCountEntry()">
+              <?= Icon::get('check-circle', 13) ?> Submit
+            </button>
+          </div>
         </div>
 
         <!-- Official AV/1/A Sheet Container -->
@@ -2052,40 +2057,155 @@ require_once __DIR__ . '/views/layouts/header.php';
         </div>
       </div>
 
-      <!-- SUB-PANE 4: VERIFICATION EDIT -->
+      <!-- SUB-PANE 4: VERIFICATION EDIT (Same Official AV/1/A Layout - 21 items/sheet) -->
       <div id="pv-sub-edit" class="pv-sub-pane">
-        <div class="filter-pills-bar"
-          style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
-          <div style="display: flex; gap: 6px;">
-            <button class="filter-pill active" onclick="Desk.filterPvEdit('all')">All Items</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('discrepancy')">Discrepancies Only (Variance &ne;
-              0)</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('surplus')">Surplus Items (+)</button>
-            <button class="filter-pill" onclick="Desk.filterPvEdit('deficit')">Deficit Items (-)</button>
+        <div class="desk-card"
+          style="margin-bottom: 16px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div class="filter-pills-bar" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+            <button class="filter-pill active" onclick="Desk.filterPvEdit('all', this)">All Items</button>
+            <button class="filter-pill" onclick="Desk.filterPvEdit('discrepancy', this)">Discrepancies Only (Variance &ne; 0)</button>
+            <button class="filter-pill" onclick="Desk.filterPvEdit('surplus', this)">Surplus Items (+)</button>
+            <button class="filter-pill" onclick="Desk.filterPvEdit('deficit', this)">Deficit Items (-)</button>
           </div>
-          <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.saveVerificationCounts()">
-            <?= Icon::get('edit-3', 13) ?> Update All Changes
-          </button>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <select id="pvEditPageSelect" class="desk-form-control"
+              style="width: auto; height: 32px; font-size: 12px; font-weight: 600; padding: 2px 8px;"
+              onchange="Desk.loadPvEdit(this.value)">
+              <option value="1">Sheet 1</option>
+            </select>
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.prevPvEditPage()">&larr; Prev</button>
+            <span id="pvEditPageBadge" style="font-size: 12px; font-weight: 700; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; color: #334155;">Sheet 1</span>
+            <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.nextPvEditPage()">Next &rarr;</button>
+            <button class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.saveVerificationCounts('#pvEditTableBody')">
+              <?= Icon::get('edit-3', 13) ?> Update All Changes
+            </button>
+          </div>
         </div>
 
-        <div class="desk-card">
-          <div class="desk-table-wrapper">
-            <table class="desk-table">
+        <!-- Official AV/1/A Sheet Container -->
+        <div class="desk-card" style="padding: 24px 26px; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif;">
+          <div style="border: 1.5px solid #000; padding: 6px 14px; text-align: center; font-size: 13px; margin: 0 auto 14px auto; max-width: 780px;">
+            <strong>Annual Verification of Stores -</strong>
+            <span id="pvEditYear"><?= date('Y') ?></span>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span id="pvEditWarehouse">-</span>
+            &nbsp;&nbsp;&nbsp;&nbsp;<strong>/ Cost Center -</strong>
+            <span id="pvEditCostCenter">-</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 12px; gap: 16px; flex-wrap: wrap;">
+            <div style="display: grid; grid-template-columns: 110px auto; row-gap: 3px;">
+              <div>ORIGINAL</div><div>Accountant</div>
+              <div>DUPLICATE</div><div>Province / Complex</div>
+              <div>TRIPLCATE</div><div>Store Keeper/ES(CSC)</div>
+              <div>Fourth Copy</div><div>Branch Copy</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 130px 160px; row-gap: 3px;">
+              <div style="text-align: right; padding-right: 12px;">From Ref :</div><div>AV/1/A</div>
+              <div style="text-align: right; padding-right: 12px;">Sheet No :</div><div id="pvEditSheetNo">-</div>
+              <div style="text-align: right; padding-right: 12px;">Date of Verification :</div><div><input type="date" id="pvEditDate" value="<?= date('Y-m-d') ?>" style="border: none; border-bottom: 1px dotted #000; font-size: 11px; padding: 0 2px; background: transparent;"></div>
+            </div>
+          </div>
+
+          <div class="desk-table-wrapper" style="border: 1.5px solid #000; overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; color: #000;">
               <thead>
-                <tr>
-                  <th>SKU</th>
-                  <th>Item Description</th>
-                  <th>Bin</th>
-                  <th>Book Qty</th>
-                  <th style="width: 140px;">Counted Qty</th>
-                  <th>Variance</th>
-                  <th>Net Value (LKR)</th>
-                  <th>Audit Reason / Explanation</th>
+                <tr style="border-bottom: 1px solid #000; background: #fff;">
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">1</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 6px; text-align: center; font-weight: 700;">2</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">3</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">4</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">5</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">6</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">7</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">8</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">9</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">10</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">11</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">12</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">13</th>
+                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">14</th>
+                  <th style="padding: 3px 4px; text-align: center; font-weight: 700;">15</th>
+                </tr>
+                <tr style="border-bottom: 1.5px solid #000; background: #fff;">
+                  <th style="border-right: 1px solid #000; padding: 4px; text-align: center; width: 32px;">SNO</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 6px; text-align: center; min-width: 190px;">Mat Code - Description</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 5px; text-align: center; width: 105px;">Batch ID</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 3px; text-align: center; width: 40px;">GRD CD</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 3px; text-align: center; width: 38px;">UOM</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 64px;">Stock Price (Rs)</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 52px;">Stock Book Qty</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: center; width: 68px;">Physical Qty</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 50px;">Surplus Qty</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 52px;">Shortage Qty</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 68px;">Stock Book Val(Rs)</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 68px;">Physical Val(Rs)</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 62px;">Surplus Val(Rs)</th>
+                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 64px;">Shortage Val(Rs)</th>
+                  <th style="padding: 4px 6px; text-align: center; min-width: 100px;">Remarks</th>
                 </tr>
               </thead>
               <tbody id="pvEditTableBody"></tbody>
             </table>
           </div>
+
+          <div style="border: 1.5px solid #000; border-top: none; padding: 8px 14px; display: grid; grid-template-columns: 120px 1fr 1fr; gap: 12px; font-size: 11px; font-weight: 700; align-items: center;">
+            <div style="font-size: 13px;">Total Values</div>
+            <div style="display: grid; grid-template-columns: 140px 100px; row-gap: 4px;">
+              <div>Stock Book Total</div><div id="pvEditTotalBookVal" style="text-align: right;">0.00</div>
+              <div>Physical Value Total</div><div id="pvEditTotalPhysVal" style="text-align: right;">0.00</div>
+            </div>
+            <div style="display: grid; grid-template-columns: 130px 100px; row-gap: 4px;">
+              <div>Surplus Total</div><div id="pvEditTotalSurplusVal" style="text-align: right;">0.00</div>
+              <div>Shortage Total</div><div id="pvEditTotalShortageVal" style="text-align: right;">0.00</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
+            <div style="flex: 1.1; min-width: 320px; border: 1.2px solid #000; padding: 10px 12px;">
+              <div style="font-size: 11px; margin-bottom: 6px;">We do hereby certify that stocks are physically verified as per the given statement</div>
+              <div style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">Verifiers</div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+                <thead>
+                  <tr>
+                    <th style="border: 1px solid #000; padding: 3px 6px; text-align: center; width: 34%;">Name</th>
+                    <th style="border: 1px solid #000; padding: 3px 6px; text-align: center; width: 33%;">Designation</th>
+                    <th style="border: 1px solid #000; padding: 3px 6px; text-align: center; width: 33%;">Signature</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="border: 1px solid #000; height: 20px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                  <tr><td style="border: 1px solid #000; height: 20px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                  <tr><td style="border: 1px solid #000; height: 20px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="flex: 1; min-width: 320px; border: 1.2px solid #000; padding: 10px 12px; font-size: 10.5px;">
+              <div style="text-align: center; margin-bottom: 8px;">
+                <div>Agreed for the above physical verification</div>
+                <div style="margin-top: 8px;">..................................................</div>
+                <div style="font-size: 9.5px;">Signature of Stock Keeper / Electrical Superintendent</div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                  <div style="font-weight: 700; margin-bottom: 3px;">Valued By</div>
+                  <div style="border: 1px solid #000; padding: 6px 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Name</span><span>........................</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Signature</span><span>........................</span></div>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-weight: 700; margin-bottom: 3px;">Checked By</div>
+                  <div style="border: 1px solid #000; padding: 6px 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Name</span><span>........................</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Signature</span><span>........................</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: right; font-size: 11px; margin-top: 10px; padding-right: 24px;" id="pvEditPageBot">Page 1 of 1</div>
         </div>
       </div>
 
