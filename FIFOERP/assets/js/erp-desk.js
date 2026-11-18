@@ -718,8 +718,14 @@ const Desk = {
 
     const entryCard = document.getElementById('bodyGrnEntryCard');
     if (entryCard) {
-      const isEditingGrn = !!(this.stockEntryState?.grn?.isEditing);
-      entryCard.style.display = (filter === 'Entry' || (filter === 'Unposted Document Edit' && isEditingGrn)) ? 'block' : 'none';
+      const grnState = this.stockEntryState?.grn;
+      const isEditingGrn = !!(grnState?.isEditing);
+      // Keep Entry and Unposted Document Edit editing states separate
+      if (filter === 'Entry' && isEditingGrn && grnState.editingFromFilter === 'Unposted Document Edit') {
+        this.cancelStockEntryForm('grn');
+      }
+      const stillEditing = !!(this.stockEntryState?.grn?.isEditing);
+      entryCard.style.display = (filter === 'Entry' || (filter === 'Unposted Document Edit' && stillEditing)) ? 'block' : 'none';
       const secActions = document.getElementById('grnEntrySecondaryActions');
       if (secActions) {
         secActions.style.display = (filter === 'Unposted Document Edit') ? 'none' : 'flex';
@@ -1075,6 +1081,7 @@ const Desk = {
       const state = this.stockEntryState[context];
       state.editingDocId = docId;
       state.isEditing = true;
+      state.editingFromFilter = targetFilter;
 
       this.switchTab(context === 'grn' ? 'tab-receipts' : 'tab-issues');
 

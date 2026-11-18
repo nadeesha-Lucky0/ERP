@@ -1055,14 +1055,6 @@ require_once __DIR__ . '/views/layouts/header.php';
                   </svg>
                   Save Draft
                 </button>
-                <button type="button" class="frappe-table-btn" onclick="Desk.openRequestItemCodeModal('grn')"
-                  style="background: #eef2ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  Request &amp; Add Code
-                </button>
               </div>
               <div style="display: flex; gap: 10px; align-items: center;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.cancelStockEntryForm('grn')"
