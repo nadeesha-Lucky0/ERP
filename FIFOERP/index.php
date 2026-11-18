@@ -1917,10 +1917,6 @@ require_once __DIR__ . '/views/layouts/header.php';
             <span id="pvEntrySubmittedBadge" style="display: none; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">
               &#10003; Submitted
             </span>
-            <button type="button" id="btnSavePvEntrySheet" class="desk-btn desk-btn-default" onclick="Desk.toggleSavePvEntrySheet()" style="display: inline-flex; align-items: center; gap: 6px;">
-              <input type="checkbox" id="pvEntrySavedCheck" style="pointer-events: none; accent-color: #2563eb; margin: 0; width: 14px; height: 14px;">
-              <span>Save</span>
-            </button>
             <button type="button" id="btnSubmitPvPage" class="desk-btn desk-btn-primary" onclick="Desk.submitPvPage()" style="display: inline-flex; align-items: center; gap: 5px;">
               Submit
             </button>

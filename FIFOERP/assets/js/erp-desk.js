@@ -1925,7 +1925,6 @@ const Desk = {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          Desk.savedPvEntrySheets.clear();
           Desk.showToast(res.message);
           Desk.loadGeneratedSheet(1);
         } else {
@@ -2079,7 +2078,6 @@ const Desk = {
 
   currentPvEntryPage: 1,
   totalPvEntryPages: 1,
-  savedPvEntrySheets: new Set(),
 
   loadPvEntry(page = 1) {
     const tbody = document.getElementById('pvEntryTableBody');
@@ -2111,15 +2109,12 @@ const Desk = {
           setTxt('pvEntryPageBadge', `Sheet ${Desk.currentPvEntryPage} of ${totalSheets}`);
           setTxt('pvEntryPageBot', `Page ${Desk.currentPvEntryPage} of ${totalSheets}`);
 
-          // Show/hide Save (tick box), Submit (per page), Submit All (last page only), and Submitted badge
-          const saveBtn = document.getElementById('btnSavePvEntrySheet');
-          const savedChk = document.getElementById('pvEntrySavedCheck');
+          // Show/hide Submit (per page), Submit All (last page only), and Submitted badge
           const submitPageBtn = document.getElementById('btnSubmitPvPage');
           const submitAllBtn = document.getElementById('btnSubmitPvEntry');
           const lockBadge = document.getElementById('pvEntrySubmittedBadge');
 
           if (isPageSubmitted) {
-            if (saveBtn) saveBtn.style.display = 'none';
             if (submitPageBtn) submitPageBtn.style.display = 'none';
             if (lockBadge) {
               lockBadge.style.display = 'inline-block';
@@ -2127,8 +2122,6 @@ const Desk = {
             }
           } else {
             if (lockBadge) lockBadge.style.display = 'none';
-            if (saveBtn) saveBtn.style.display = 'inline-flex';
-            if (savedChk) savedChk.checked = Desk.savedPvEntrySheets.has(Desk.currentPvEntryPage);
             if (submitPageBtn) submitPageBtn.style.display = 'inline-flex';
           }
           if (submitAllBtn) {
@@ -2141,7 +2134,7 @@ const Desk = {
             for (let i = 1; i <= totalSheets; i++) {
               const start = (i - 1) * 21 + 1;
               const end = Math.min(totalItems, i * 21);
-              const mark = (isAllSubmitted || submittedPages.includes(i)) ? '✓ ' : (Desk.savedPvEntrySheets.has(i) ? '● ' : '');
+              const mark = (isAllSubmitted || submittedPages.includes(i)) ? '✓ ' : '';
               opts += `<option value="${i}" ${i === Desk.currentPvEntryPage ? 'selected' : ''}>${mark}Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
             }
             pageSelect.innerHTML = opts;
@@ -2159,23 +2152,6 @@ const Desk = {
 
   nextPvEntryPage() {
     if (this.currentPvEntryPage < this.totalPvEntryPages) this.loadPvEntry(this.currentPvEntryPage + 1);
-  },
-
-  toggleSavePvEntrySheet() {
-    const page = this.currentPvEntryPage || 1;
-    if (this.savedPvEntrySheets.has(page)) {
-      this.savedPvEntrySheets.delete(page);
-      const chk = document.getElementById('pvEntrySavedCheck');
-      if (chk) chk.checked = false;
-      const pageSelect = document.getElementById('pvEntryPageSelect');
-      if (pageSelect && pageSelect.selectedIndex >= 0) {
-        const opt = pageSelect.options[pageSelect.selectedIndex];
-        opt.textContent = opt.textContent.replace(/^●\s*/, '');
-      }
-      Desk.showToast(`Sheet ${page} unsaved`);
-    } else {
-      this.saveVerificationCounts('#pvEntryTableBody');
-    }
   },
 
   recalcPvEntryTotals(tbodyId = 'pvEntryTableBody', prefix = 'pvTotal') {
@@ -2310,9 +2286,6 @@ const Desk = {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
-          if (sourceSelector === '#pvEntryTableBody') {
-            Desk.savedPvEntrySheets.add(Desk.currentPvEntryPage || 1);
-          }
           Desk.showToast(res.message);
           Desk.loadPvEntry(Desk.currentPvEntryPage || 1);
           Desk.loadPvEdit(Desk.currentPvEditPage || 1);
