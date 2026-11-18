@@ -12,6 +12,7 @@ const Desk = {
 
   init(baseUrl) {
     this.baseUrl = baseUrl || '';
+    this.restoreSidebarState();
     this.bindEvents();
 
     // Auto-restore active tab and sub-tab from URL hash, sessionStorage, or first active sidebar button on refresh
@@ -335,6 +336,27 @@ const Desk = {
       case 'tab-admin':
         this.switchAdminSubTab(adminSubToActivate || this.currentAdminSubTab || sessionStorage.getItem('fifoerp_active_admin_sub') || 'admin-sub-locations');
         break;
+    }
+  },
+
+  toggleSidebar() {
+    const collapsed = document.body.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('erp_sidebar_collapsed', collapsed ? '1' : '0');
+    const btn = document.getElementById('deskSidebarToggleBtn');
+    if (btn) {
+      btn.innerHTML = collapsed ? '&gt;' : '&lt;';
+      btn.title = collapsed ? 'Show tab names' : 'Hide tab names';
+    }
+  },
+
+  restoreSidebarState() {
+    if (localStorage.getItem('erp_sidebar_collapsed') === '1') {
+      document.body.classList.add('sidebar-collapsed');
+      const btn = document.getElementById('deskSidebarToggleBtn');
+      if (btn) {
+        btn.innerHTML = '&gt;';
+        btn.title = 'Show tab names';
+      }
     }
   },
 

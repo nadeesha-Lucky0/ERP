@@ -18,7 +18,10 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
     return '';
 };
 ?>
-<aside class="desk-sidebar">
+<aside class="desk-sidebar" id="deskSidebar">
+  <div class="desk-sidebar-toggle-row">
+    <button type="button" id="deskSidebarToggleBtn" class="desk-sidebar-toggle" onclick="Desk.toggleSidebar()" title="Hide tab names">&lt;</button>
+  </div>
 <?php if ($isSuperAdmin): ?>
   <!-- ============================================================
        ADMINISTRATION ROLE SIDEBAR NAVIGATION
