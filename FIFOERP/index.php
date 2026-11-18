@@ -1922,7 +1922,7 @@ require_once __DIR__ . '/views/layouts/header.php';
               <span>Save</span>
             </button>
             <button type="button" id="btnSubmitPvPage" class="desk-btn desk-btn-primary" onclick="Desk.submitPvPage()" style="display: inline-flex; align-items: center; gap: 5px;">
-              <?= Icon::get('check', 13) ?> Submit
+              Submit
             </button>
             <button type="button" id="btnSubmitPvEntry" class="desk-btn desk-btn-primary" onclick="Desk.submitPvCountEntry()" style="display: none; background: #0f766e; border-color: #0f766e;">
               <?= Icon::get('check-circle', 13) ?> Submit All
