@@ -1124,27 +1124,7 @@ require_once __DIR__ . '/views/layouts/header.php';
           <div class="workspace-subtitle">Spares &amp; Consumables Issue Workflow (Entry &rarr; Edit &rarr; Validation
             &rarr; Approval &rarr; Posting)</div>
         </div>
-        <div class="header-action-btns" style="display: flex; align-items: center; gap: 10px;">
-          <select id="issueStageSelect" class="desk-form-control"
-            style="width: auto; min-width: 160px; padding: 6px 12px; font-weight: 600;"
-            onchange="Desk.filterIssues(this.value)">
-            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-entry', $userId)): ?>
-              <option value="Entry">Entry</option>
-            <?php endif; ?>
-            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-edit', $userId)): ?>
-              <option value="Edit">Edit</option>
-            <?php endif; ?>
-            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-validation', $userId)): ?>
-              <option value="Validation">Validation</option>
-            <?php endif; ?>
-            <?php if ($permModel->hasPermission($roleId, 'tab-user-issue-approval', $userId)): ?>
-              <option value="Approval">Approval</option>
-            <?php endif; ?>
-            <?php if ($permModel->hasPermission($roleId, 'tab-user-posting', $userId)): ?>
-              <option value="Posting">Posting</option>
-            <?php endif; ?>
-            <option value="All">All</option>
-          </select>
+        <div class="header-action-btns">
           <button class="desk-btn desk-btn-default" onclick="Desk.loadIssues()">
             <?= Icon::get('refresh', 13) ?> Refresh
           </button>
