@@ -1200,7 +1200,9 @@ const Desk = {
         setChk('grnOtherExclude', doc.other_excluded);
         setChk('grnSingleMaterial', doc.single_material);
       }
-      this.calculateStockEntryTotals(context);
+      if (context === 'grn' && typeof this.recalcGrnInvoiceTotal === 'function') {
+        this.recalcGrnInvoiceTotal();
+      }
 
       // Smooth scroll to form
       const formEl = document.getElementById(context === 'grn' ? 'formStockEntry_grn' : 'formStockEntry_issue');
@@ -5954,7 +5956,9 @@ const Desk = {
               row.basic_rate = parseFloat(res.data.unit_cost);
             }
             this.renderStockEntryRows(context);
-            this.calculateStockEntryTotals(context);
+            if (context === 'grn' && typeof this.recalcGrnInvoiceTotal === 'function') {
+        this.recalcGrnInvoiceTotal();
+      }
           }
         })
         .catch(() => {});
