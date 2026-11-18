@@ -836,7 +836,6 @@ const Desk = {
           <td><span class="desk-badge" style="${badgeStyle}">${statusLabel}</span></td>
           <td>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="Inspect full items and pricing breakdown">Inspect</button>
               ${filter === 'Unposted Document Edit' && d.status !== 'Posted' && d.status !== 'Cancelled' ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'grn', 'Unposted Document Edit')" title="Edit unposted consignment details in full form">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.editDraft(${d.id}, 'grn')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Edit draft details in top form">Edit</button>` : ''}
               ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" style="background: #2563eb; color: #fff; font-weight: 600;" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
@@ -1028,7 +1027,6 @@ const Desk = {
           </td>
           <td>
             <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-              <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.viewDocDetail(${d.id})" title="View line items & history">Inspect</button>
               ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue')" title="Edit draft details in top form">Edit</button>` : ''}
               ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
