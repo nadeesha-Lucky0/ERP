@@ -720,6 +720,10 @@ const Desk = {
     if (entryCard) {
       const isEditingGrn = !!(this.stockEntryState?.grn?.isEditing);
       entryCard.style.display = (filter === 'Entry' || (filter === 'Unposted Document Edit' && isEditingGrn)) ? 'block' : 'none';
+      const secActions = document.getElementById('grnEntrySecondaryActions');
+      if (secActions) {
+        secActions.style.display = (filter === 'Unposted Document Edit') ? 'none' : 'flex';
+      }
       if (filter === 'Entry') {
         this.initStockEntryForm('grn');
       }

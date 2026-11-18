@@ -1045,7 +1045,7 @@ require_once __DIR__ . '/views/layouts/header.php';
             <!-- BOTTOM APPLICATION ACTIONS (SAVE AT END OF FORM) -->
             <div
               style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <div id="grnEntrySecondaryActions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('grn', true)"
                   style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1496,7 +1496,7 @@ require_once __DIR__ . '/views/layouts/header.php';
             <!-- BOTTOM APPLICATION ACTIONS (SAVE AT END OF FORM) -->
             <div
               style="margin-top: 24px; padding: 16px 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <div id="grnEntrySecondaryActions" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="frappe-table-btn" onclick="Desk.submitStockEntryForm('issue', true)"
                   style="background: #f8fafc; color: #1e293b; border: 1px solid #cbd5e1; font-weight: 600; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
