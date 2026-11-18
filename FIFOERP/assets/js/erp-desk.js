@@ -1903,6 +1903,7 @@ const Desk = {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
+          Desk.savedPvEntrySheets.clear();
           Desk.showToast(res.message);
           Desk.loadGeneratedSheet(1);
         } else {
@@ -2056,6 +2057,7 @@ const Desk = {
 
   currentPvEntryPage: 1,
   totalPvEntryPages: 1,
+  savedPvEntrySheets: new Set(),
 
   loadPvEntry(page = 1) {
     const tbody = document.getElementById('pvEntryTableBody');
@@ -2072,6 +2074,7 @@ const Desk = {
           const totalSheets = data.total_sheets || 1;
           const totalItems = data.total_items || 0;
           const meta = data.meta || {};
+          const isSubmitted = !!data.is_submitted;
           Desk.totalPvEntryPages = totalSheets;
           Desk.currentPvEntryPage = data.current_sheet || 1;
 
@@ -2084,67 +2087,35 @@ const Desk = {
           setTxt('pvEntryPageBadge', `Sheet ${Desk.currentPvEntryPage} of ${totalSheets}`);
           setTxt('pvEntryPageBot', `Page ${Desk.currentPvEntryPage} of ${totalSheets}`);
 
+          // Show/hide Save (with blue dot), Submit All (only on last page), and Submitted Locked badge
+          const saveBtn = document.getElementById('btnSavePvEntrySheet');
+          const savedDot = document.getElementById('pvEntrySavedDot');
+          const submitBtn = document.getElementById('btnSubmitPvEntry');
+          const lockBadge = document.getElementById('pvEntrySubmittedBadge');
+          if (isSubmitted) {
+            if (saveBtn) saveBtn.style.display = 'none';
+            if (submitBtn) submitBtn.style.display = 'none';
+            if (lockBadge) lockBadge.style.display = 'inline-block';
+          } else {
+            if (lockBadge) lockBadge.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'inline-flex';
+            if (savedDot) savedDot.style.display = Desk.savedPvEntrySheets.has(Desk.currentPvEntryPage) ? 'inline-block' : 'none';
+            if (submitBtn) submitBtn.style.display = (Desk.currentPvEntryPage >= totalSheets) ? 'inline-flex' : 'none';
+          }
+
           const pageSelect = document.getElementById('pvEntryPageSelect');
           if (pageSelect) {
             let opts = '';
             for (let i = 1; i <= totalSheets; i++) {
               const start = (i - 1) * 21 + 1;
               const end = Math.min(totalItems, i * 21);
-              opts += `<option value="${i}" ${i === Desk.currentPvEntryPage ? 'selected' : ''}>Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
+              const dot = Desk.savedPvEntrySheets.has(i) ? '● ' : '';
+              opts += `<option value="${i}" ${i === Desk.currentPvEntryPage ? 'selected' : ''}>${dot}Sheet ${i} of ${totalSheets} (Items ${start} - ${end})</option>`;
             }
             pageSelect.innerHTML = opts;
           }
 
-          const fmt = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          let html = '';
-          entries.forEach((e, idx) => {
-            const sno = idx + 1;
-            const codeClean = String(e.sku || '').replace(/[^0-9A-Za-z]/g, '');
-            const itemName = String(e.item_name || '').toUpperCase();
-            const batchNo = e.batch_number || e.batch_no || '-';
-            const grade = String(e.grade || 'NEW').toUpperCase();
-            const uom = String(e.uom || 'NO').toUpperCase();
-            const price = parseFloat(e.unit_cost || 0);
-            const bookQty = parseFloat(e.book_quantity || 0);
-            const physQty = parseFloat(e.physical_quantity || 0);
-            const surplusQty = Math.max(0, physQty - bookQty);
-            const shortageQty = Math.max(0, bookQty - physQty);
-            const bookVal = bookQty * price;
-            const physVal = physQty * price;
-            const surplusVal = surplusQty * price;
-            const shortageVal = shortageQty * price;
-
-            html += `
-              <tr data-entry-id="${e.id}" data-book-qty="${bookQty}" data-cost="${price}" style="border-bottom: 1px solid #000;">
-                <td style="border-right: 1px solid #000; padding: 5px 4px; text-align: center; vertical-align: top;">${sno}</td>
-                <td style="border-right: 1px solid #000; padding: 5px 6px; vertical-align: top;">
-                  <div style="font-weight: 700; font-family: monospace;">${Desk.escapeHtml(codeClean)}</div>
-                  <div>${Desk.escapeHtml(itemName)}</div>
-                </td>
-                <td style="border-right: 1px solid #000; padding: 5px 5px; vertical-align: top; word-break: break-all;">${Desk.escapeHtml(batchNo)}</td>
-                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: center;">${Desk.escapeHtml(grade)}</td>
-                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: center;">${Desk.escapeHtml(uom)}</td>
-                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(price)}</td>
-                <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookQty)}</td>
-                <td style="border-right: 1px solid #000; padding: 3px 4px; vertical-align: top;">
-                  <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}"
-                         style="width: 62px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px;"
-                         oninput="Desk.calcPvEntryRow(this)">
-                </td>
-                <td class="pv-surplus-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty)}</td>
-                <td class="pv-shortage-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageQty)}</td>
-                <td class="pv-book-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookVal)}</td>
-                <td class="pv-phys-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(physVal)}</td>
-                <td class="pv-surplus-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusVal)}</td>
-                <td class="pv-shortage-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageVal)}</td>
-                <td style="padding: 3px 4px; vertical-align: top;">
-                  <input type="text" class="desk-form-control pv-remarks-input" value="${Desk.escapeHtml(e.remarks || '')}"
-                         placeholder="Remarks" style="padding: 3px 5px; font-size: 10.5px; height: 24px;">
-                </td>
-              </tr>
-            `;
-          });
-          tbody.innerHTML = html;
+          tbody.innerHTML = Desk.buildAv1aRowsHtml(entries, isSubmitted);
           Desk.recalcPvEntryTotals();
         }
       });
@@ -2181,8 +2152,10 @@ const Desk = {
     setTxt(`${prefix}ShortageVal`, fmt(totShort));
   },
 
-  buildAv1aRowsHtml(entries) {
+  buildAv1aRowsHtml(entries, readOnly = false) {
     const fmt = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const disAttr = readOnly ? 'disabled' : '';
+    const roStyle = readOnly ? 'background: #f8fafc; cursor: not-allowed;' : '';
     return entries.map((e, idx) => {
       const sno = idx + 1;
       const codeClean = String(e.sku || '').replace(/[^0-9A-Za-z]/g, '');
@@ -2210,8 +2183,8 @@ const Desk = {
           <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(price)}</td>
           <td style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(bookQty)}</td>
           <td style="border-right: 1px solid #000; padding: 3px 4px; vertical-align: top;">
-            <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}"
-                   style="width: 62px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px;"
+            <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}" ${disAttr}
+                   style="width: 62px; padding: 3px 4px; font-weight: 700; text-align: right; font-size: 10.5px; height: 24px; ${roStyle}"
                    oninput="Desk.calcPvEntryRow(this)">
           </td>
           <td class="pv-surplus-qty" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty)}</td>
@@ -2221,8 +2194,8 @@ const Desk = {
           <td class="pv-surplus-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(surplusQty * price)}</td>
           <td class="pv-shortage-val" style="border-right: 1px solid #000; padding: 5px 4px; vertical-align: top; text-align: right;">${fmt(shortageQty * price)}</td>
           <td style="padding: 3px 4px; vertical-align: top;">
-            <input type="text" class="desk-form-control pv-remarks-input" value="${Desk.escapeHtml(e.remarks || '')}"
-                   placeholder="Remarks" style="padding: 3px 5px; font-size: 10.5px; height: 24px;">
+            <input type="text" class="desk-form-control pv-remarks-input" value="${Desk.escapeHtml(e.remarks || '')}" ${disAttr}
+                   placeholder="Remarks" style="padding: 3px 5px; font-size: 10.5px; height: 24px; ${roStyle}">
           </td>
         </tr>
       `;
@@ -2278,6 +2251,7 @@ const Desk = {
     const fd = new FormData();
     fd.append('action', 'save_counts');
     fd.append('session_id', '1');
+    fd.append('source', sourceSelector === '#pvEditTableBody' ? 'edit' : 'entry');
     fd.append('counts', JSON.stringify(counts));
     if (isSubmit) fd.append('submit', '1');
 
@@ -2285,6 +2259,9 @@ const Desk = {
       .then(res => res.json())
       .then(res => {
         if (res.success) {
+          if (sourceSelector === '#pvEntryTableBody') {
+            Desk.savedPvEntrySheets.add(Desk.currentPvEntryPage || 1);
+          }
           Desk.showToast(res.message);
           Desk.loadPvEntry(Desk.currentPvEntryPage || 1);
           Desk.loadPvEdit(Desk.currentPvEditPage || 1);

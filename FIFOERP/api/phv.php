@@ -275,9 +275,19 @@ try {
         // -------------------------------------------------------------
         case 'save_counts':
             $sessionId = (int)($_POST['session_id'] ?? 0);
+            $source = trim($_POST['source'] ?? 'entry');
             $counts = json_decode($_POST['counts'] ?? '[]', true);
 
             if (empty($counts)) Response::error('No count records received');
+
+            if ($source === 'entry') {
+                $stChk = $db->prepare("SELECT status FROM phv_sessions WHERE id = :sid LIMIT 1");
+                $stChk->execute([':sid' => $sessionId]);
+                $curSt = (string)($stChk->fetchColumn() ?: 'Draft');
+                if (in_array($curSt, ['Submitted', 'Validated', 'Approved', 'Posted'], true)) {
+                    Response::error('Counts have already been submitted and locked. Resubmission is not allowed.');
+                }
+            }
 
             $db->beginTransaction();
             $upd = $db->prepare("

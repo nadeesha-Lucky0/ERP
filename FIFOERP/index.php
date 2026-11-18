@@ -1914,11 +1914,15 @@ require_once __DIR__ . '/views/layouts/header.php';
             <button type="button" class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.nextPvEntryPage()">Next &rarr;</button>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <button class="desk-btn desk-btn-default" onclick="Desk.saveVerificationCounts('#pvEntryTableBody')">
-              <?= Icon::get('save', 13) ?> Save Sheet
+            <span id="pvEntrySubmittedBadge" style="display: none; background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+              &#10003; Submitted (Locked)
+            </span>
+            <button id="btnSavePvEntrySheet" class="desk-btn desk-btn-default" onclick="Desk.saveVerificationCounts('#pvEntryTableBody')" style="display: inline-flex; align-items: center; gap: 5px;">
+              <?= Icon::get('save', 13) ?> Save
+              <span id="pvEntrySavedDot" title="Sheet Saved" style="display: none; width: 8px; height: 8px; border-radius: 50%; background: #2563eb;"></span>
             </button>
-            <button id="btnSubmitPvEntry" class="desk-btn desk-btn-primary" onclick="Desk.submitPvCountEntry()">
-              <?= Icon::get('check-circle', 13) ?> Submit
+            <button id="btnSubmitPvEntry" class="desk-btn desk-btn-primary" onclick="Desk.submitPvCountEntry()" style="display: none;">
+              <?= Icon::get('check-circle', 13) ?> Submit All
             </button>
           </div>
         </div>
