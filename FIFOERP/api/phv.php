@@ -189,10 +189,15 @@ try {
                 ]);
             }
 
+            try {
+                $chkCol = $db->query("SHOW COLUMNS FROM phv_sessions LIKE 'submitted_pages'")->fetch();
+                if (!$chkCol) $db->exec("ALTER TABLE phv_sessions ADD COLUMN submitted_pages TEXT NULL");
+            } catch (\Throwable $e) {}
+
             $db->prepare("
-                INSERT INTO phv_sessions (id, location_id, session_code, session_title, verification_date, status, created_by)
-                VALUES (:sid, :loc, :code, 'Store Physical Verification', CURDATE(), 'In_Counting', :uid)
-                ON DUPLICATE KEY UPDATE status = 'In_Counting'
+                INSERT INTO phv_sessions (id, location_id, session_code, session_title, verification_date, status, submitted_pages, created_by)
+                VALUES (:sid, :loc, :code, 'Store Physical Verification', CURDATE(), 'In_Counting', '[]', :uid)
+                ON DUPLICATE KEY UPDATE status = 'In_Counting', submitted_pages = '[]'
             ")->execute([
                 ':sid' => $sessionId,
                 ':loc' => $locationId,
@@ -251,10 +256,14 @@ try {
             $curSheet = $sheetPage > 0 ? $sheetPage : 1;
 
             $sessStatus = 'Draft';
+            $submittedPages = [];
             try {
-                $stSess = $db->prepare("SELECT status FROM phv_sessions WHERE id = :sid LIMIT 1");
+                $stSess = $db->prepare("SELECT status, submitted_pages FROM phv_sessions WHERE id = :sid LIMIT 1");
                 $stSess->execute([':sid' => $sessionId]);
-                $sessStatus = (string)($stSess->fetchColumn() ?: 'Draft');
+                if ($sRow = $stSess->fetch()) {
+                    $sessStatus = (string)($sRow['status'] ?: 'Draft');
+                    $submittedPages = json_decode((string)($sRow['submitted_pages'] ?? '[]'), true) ?: [];
+                }
             } catch (\Throwable $e) {}
             $isSubmitted = in_array($sessStatus, ['Submitted', 'Validated', 'Approved', 'Posted'], true);
 
@@ -266,6 +275,7 @@ try {
                 'current_sheet' => $curSheet,
                 'session_status' => $sessStatus,
                 'is_submitted' => $isSubmitted,
+                'submitted_pages' => array_values(array_unique(array_map('intval', $submittedPages))),
                 'meta' => phvSheetMeta($locationId, $curSheet)
             ]);
             break;
@@ -281,11 +291,17 @@ try {
             if (empty($counts)) Response::error('No count records received');
 
             if ($source === 'entry') {
-                $stChk = $db->prepare("SELECT status FROM phv_sessions WHERE id = :sid LIMIT 1");
+                $stChk = $db->prepare("SELECT status, submitted_pages FROM phv_sessions WHERE id = :sid LIMIT 1");
                 $stChk->execute([':sid' => $sessionId]);
-                $curSt = (string)($stChk->fetchColumn() ?: 'Draft');
+                $chkRow = $stChk->fetch() ?: [];
+                $curSt = (string)($chkRow['status'] ?? 'Draft');
+                $curSubPages = json_decode((string)($chkRow['submitted_pages'] ?? '[]'), true) ?: [];
                 if (in_array($curSt, ['Submitted', 'Validated', 'Approved', 'Posted'], true)) {
-                    Response::error('Counts have already been submitted and locked. Resubmission is not allowed.');
+                    Response::error('All counts have already been submitted and locked. Resubmission is not allowed.');
+                }
+                $pageNum = (int)($_POST['page'] ?? $_POST['submit_page'] ?? 0);
+                if ($pageNum > 0 && in_array($pageNum, array_map('intval', $curSubPages), true) && empty($_POST['submit_all'])) {
+                    Response::error("Sheet {$pageNum} is already submitted and locked.");
                 }
             }
 
@@ -307,7 +323,32 @@ try {
             }
             $db->commit();
 
-            if (!empty($_POST['submit'])) {
+            try {
+                $chkCol = $db->query("SHOW COLUMNS FROM phv_sessions LIKE 'submitted_pages'")->fetch();
+                if (!$chkCol) $db->exec("ALTER TABLE phv_sessions ADD COLUMN submitted_pages TEXT NULL");
+            } catch (\Throwable $e) {}
+
+            $submitPage = (int)($_POST['submit_page'] ?? 0);
+            $submitAll = !empty($_POST['submit_all']) || !empty($_POST['submit']);
+
+            if ($submitPage > 0) {
+                $stSub = $db->prepare("SELECT submitted_pages FROM phv_sessions WHERE id = :sid LIMIT 1");
+                $stSub->execute([':sid' => $sessionId]);
+                $pages = json_decode((string)($stSub->fetchColumn() ?: '[]'), true) ?: [];
+                if (!in_array($submitPage, array_map('intval', $pages), true)) {
+                    $pages[] = $submitPage;
+                }
+                $db->prepare("
+                    INSERT INTO phv_sessions (id, location_id, session_code, session_title, verification_date, status, submitted_pages, created_by)
+                    VALUES (:sid, :loc, :code, 'Store Physical Verification', CURDATE(), 'In_Counting', :sp, :uid)
+                    ON DUPLICATE KEY UPDATE submitted_pages = :sp2
+                ")->execute([
+                    ':sid' => $sessionId, ':loc' => $locationId, ':code' => 'PHV-' . date('Y') . '-S' . $sessionId,
+                    ':sp' => json_encode(array_values($pages)), ':sp2' => json_encode(array_values($pages)), ':uid' => Auth::id() ?? 1
+                ]);
+            }
+
+            if ($submitAll) {
                 $db->prepare("
                     INSERT INTO phv_sessions (id, location_id, session_code, session_title, verification_date, status, created_by)
                     VALUES (:sid, :loc, :code, 'Store Physical Verification', CURDATE(), 'Submitted', :uid)
@@ -320,7 +361,7 @@ try {
                 ]);
             }
 
-            Response::success('Physical counts updated successfully');
+            Response::success($submitAll ? 'All verification counts submitted!' : ($submitPage > 0 ? "Sheet {$submitPage} submitted!" : 'Physical counts updated successfully'));
             break;
 
         // -------------------------------------------------------------
