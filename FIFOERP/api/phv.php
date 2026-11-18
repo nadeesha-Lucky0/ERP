@@ -290,6 +290,11 @@ try {
 
             if (empty($counts)) Response::error('No count records received');
 
+            try {
+                $chkCol = $db->query("SHOW COLUMNS FROM phv_sessions LIKE 'submitted_pages'")->fetch();
+                if (!$chkCol) $db->exec("ALTER TABLE phv_sessions ADD COLUMN submitted_pages TEXT NULL");
+            } catch (\Throwable $e) {}
+
             if ($source === 'entry') {
                 $stChk = $db->prepare("SELECT status, submitted_pages FROM phv_sessions WHERE id = :sid LIMIT 1");
                 $stChk->execute([':sid' => $sessionId]);
