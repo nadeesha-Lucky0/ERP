@@ -35,6 +35,53 @@ function phvSheetFileName(int $locationId, int $sheetNum): string {
     return sprintf('PHV_SHEET_%s_PHV_%s_%04d.pdf', $codePart, date('y'), $sheetNum);
 }
 
+/** Station meta for the official PHV sheet header */
+function phvSheetMeta(int $locationId, int $sheetNum): array {
+    $code = '000'; $name = 'Power Station';
+    try {
+        $st = Database::getConnection()->prepare("SELECT code, name FROM locations WHERE id = :id LIMIT 1");
+        $st->execute([':id' => $locationId]);
+        if ($r = $st->fetch()) { $code = trim((string)$r['code']) ?: $code; $name = trim((string)$r['name']) ?: $name; }
+    } catch (\Throwable $e) {}
+    $codePart = str_contains($code, '.') ? $code : $code . '.00';
+    $u = $_SESSION['user'] ?? [];
+    return [
+        'station_code'  => $codePart,
+        'station_name'  => $name,
+        'department_id' => $codePart,
+        'generated_by'  => $u['username'] ?? ($u['full_name'] ?? 'SYSTEM'),
+        'report_id'     => 'INPHVRPT01',
+        'sheet_no'      => sprintf('%s/PHV/%s/%04d', $codePart, date('y'), $sheetNum),
+    ];
+}
+
+/** Attach batch_number and UOM to sheet items */
+function phvEnrichItems(\PDO $db, array $items): array {
+    $central = null;
+    try { $central = Database::getConnection(); } catch (\Throwable $e) {}
+    $bStmt = $db->prepare("SELECT batch_number FROM fifo_batches WHERE id = :id LIMIT 1");
+    $uStmt = $central ? $central->prepare("SELECT uom FROM fifo_master_items WHERE formatted_code = :c OR raw_code = :r LIMIT 1") : null;
+    $uomCache = [];
+    foreach ($items as &$it) {
+        if (empty($it['batch_number']) && !empty($it['batch_id'])) {
+            try { $bStmt->execute([':id' => $it['batch_id']]); $it['batch_number'] = $bStmt->fetchColumn() ?: '-'; } catch (\Throwable $e) {}
+        }
+        $sku = (string)($it['sku'] ?? '');
+        if (!isset($uomCache[$sku])) {
+            $uomCache[$sku] = 'NO';
+            if ($uStmt && $sku !== '') {
+                try {
+                    $uStmt->execute([':c' => $sku, ':r' => preg_replace('/[^0-9A-Za-z]/', '', $sku)]);
+                    $uomCache[$sku] = $uStmt->fetchColumn() ?: 'NO';
+                } catch (\Throwable $e) {}
+            }
+        }
+        $it['uom'] = $it['uom'] ?? $uomCache[$sku];
+    }
+    unset($it);
+    return $items;
+}
+
 try {
     $db = Database::getStationConnection($locationId);
 
@@ -513,7 +560,8 @@ try {
             }
 
             // Configurable items per sheet (default 21)
-            $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 21)));
+            $items = phvEnrichItems($db, $items);
+            $perPage = max(1, min(21, (int)($_GET['per_page'] ?? 21)));
             $chunks = array_chunk($items, $perPage);
             $totalSheets = count($chunks);
 
@@ -535,7 +583,8 @@ try {
                     $station, 
                     $costCenter, 
                     $warehouse, 
-                    date('Y-m-d')
+                    date('Y-m-d'),
+                    phvSheetMeta($locationId, $sheetNum)
                 );
                 $fileName = phvSheetFileName($locationId, $sheetNum);
                 $zip->addFromString($fileName, $pdfData);
@@ -629,7 +678,8 @@ try {
                 $items = $stmt->fetchAll();
             }
 
-            $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 21)));
+            $items = phvEnrichItems($db, $items);
+            $perPage = max(1, min(21, (int)($_GET['per_page'] ?? 21)));
             $chunks = array_chunk($items, $perPage);
             $totalSheets = max(1, count($chunks));
             $chunk = $chunks[$sheetNum - 1] ?? [];
@@ -642,7 +692,8 @@ try {
                 $station, 
                 $costCenter, 
                 $warehouse, 
-                date('Y-m-d')
+                date('Y-m-d'),
+                phvSheetMeta($locationId, $sheetNum)
             );
 
             while (ob_get_level()) {

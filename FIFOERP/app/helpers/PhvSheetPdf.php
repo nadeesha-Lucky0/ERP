@@ -2,200 +2,240 @@
 namespace App\Helpers;
 
 /**
- * PhvSheetPdf - Pure PHP PDF generator for Board of Survey Physical Verification Count Sheets
- * Exactly 21 items per A4 sheet with official headers, grid, and auditor signature blocks.
+ * PhvSheetPdf - Pure PHP PDF generator for the official EGL
+ * "Physical Verification Sheet" (Report ID INPHVRPT01) layout.
  */
 class PhvSheetPdf {
-    public static function generateSheet(int $sheetNum, int $totalSheets, array $items, string $station = 'Victoria Hydro Station', string $costCenter = 'Mechanical', string $warehouse = 'Central Main Store', string $date = ''): string {
-        if (empty($date)) $date = date('Y-m-d');
-        
+    /**
+     * @param array $meta Optional: station_code, station_name, generated_by, sheet_no, department_id, report_id
+     */
+    public static function generateSheet(int $sheetNum, int $totalSheets, array $items, string $station = 'Victoria Hydro Station', string $costCenter = 'Mechanical', string $warehouse = 'Central Main Store', string $date = '', array $meta = []): string {
+        $ts = $date ? strtotime($date . ' ' . date('H:i:s')) : time();
+        $stationCode = $meta['station_code'] ?? '000.00';
+        $stationName = $meta['station_name'] ?? $station;
+        $generatedBy = strtoupper($meta['generated_by'] ?? 'SYSTEM');
+        $reportId    = $meta['report_id'] ?? 'INPHVRPT01';
+        $sheetNo     = $meta['sheet_no'] ?? sprintf('%s/PHV/%s/%04d', $stationCode, date('y', $ts), $sheetNum);
+        $deptId      = $meta['department_id'] ?? $stationCode;
+
         $buffer = "%PDF-1.4\n";
         $offsets = [];
-        
-        $newObj = function() use (&$buffer, &$offsets) {
+        $newObj = function () use (&$buffer, &$offsets) {
             $id = count($offsets) + 1;
             $offsets[$id] = strlen($buffer);
             $buffer .= "$id 0 obj\n";
             return $id;
         };
 
-        // 1: Catalog
-        $catId = $newObj();
-        $buffer .= "<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+        $newObj(); $buffer .= "<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
+        $newObj(); $buffer .= "<< /Type /Pages /Kids [6 0 R] /Count 1 >>\nendobj\n";
+        $fontId = $newObj();     $buffer .= "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n";
+        $fontBoldId = $newObj(); $buffer .= "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>\nendobj\n";
 
-        // 2: Pages
-        $pagesId = $newObj();
-        $buffer .= "<< /Type /Pages /Kids [6 0 R] /Count 1 >>\nendobj\n";
+        $c = "0 0 0 rg 0 0 0 RG\n";
+        $txt = function (float $x, float $y, string $s, float $size = 8, bool $bold = false) use (&$c) {
+            $f = $bold ? 'F2' : 'F1';
+            $c .= "BT /$f $size Tf $x $y Td (" . self::cleanStr($s) . ") Tj ET\n";
+        };
+        $txtC = function (float $cx, float $y, string $s, float $size = 8, bool $bold = false) use ($txt) {
+            $txt($cx - self::textWidth($s, $size, $bold) / 2, $y, $s, $size, $bold);
+        };
+        $txtR = function (float $rx, float $y, string $s, float $size = 8, bool $bold = false) use ($txt) {
+            $txt($rx - self::textWidth($s, $size, $bold), $y, $s, $size, $bold);
+        };
+        $line = function (float $x1, float $y1, float $x2, float $y2, float $w = 0.6) use (&$c) {
+            $c .= "$w w $x1 $y1 m $x2 $y2 l S\n";
+        };
+        $rect = function (float $x, float $y, float $w, float $h, float $lw = 0.8) use (&$c) {
+            $c .= "$lw w $x $y $w $h re S\n";
+        };
+        $dbl = function (float $y) use ($line) {
+            $c1 = 35; $c2 = 560;
+            $line($c1, $y + 1.5, $c2, $y + 1.5, 0.4);
+            $line($c1, $y - 1.5, $c2, $y - 1.5, 0.4);
+        };
 
-        // Fonts: Helvetica & Helvetica-Bold
-        $fontId = $newObj();
-        $buffer .= "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
-        $fontBoldId = $newObj();
-        $buffer .= "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n";
+        // ---------------- HEADER ----------------
+        $txtC(297.5, 812, 'Electricity Generation Lanka (Pvt) Ltd', 12, true);
+        $txtC(297.5, 799, 'Physical Verification Sheet', 8.5);
 
-        // Stream content
-        $c = "";
-        
-        // Header Banner Box
-        $c .= "0.95 0.95 0.97 rg\n";
-        $c .= "30 750 535 60 re f\n"; // top box
-        $c .= "0.2 0.3 0.4 RG 1.2 w\n";
-        $c .= "30 750 535 60 re s\n";
+        $txt(400, 788, 'Date', 8.5);  $txt(465, 788, date('F d, Y', $ts), 8.5);
+        $txt(400, 774, 'Time', 8.5);  $txt(465, 774, date('h:i:s A', $ts), 8.5);
+        $txt(400, 760, 'Page', 8.5);  $txt(465, 760, "Page $sheetNum of $totalSheets", 8.5);
 
-        // Company Title & Form Name
-        $c .= "0.05 0.1 0.2 rg\n";
-        $c .= "BT\n/F2 12 Tf\n";
-        $c .= "40 792 Td (ELECTRICITY GENERATION LANKA - BOARD OF SURVEY COUNT SHEET) Tj\n";
-        $c .= "ET\n";
+        $txt(40, 780, 'Report ID', 8.5);    $txt(140, 780, $reportId, 8.5);
+        $txt(40, 765, 'Generated By', 8.5); $txt(140, 765, $generatedBy, 8.5);
 
-        $c .= "0.3 0.35 0.4 rg\n";
-        $c .= "BT\n/F1 8.5 Tf\n";
-        $c .= "40 777 Td (Station: " . self::cleanStr($station) . " | Warehouse: " . self::cleanStr($warehouse) . ") Tj\n";
-        $c .= "40 762 Td (Cost Center: " . self::cleanStr($costCenter) . " | Verification Date: " . self::cleanStr($date) . ") Tj\n";
-        $c .= "ET\n";
+        $dbl(750);
 
-        // Sheet Badge (Top Right)
-        $c .= "0.05 0.58 0.53 rg\n";
-        $c .= "440 760 115 38 re f\n";
-        $c .= "1 1 1 rg\n";
-        $c .= "BT\n/F2 11 Tf\n";
-        $c .= "452 775 Td (SHEET " . sprintf('%02d', $sheetNum) . " / " . sprintf('%02d', $totalSheets) . ") Tj\n";
-        $c .= "ET\n";
+        $profile = 'PHYSICAL VERIFICATION - ' . strtoupper($stationName) . ' - ' . $stationCode;
+        if (strlen($profile) > 52) $profile = substr($profile, 0, 50) . '..';
+        $txt(40, 734, 'Document Profile', 8.5); $txt(140, 734, $profile, 8.5);
+        $txt(375, 734, 'Sheet No', 8.5);        $txt(440, 734, $sheetNo, 8.5);
+        $txt(40, 720, 'Department ID', 8.5);    $txt(140, 720, $deptId, 8.5);
+        $wh = $warehouse;
+        if (strlen($wh) > 24) $wh = substr($wh, 0, 22) . '..';
+        $txt(375, 720, 'Warehouse', 8.5);       $txt(440, 720, $wh, 8.5);
 
-        // Table Header Row
-        $c .= "0.15 0.2 0.28 rg\n";
-        $c .= "30 726 535 18 re f\n"; // header fill
-        $c .= "1 1 1 rg\n";
-        $c .= "BT\n/F2 8.5 Tf\n";
-        $c .= "34 731 Td (#) Tj\n";
-        $c .= "22 0 Td (ITEM CODE) Tj\n";
-        $c .= "80 0 Td (ITEM DESCRIPTION & SPECIFICATION) Tj\n";
-        $c .= "200 0 Td (BIN) Tj\n";
-        $c .= "48 0 Td (BOOK) Tj\n";
-        $c .= "45 0 Td (PHYSICAL COUNT) Tj\n";
-        $c .= "76 0 Td (INITIAL) Tj\n";
-        $c .= "ET\n";
+        $dbl(708);
 
-        // Table Rows (Exactly 21 items)
-        $y = 708;
-        $rowH = 26; // 26 pt per row * 21 = 546 pt
-        $rowNum = 1;
+        // ---------------- ITEM TABLE ----------------
+        // Column boundaries
+        $cols = [25, 215, 298, 343, 385, 435, 485, 525, 570];
+        $tTop = 698;
+        $hdrH = 16;
+        $rowH = 20;
+        $rows = 21;
+        $tBot = $tTop - $hdrH - ($rows * $rowH);
 
-        for ($idx = 0; $idx < 21; $idx++) {
-            $item = $items[$idx] ?? null;
+        $rect($cols[0], $tBot, $cols[8] - $cols[0], $tTop - $tBot, 1.0);
+        $line($cols[0], $tTop - $hdrH, $cols[8], $tTop - $hdrH, 0.8);
+        foreach (array_slice($cols, 1, 7) as $i => $x) {
+            $line($x, $tBot, $x, $tTop, $i === 0 ? 1.6 : 0.8);
+        }
+        $headers = ['Mat Code & Name', 'Batch', 'Current Gr', 'UOM', 'UP', 'Counted', 'Damages', 'Remarks'];
+        $hy = $tTop - 11.5;
+        foreach ($headers as $i => $h) {
+            $sz = ($h === 'Current Gr') ? 6.5 : 8;
+            $txtC(($cols[$i] + $cols[$i + 1]) / 2, $hy, $h, $sz);
+        }
 
-            // Row background (alternate)
-            if ($idx % 2 === 1) {
-                $c .= "0.97 0.98 0.99 rg\n";
-                $c .= "30 " . ($y - 2) . " 535 " . ($rowH) . " re f\n";
+        $y = $tTop - $hdrH;
+        for ($i = 0; $i < $rows; $i++) {
+            $it = $items[$i] ?? null;
+            $baseY = $y - 12;
+            if ($it) {
+                $code = preg_replace('/[^0-9A-Za-z]/', '', (string)($it['sku'] ?? ''));
+                $name = strtoupper((string)($it['item_name'] ?? ''));
+                $batch = (string)($it['batch_number'] ?? $it['batch_no'] ?? '-');
+                $grade = strtoupper((string)($it['grade'] ?? 'NEW'));
+                $uom = strtoupper((string)($it['uom'] ?? 'NO'));
+                $up = number_format((float)($it['unit_cost'] ?? 0), 2);
+
+                $txt(29, $baseY, $code, 7);
+                $txt(72, $baseY + 1, '-', 6);
+                $l1 = $name; $l2 = '';
+                if (strlen($name) > 34) {
+                    $cut = strrpos(substr($name, 0, 34), ' ');
+                    if ($cut === false || $cut < 15) $cut = 34;
+                    $l1 = substr($name, 0, $cut);
+                    $l2 = trim(substr($name, $cut));
+                    if (strlen($l2) > 34) $l2 = substr($l2, 0, 32) . '..';
+                }
+                $txt(78, $baseY + 1.5, $l1, 5.8);
+                if ($l2 !== '') $txt(78, $baseY - 5.5, $l2, 5.8);
+
+                if (strlen($batch) > 20) $batch = substr($batch, 0, 19) . '.';
+                $txt($cols[1] + 4, $baseY, $batch, 6.5);
+                $txt($cols[2] + 4, $baseY, $grade, 7);
+                $txt($cols[3] + 4, $baseY, $uom, 7);
+                $txtR($cols[5] - 5, $baseY, $up, 7);
             }
-
-            // Grid border lines
-            $c .= "0.85 0.88 0.92 RG 0.5 w\n";
-            $c .= "30 " . ($y - 2) . " 535 " . ($rowH) . " re s\n";
-
-            // Vertical column dividers
-            $c .= "54 " . ($y - 2) . " m 54 " . ($y + $rowH - 2) . " l S\n";
-            $c .= "134 " . ($y - 2) . " m 134 " . ($y + $rowH - 2) . " l S\n";
-            $c .= "334 " . ($y - 2) . " m 334 " . ($y + $rowH - 2) . " l S\n";
-            $c .= "382 " . ($y - 2) . " m 382 " . ($y + $rowH - 2) . " l S\n";
-            $c .= "427 " . ($y - 2) . " m 427 " . ($y + $rowH - 2) . " l S\n";
-            $c .= "503 " . ($y - 2) . " m 503 " . ($y + $rowH - 2) . " l S\n";
-
-            if ($item) {
-                $sku = self::cleanStr($item['sku'] ?? '');
-                $name = self::cleanStr($item['item_name'] ?? '');
-                if (strlen($name) > 42) $name = substr($name, 0, 40) . '..';
-                $bin = self::cleanStr($item['location_bin'] ?? '-');
-                $book = self::cleanStr($item['book_quantity'] ?? $item['remaining_quantity'] ?? '0');
-                $globalIdx = (($sheetNum - 1) * 21) + ($idx + 1);
-
-                $c .= "0.1 0.15 0.25 rg\n";
-                $c .= "BT\n/F1 8 Tf\n";
-                $c .= "35 " . ($y + 8) . " Td (" . sprintf('%02d', $globalIdx) . ") Tj\n";
-                $c .= "22 0 Td ($sku) Tj\n";
-                $c .= "80 0 Td ($name) Tj\n";
-                $c .= "202 0 Td ($bin) Tj\n";
-                $c .= "49 0 Td ($book) Tj\n";
-                $c .= "ET\n";
-
-                // Physical Count Blank Box
-                $c .= "0.7 0.75 0.8 RG 0.8 w\n";
-                $c .= "436 " . ($y + 2) . " 58 18 re s\n";
-
-                // Initial line
-                $c .= "512 " . ($y + 6) . " m 555 " . ($y + 6) . " l S\n";
-            }
-
             $y -= $rowH;
         }
 
-        // Bottom Signature Section
-        $sigY = 135;
-        $c .= "0.96 0.96 0.98 rg\n";
-        $c .= "30 50 535 75 re f\n";
-        $c .= "0.8 0.85 0.9 RG 0.8 w\n";
-        $c .= "30 50 535 75 re s\n";
+        // ---------------- FOOTER: VERIFIERS ----------------
+        $fTop = $tBot - 10;      // top of footer boxes
+        $fBot = 108;
+        $lx1 = 30; $lx2 = 390;
+        $rect($lx1, $fBot, $lx2 - $lx1, $fTop - $fBot, 0.8);
+        $txt($lx1 + 6, $fTop - 13, 'We do hereby clarify the stocks were physically counted as per the given statement', 7.5);
+        $txt($lx1 + 12, $fTop - 27, 'Verifires', 7);
 
-        // Three Signature Columns
-        $c .= "0.2 0.25 0.35 rg\n";
-        $c .= "BT\n/F2 8 Tf\n";
-        $c .= "45 105 Td (1. PHYSICAL STOCK VERIFIED BY:) Tj\n";
-        $c .= "220 0 Td (2. SUPERVISED & CHECKED BY:) Tj\n";
-        $c .= "195 0 Td (3. BOARD OF SURVEY AUDITOR:) Tj\n";
-        $c .= "ET\n";
+        // Verifiers table (header + 3 rows)
+        $vx = [$lx1 + 12, $lx1 + 125, $lx1 + 238, $lx2 - 8];
+        $vTop = $fTop - 32;
+        $vHdr = 11; $vRow = 14;
+        $vBot = $vTop - $vHdr - 3 * $vRow;
+        $rect($vx[0], $vBot, $vx[3] - $vx[0], $vTop - $vBot, 0.8);
+        $line($vx[0], $vTop - $vHdr, $vx[3], $vTop - $vHdr, 0.8);
+        for ($r = 1; $r < 3; $r++) {
+            $line($vx[0], $vTop - $vHdr - $r * $vRow, $vx[3], $vTop - $vHdr - $r * $vRow, 0.8);
+        }
+        $line($vx[1], $vBot, $vx[1], $vTop, 0.8);
+        $line($vx[2], $vBot, $vx[2], $vTop, 0.8);
+        $txtC(($vx[0] + $vx[1]) / 2, $vTop - 8.5, 'Name', 7);
+        $txtC(($vx[1] + $vx[2]) / 2, $vTop - 8.5, 'Designation', 7);
+        $txtC(($vx[2] + $vx[3]) / 2, $vTop - 8.5, 'Signature', 7);
 
-        $c .= "0.4 0.45 0.5 rg\n";
-        $c .= "BT\n/F1 7.5 Tf\n";
-        $c .= "45 92 Td (Name: _________________________) Tj\n";
-        $c .= "220 0 Td (Name: _________________________) Tj\n";
-        $c .= "195 0 Td (Name: _________________________) Tj\n";
-        $c .= "ET\n";
+        // CEB Observation Team
+        $txt($lx1 + 12, $vBot - 12, 'CEB Observation Team', 7);
+        $oTop = $vBot - 18;
+        $oBot = $oTop - 2 * $vRow;
+        $rect($vx[0], $oBot, $vx[3] - $vx[0], $oTop - $oBot, 0.8);
+        $line($vx[0], $oTop - $vRow, $vx[3], $oTop - $vRow, 0.8);
+        $line($vx[1], $oBot, $vx[1], $oTop, 0.8);
+        $line($vx[2], $oBot, $vx[2], $oTop, 0.8);
 
-        $c .= "BT\n/F1 7.5 Tf\n";
-        $c .= "45 78 Td (Designation / EPF: ____________) Tj\n";
-        $c .= "220 0 Td (Designation / EPF: ____________) Tj\n";
-        $c .= "195 0 Td (Designation / EPF: ____________) Tj\n";
-        $c .= "ET\n";
+        // ---------------- FOOTER: RIGHT SIDE ----------------
+        $rx1 = 395; $rx2 = 570;
+        $txtC(480, $fTop - 2, '==============', 7);
+        $txt($rx1 + 2, $fTop - 15, 'Total Quantity', 8.5);
+        $txtC(480, $fTop - 27, '==============', 7);
 
-        $c .= "BT\n/F1 7.5 Tf\n";
-        $c .= "45 64 Td (Signature & Date: _____________) Tj\n";
-        $c .= "220 0 Td (Signature & Date: _____________) Tj\n";
-        $c .= "195 0 Td (Signature & Date: _____________) Tj\n";
-        $c .= "ET\n";
+        $aTop = $fTop - 34;
+        $nBoxH = 24;
+        $aBot = $fBot + 2 * $nBoxH;
+        $rect($rx1, $fBot, $rx2 - $rx1, $aTop - $fBot, 0.8);
+        $txt($rx1 + 6, $aTop - 13, 'Agreed for Above Physical Count', 7);
+        $step = ($aTop - 22 - $aBot) / 4;
+        $ly = $aTop - 22 - $step + 4;
+        $txt($rx1 + 6, $ly, 'SK / ES', 7);
+        foreach (['Name', 'Signature', 'Approved Date'] as $lbl) {
+            $ly -= $step;
+            $txt($rx1 + 6, $ly, $lbl, 7);
+            $txt($rx1 + 68, $ly, '....................................................', 6);
+        }
 
-        // Page footer note
-        $c .= "0.55 0.6 0.65 rg\n";
-        $c .= "BT\n/F1 7 Tf\n";
-        $c .= "30 38 Td (Generated on $date) Tj\n";
-        $c .= "430 0 Td (Page $sheetNum of $totalSheets) Tj\n";
-        $c .= "ET\n";
+        // Notes boxes
+        $line($rx1, $aBot, $rx2, $aBot, 0.8);
+        $line($rx1, $fBot + $nBoxH, $rx2, $fBot + $nBoxH, 0.8);
+        $line($rx1 + 55, $fBot, $rx1 + 55, $aBot, 0.8);
+        $txt($rx1 + 5, $aBot - 10, 'Notes for', 6.5);
+        $txt($rx1 + 5, $aBot - 19, 'Remarks', 6.5);
+        $txt($rx1 + 59, $aBot - 10, 'S: slow moving | N: non moving |', 6);
+        $txt($rx1 + 59, $aBot - 19, 'D: Damage', 6);
+        $txt($rx1 + 5, $fBot + $nBoxH - 10, 'Notes to Stock', 6.5);
+        $txt($rx1 + 5, $fBot + $nBoxH - 19, 'Category', 6.5);
+        $txt($rx1 + 59, $fBot + $nBoxH - 10, '1.Electrical items 2. Consumables', 6);
+        $txt($rx1 + 59, $fBot + $nBoxH - 19, '3.Fuel 4.Spare Parts 5. Goods in transit', 6);
 
-        // Content object
+        // Page footer
+        $txt(470, 88, "Page $sheetNum of $totalSheets", 8.5);
+
+        // ---------------- WRITE OBJECTS ----------------
         $contentId = $newObj();
-        $len = strlen($c);
-        $buffer .= "<< /Length $len >>\nstream\n$c\nendstream\nendobj\n";
-
-        // Page object (6)
-        $pageId = $newObj();
+        $buffer .= "<< /Length " . strlen($c) . " >>\nstream\n$c\nendstream\nendobj\n";
+        $newObj();
         $buffer .= "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 $fontId 0 R /F2 $fontBoldId 0 R >> >> /Contents $contentId 0 R >>\nendobj\n";
 
-        // Xref table
         $xrefOffset = strlen($buffer);
         $totalObjs = count($offsets) + 1;
-        $buffer .= "xref\n0 $totalObjs\n";
-        $buffer .= "0000000000 65535 f \n";
+        $buffer .= "xref\n0 $totalObjs\n0000000000 65535 f \n";
         for ($i = 1; $i < $totalObjs; $i++) {
             $buffer .= sprintf("%010d 00000 n \n", $offsets[$i]);
         }
         $buffer .= "trailer\n<< /Size $totalObjs /Root 1 0 R >>\nstartxref\n$xrefOffset\n%%EOF\n";
-
         return $buffer;
     }
 
+    /** Approximate Helvetica text width (points) for alignment. */
+    private static function textWidth(string $s, float $size, bool $bold = false): float {
+        $avg = $bold ? 0.58 : 0.53;
+        $w = 0;
+        foreach (str_split($s) as $ch) {
+            if ($ch === ' ') $w += 0.28;
+            elseif (strpbrk($ch, 'il.,:;|!\'') !== false) $w += 0.25;
+            elseif (ctype_upper($ch) || strpbrk($ch, 'mwMW') !== false) $w += $avg + 0.12;
+            elseif (ctype_digit($ch)) $w += 0.556;
+            else $w += $avg;
+        }
+        return $w * $size;
+    }
+
     private static function cleanStr(string $str): string {
-        $str = iconv('UTF-8', 'windows-1252//IGNORE', $str);
-        return str_replace(['(', ')', '\\'], ['[', ']', '/'], $str);
+        $conv = @iconv('UTF-8', 'windows-1252//IGNORE', $str);
+        if ($conv !== false) $str = $conv;
+        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $str);
     }
 }
-
