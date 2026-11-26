@@ -4055,9 +4055,9 @@ require_once __DIR__ . '/views/layouts/header.php';
                       </td>
                       <td>
                         <div style="font-size: 0.84rem; font-weight: 600; color: #1e293b;">
-                          <?= htmlspecialchars($u['location_name'] ?? 'Victoria Station') ?></div>
+                          <?= htmlspecialchars(!empty($u['location_name']) ? $u['location_name'] : 'All Stations') ?></div>
                         <div style="font-size: 0.74rem; color: #64748b;">
-                          <?= htmlspecialchars($u['department'] ?? 'General') ?></div>
+                          <?= htmlspecialchars(!empty($u['location_name']) ? ($u['department'] ?? 'General') : 'All') ?></div>
                       </td>
                       <td>
                         <?php if ($u['role_name'] === 'super_admin'): ?>
