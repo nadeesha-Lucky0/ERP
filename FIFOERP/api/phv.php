@@ -310,16 +310,22 @@ try {
                 }
             }
 
+            try {
+                $chkDmg = $db->query("SHOW COLUMNS FROM phv_entries LIKE 'damages'")->fetch();
+                if (!$chkDmg) $db->exec("ALTER TABLE phv_entries ADD COLUMN damages INT NOT NULL DEFAULT 0");
+            } catch (\Throwable $e) {}
+
             $db->beginTransaction();
             $upd = $db->prepare("
                 UPDATE phv_entries 
-                SET physical_quantity = :pqty, remarks = :rem, verified_by = :uid
+                SET physical_quantity = :pqty, damages = :dmg, remarks = :rem, verified_by = :uid
                 WHERE id = :id AND session_id = :sid
             ");
 
             foreach ($counts as $c) {
                 $upd->execute([
                     ':pqty' => (int)($c['physical_quantity'] ?? 0),
+                    ':dmg' => (int)($c['damages'] ?? 0),
                     ':rem' => trim($c['remarks'] ?? ''),
                     ':uid' => Auth::id() ?? 1,
                     ':id' => (int)$c['id'],

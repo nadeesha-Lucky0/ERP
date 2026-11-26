@@ -2182,11 +2182,16 @@ const Desk = {
           // Update header meta & pagination
           const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
           const selectedWh = document.getElementById('sheetWarehouse')?.value || 'Central Main Store';
+          const pageLabel = `Page ${Desk.currentPvEntryPage} of ${totalSheets}`;
+          setTxt('pvEntryReportId', meta.report_id || 'INPHVRPT01');
+          setTxt('pvEntryGenBy', (meta.generated_by || 'SYSTEM').toUpperCase());
+          setTxt('pvEntryDocProfile', `PHYSICAL VERIFICATION - ${(meta.station_name || 'POWER STATION').toUpperCase()} - ${meta.station_code || '000.00'}`);
           setTxt('pvEntryWarehouse', selectedWh);
           setTxt('pvEntryCostCenter', meta.department_id || meta.station_code || '-');
           setTxt('pvEntrySheetNo', meta.sheet_no || '-');
           setTxt('pvEntryPageBadge', `Sheet ${Desk.currentPvEntryPage} of ${totalSheets}`);
-          setTxt('pvEntryPageBot', `Page ${Desk.currentPvEntryPage} of ${totalSheets}`);
+          setTxt('pvEntryPageTop', pageLabel);
+          setTxt('pvEntryPageBot', pageLabel);
 
           // Show/hide Submit (per page), Submit All (last page only), and Submitted badge
           const submitPageBtn = document.getElementById('btnSubmitPvPage');
@@ -2219,8 +2224,8 @@ const Desk = {
             pageSelect.innerHTML = opts;
           }
 
-          tbody.innerHTML = Desk.buildAv1aRowsHtml(entries, isPageSubmitted);
-          Desk.recalcPvEntryTotals();
+          tbody.innerHTML = Desk.buildCountEntrySheetRowsHtml(entries, isPageSubmitted);
+          Desk.recalcCountEntryTotalQty();
         }
       });
   },
@@ -2231,6 +2236,76 @@ const Desk = {
 
   nextPvEntryPage() {
     if (this.currentPvEntryPage < this.totalPvEntryPages) this.loadPvEntry(this.currentPvEntryPage + 1);
+  },
+
+  recalcCountEntryTotalQty() {
+    let tot = 0;
+    document.querySelectorAll('#pvEntryTableBody .pv-phys-input').forEach(inp => {
+      tot += parseFloat(inp.value || 0) || 0;
+    });
+    const el = document.getElementById('pvEntryTotalQty');
+    if (el) el.textContent = tot.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  },
+
+  buildCountEntrySheetRowsHtml(entries, readOnly = false) {
+    const disAttr = readOnly ? 'disabled' : '';
+    const roStyle = readOnly ? 'background: #f8fafc; cursor: not-allowed;' : '';
+    let html = entries.map((e) => {
+      const codeClean = String(e.sku || '').replace(/[^0-9A-Za-z]/g, '');
+      const itemName = String(e.item_name || '').toUpperCase();
+      const batchNo = e.batch_number || e.batch_no || '-';
+      const grade = String(e.grade || 'NEW').toUpperCase();
+      const uom = String(e.uom || 'NO').toUpperCase();
+      const up = parseFloat(e.unit_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const physQty = e.physical_quantity !== undefined && e.physical_quantity !== null ? e.physical_quantity : (e.book_quantity ?? 0);
+      const dmgQty = e.damages !== undefined && e.damages !== null ? e.damages : 0;
+
+      return `
+        <tr data-entry-id="${e.id}" data-book-qty="${e.book_quantity || 0}" data-cost="${e.unit_cost || 0}">
+          <td style="padding: 6px 8px; border-right: 2px solid #000; vertical-align: middle;">
+            <div style="display: flex; gap: 12px; align-items: flex-start;">
+              <span style="font-family: monospace; min-width: 72px;">${Desk.escapeHtml(codeClean)}</span>
+              <span>- &nbsp;${Desk.escapeHtml(itemName)}</span>
+            </div>
+          </td>
+          <td style="padding: 6px 8px; border-right: 1px solid #000; vertical-align: middle; white-space: nowrap;">${Desk.escapeHtml(batchNo)}</td>
+          <td style="padding: 6px 6px; border-right: 1px solid #000; vertical-align: middle;">${Desk.escapeHtml(grade)}</td>
+          <td style="padding: 6px 6px; border-right: 1px solid #000; vertical-align: middle;">${Desk.escapeHtml(uom)}</td>
+          <td style="padding: 6px 8px; border-right: 1px solid #000; vertical-align: middle; text-align: right;">${up}</td>
+          <td style="padding: 3px 5px; border-right: 1px solid #000; vertical-align: middle;">
+            <input type="number" step="any" class="desk-form-control pv-phys-input" value="${physQty}" ${disAttr}
+                   style="width: 100%; min-width: 70px; padding: 3px 4px; font-weight: 700; text-align: center; font-size: 11px; height: 26px; ${roStyle}"
+                   oninput="Desk.recalcCountEntryTotalQty()">
+          </td>
+          <td style="padding: 3px 5px; border-right: 1px solid #000; vertical-align: middle;">
+            <input type="number" step="any" min="0" class="desk-form-control pv-damages-input" value="${dmgQty}" ${disAttr}
+                   style="width: 100%; min-width: 65px; padding: 3px 4px; font-weight: 600; text-align: center; font-size: 11px; height: 26px; ${roStyle}">
+          </td>
+          <td style="padding: 3px 5px; vertical-align: middle;">
+            <input type="text" class="desk-form-control pv-remarks-input" value="${Desk.escapeHtml(e.remarks || '')}" ${disAttr}
+                   placeholder="Remarks" style="width: 100%; min-width: 100px; padding: 3px 6px; font-size: 11px; height: 26px; ${roStyle}">
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (entries.length < 21) {
+      for (let pad = entries.length + 1; pad <= 21; pad++) {
+        html += `
+          <tr>
+            <td style="height: 26px; border-right: 2px solid #000;">&nbsp;</td>
+            <td style="border-right: 1px solid #000;"></td>
+            <td style="border-right: 1px solid #000;"></td>
+            <td style="border-right: 1px solid #000;"></td>
+            <td style="border-right: 1px solid #000;"></td>
+            <td style="border-right: 1px solid #000;"></td>
+            <td style="border-right: 1px solid #000;"></td>
+            <td></td>
+          </tr>
+        `;
+      }
+    }
+    return html;
   },
 
   recalcPvEntryTotals(tbodyId = 'pvEntryTableBody', prefix = 'pvTotal') {
@@ -2336,11 +2411,13 @@ const Desk = {
     document.querySelectorAll(`${selector} tr`).forEach(r => {
       const id = r.dataset.entryId;
       const physInput = r.querySelector('.pv-phys-input');
+      const dmgInput = r.querySelector('.pv-damages-input');
       const remInput = r.querySelector('.pv-remarks-input');
       if (id && physInput) {
         counts.push({
           id: id,
           physical_quantity: parseInt(physInput.value || 0, 10),
+          damages: dmgInput ? parseInt(dmgInput.value || 0, 10) : 0,
           remarks: remInput ? remInput.value : ''
         });
       }
