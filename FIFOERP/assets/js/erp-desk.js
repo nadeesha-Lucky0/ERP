@@ -598,20 +598,44 @@ const Desk = {
   async loadWarehouseFreezeTables() {
     const freezeBody = document.getElementById('freezeWarehousesTableBody');
     const unfreezeBody = document.getElementById('unfreezeWarehousesTableBody');
+    const stationFilter = document.getElementById('freezeStationFilter');
+    const reqLoc = stationFilter ? stationFilter.value : 'all';
     try {
-      const res = await fetch(`${this.baseUrl}/api/phv.php?action=get_warehouse_freeze_status`);
+      const res = await fetch(`${this.baseUrl}/api/phv.php?action=get_warehouse_freeze_status&location_id=${encodeURIComponent(reqLoc)}`);
       const data = await res.json();
       if (!data.success || !data.data) return;
       const warehouses = data.data.warehouses || [];
+      const stations = data.data.stations || [];
+      const isGlobal = Boolean(data.data.is_global);
 
-      // Populate sheetWarehouse dropdown with active existing warehouses
+      if (stationFilter) {
+        if (isGlobal && stations.length > 0) {
+          stationFilter.style.display = 'inline-block';
+          if (stationFilter.options.length <= 1) {
+            const curLoc = stationFilter.value || 'all';
+            stationFilter.innerHTML = '<option value="all">All Power Stations</option>' +
+              stations.map(s => `<option value="${s.id}">${this.escapeHtml(s.name)}</option>`).join('');
+            stationFilter.value = curLoc;
+          }
+        } else {
+          stationFilter.style.display = 'none';
+        }
+      }
+
+      // Populate sheetWarehouse dropdown with active existing warehouses (deduplicated)
       const sheetWh = document.getElementById('sheetWarehouse');
       if (sheetWh && warehouses.length > 0) {
         const curVal = sheetWh.value;
-        sheetWh.innerHTML = warehouses.map(w => {
+        const seen = new Set();
+        const uniqueOpts = [];
+        warehouses.forEach(w => {
           const label = w.code ? `${w.code} -- ${w.name}` : w.name;
-          return `<option value="${this.escapeHtml(label)}">${this.escapeHtml(label)}</option>`;
-        }).join('');
+          if (!seen.has(label)) {
+            seen.add(label);
+            uniqueOpts.push(`<option value="${this.escapeHtml(label)}">${this.escapeHtml(label)}</option>`);
+          }
+        });
+        sheetWh.innerHTML = uniqueOpts.join('');
         if (curVal && Array.from(sheetWh.options).some(o => o.value === curVal)) {
           sheetWh.value = curVal;
         }
@@ -620,11 +644,14 @@ const Desk = {
       if (freezeBody) {
         freezeBody.innerHTML = warehouses.length ? warehouses.map(w => {
           const isFrz = Number(w.is_frozen) === 1;
+          const locId = w.location_id || 1;
+          const stName = w.location_name ? this.escapeHtml(w.location_name) : '-';
           return `
             <tr>
               <td style="text-align: center;">
-                <input type="checkbox" class="freeze-wh-chk" value="${w.id}" ${isFrz ? 'disabled' : ''}>
+                <input type="checkbox" class="freeze-wh-chk" value="${w.id}" data-location-id="${locId}" ${isFrz ? 'disabled' : ''}>
               </td>
+              <td>${stName}</td>
               <td><code>${this.escapeHtml(w.code)}</code></td>
               <td><strong>${this.escapeHtml(w.name)}</strong></td>
               <td><span class="desk-badge ${isFrz ? 'badge-danger' : 'badge-approved'}">${isFrz ? 'FROZEN' : 'ACTIVE'}</span></td>
@@ -632,23 +659,27 @@ const Desk = {
               <td>${w.frozen_by ? this.escapeHtml(w.frozen_by) : '-'}</td>
             </tr>
           `;
-        }).join('') : '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No active warehouses found.</td></tr>';
+        }).join('') : '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No active warehouses found.</td></tr>';
       }
 
       if (unfreezeBody) {
         const frozenList = warehouses.filter(w => Number(w.is_frozen) === 1);
-        unfreezeBody.innerHTML = frozenList.length ? frozenList.map(w => `
+        unfreezeBody.innerHTML = frozenList.length ? frozenList.map(w => {
+          const locId = w.location_id || 1;
+          const stLabel = w.location_name ? ` <small style="color:#64748b;">(${this.escapeHtml(w.location_name)})</small>` : '';
+          return `
           <tr>
             <td style="text-align: center;">
-              <input type="checkbox" class="unfreeze-wh-chk" value="${w.id}">
+              <input type="checkbox" class="unfreeze-wh-chk" value="${w.id}" data-location-id="${locId}">
             </td>
             <td><code>${this.escapeHtml(w.code)}</code></td>
-            <td><strong>${this.escapeHtml(w.name)}</strong></td>
+            <td><strong>${this.escapeHtml(w.name)}</strong>${stLabel}</td>
             <td><span class="desk-badge badge-danger">FROZEN</span></td>
             <td>${w.frozen_at ? this.escapeHtml(w.frozen_at) : '-'}</td>
             <td>${w.frozen_by ? this.escapeHtml(w.frozen_by) : '-'}</td>
           </tr>
-        `).join('') : '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No frozen warehouses found.</td></tr>';
+        `;
+        }).join('') : '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">No frozen warehouses found.</td></tr>';
       }
     } catch (e) {
       console.error('Failed to load warehouse freeze status:', e);
@@ -657,14 +688,17 @@ const Desk = {
 
   async freezeSelectedWarehouses(isFreeze) {
     const cls = isFreeze ? '.freeze-wh-chk:checked' : '.unfreeze-wh-chk:checked';
-    const ids = Array.from(document.querySelectorAll(cls)).map(c => c.value);
-    if (ids.length === 0) {
+    const items = Array.from(document.querySelectorAll(cls)).map(c => ({
+      department_id: Number(c.value),
+      location_id: Number(c.dataset.locationId || 1)
+    }));
+    if (items.length === 0) {
       this.showToast(`Please select at least one warehouse to ${isFreeze ? 'freeze' : 'unfreeze'}.`, true);
       return;
     }
     const fd = new FormData();
     fd.append('action', isFreeze ? 'freeze_warehouses' : 'unfreeze_warehouses');
-    fd.append('department_ids', JSON.stringify(ids));
+    fd.append('items', JSON.stringify(items));
     try {
       const res = await fetch(`${this.baseUrl}/api/phv.php`, { method: 'POST', body: fd });
       const data = await res.json();
