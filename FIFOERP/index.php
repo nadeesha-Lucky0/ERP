@@ -4039,7 +4039,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                   </tr>
                 </thead>
                 <tbody id="usersTableBody">
-                  <?php foreach ($allUsers as $u): ?>
+                  <?php foreach ($allUsers as $u): if (empty($u['location_id'])) continue; ?>
                     <tr id="user-row-<?= $u['id'] ?>">
                       <td>
                         <div style="display: flex; align-items: center; gap: 10px;">
