@@ -827,9 +827,9 @@ try {
                     SELECT l.id as location_id, l.code as station_code, l.name as station_name,
                            d.id, d.code, d.name,
                            COALESCE(f.is_frozen, 0) as is_frozen, f.frozen_at, f.frozen_by
-                    FROM locations l
-                    CROSS JOIN departments d
-                    LEFT JOIN erp_warehouse_freeze f ON f.location_id = l.id AND f.department_id = d.id
+                    FROM departments d
+                    JOIN locations l ON l.id = d.location_id
+                    LEFT JOIN erp_warehouse_freeze f ON f.location_id = d.location_id AND f.department_id = d.id
                     WHERE l.status = 'active' AND d.status = 'active'
                     ORDER BY l.code ASC, d.name ASC
                 ")->fetchAll();
@@ -839,10 +839,10 @@ try {
                     SELECT l.id as location_id, l.code as station_code, l.name as station_name,
                            d.id, d.code, d.name,
                            COALESCE(f.is_frozen, 0) as is_frozen, f.frozen_at, f.frozen_by
-                    FROM locations l
-                    CROSS JOIN departments d
-                    LEFT JOIN erp_warehouse_freeze f ON f.location_id = l.id AND f.department_id = d.id
-                    WHERE l.id = :loc AND d.status = 'active'
+                    FROM departments d
+                    JOIN locations l ON l.id = d.location_id
+                    LEFT JOIN erp_warehouse_freeze f ON f.location_id = d.location_id AND f.department_id = d.id
+                    WHERE d.location_id = :loc AND d.status = 'active'
                     ORDER BY d.name ASC
                 ");
                 $st->execute([':loc' => $targetLoc]);

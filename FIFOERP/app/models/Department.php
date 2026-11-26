@@ -94,7 +94,7 @@ class Department {
                    l.name as location_name,
                    l.code as location_code,
                    l.type as location_type,
-                   (SELECT COUNT(*) FROM users u WHERE u.department = d.name) as user_count
+                   (SELECT COUNT(*) FROM users u WHERE u.department = d.name AND (u.location_id = d.location_id OR (u.location_id IS NULL AND d.location_id IS NULL))) as user_count
             FROM departments d
             LEFT JOIN locations l ON d.location_id = l.id
             WHERE 1=1
