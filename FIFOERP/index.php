@@ -2057,131 +2057,117 @@ require_once __DIR__ . '/views/layouts/header.php';
           </div>
         </div>
 
-        <!-- Official AV/1/A Sheet Container -->
-        <div class="desk-card" style="padding: 24px 26px; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif;">
-          <div style="border: 1.5px solid #000; padding: 6px 14px; text-align: center; font-size: 13px; margin: 0 auto 14px auto; max-width: 780px;">
-            <strong>Annual Verification of Stores -</strong>
-            <span id="pvEditYear"><?= date('Y') ?></span>
-            &nbsp;&nbsp;&nbsp;&nbsp;<span id="pvEditWarehouse">-</span>
-            &nbsp;&nbsp;&nbsp;&nbsp;<strong>/ Cost Center -</strong>
-            <span id="pvEditCostCenter">-</span>
-          </div>
-
-          <div style="display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 12px; gap: 16px; flex-wrap: wrap;">
-            <div style="display: grid; grid-template-columns: 110px auto; row-gap: 3px;">
-              <div>ORIGINAL</div><div>Accountant</div>
-              <div>DUPLICATE</div><div>Province / Complex</div>
-              <div>TRIPLCATE</div><div>Store Keeper/ES(CSC)</div>
-              <div>Fourth Copy</div><div>Branch Copy</div>
+          <!-- Official Physical Verification Sheet (Same 8-column INPHVRPT01 layout as Count Entry) -->
+          <div class="desk-card" style="padding: 28px 32px; background: #fff; color: #000; font-family: Arial, Helvetica, sans-serif;">
+            <div style="text-align: center; margin-bottom: 6px;">
+              <div style="font-size: 16px; font-weight: 700; color: #000;">Electricity Generation Lanka (Pvt) Ltd</div>
+              <div style="font-size: 12px; color: #000; margin-top: 2px;">Physical Verification Sheet</div>
             </div>
-            <div style="display: grid; grid-template-columns: 130px 160px; row-gap: 3px;">
-              <div style="text-align: right; padding-right: 12px;">From Ref :</div><div>AV/1/A</div>
-              <div style="text-align: right; padding-right: 12px;">Sheet No :</div><div id="pvEditSheetNo">-</div>
-              <div style="text-align: right; padding-right: 12px;">Date of Verification :</div><div><input type="date" id="pvEditDate" value="<?= date('Y-m-d') ?>" style="border: none; border-bottom: 1px dotted #000; font-size: 11px; padding: 0 2px; background: transparent;"></div>
-            </div>
-          </div>
 
-          <div class="desk-table-wrapper" style="border: 1.5px solid #000; overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; color: #000;">
-              <thead>
-                <tr style="border-bottom: 1px solid #000; background: #fff;">
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">1</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 6px; text-align: center; font-weight: 700;">2</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">3</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">4</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">5</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">6</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">7</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">8</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">9</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">10</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">11</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">12</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">13</th>
-                  <th style="border-right: 1px solid #000; padding: 3px 4px; text-align: center; font-weight: 700;">14</th>
-                  <th style="padding: 3px 4px; text-align: center; font-weight: 700;">15</th>
-                </tr>
-                <tr style="border-bottom: 1.5px solid #000; background: #fff;">
-                  <th style="border-right: 1px solid #000; padding: 4px; text-align: center; width: 32px;">SNO</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 6px; text-align: center; min-width: 190px;">Mat Code - Description</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 5px; text-align: center; width: 105px;">Batch ID</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 3px; text-align: center; width: 40px;">GRD CD</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 3px; text-align: center; width: 38px;">UOM</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 64px;">Stock Price (Rs)</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 52px;">Stock Book Qty</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: center; width: 68px;">Physical Qty</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 50px;">Surplus Qty</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 52px;">Shortage Qty</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 68px;">Stock Book Val(Rs)</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 68px;">Physical Val(Rs)</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 62px;">Surplus Val(Rs)</th>
-                  <th style="border-right: 1px solid #000; padding: 4px 4px; text-align: right; width: 64px;">Shortage Val(Rs)</th>
-                  <th style="padding: 4px 6px; text-align: center; min-width: 100px;">Remarks</th>
-                </tr>
-              </thead>
-              <tbody id="pvEditTableBody"></tbody>
-            </table>
-          </div>
-
-          <div style="border: 1.5px solid #000; border-top: none; padding: 8px 14px; display: grid; grid-template-columns: 120px 1fr 1fr; gap: 12px; font-size: 11px; font-weight: 700; align-items: center;">
-            <div style="font-size: 13px;">Total Values</div>
-            <div style="display: grid; grid-template-columns: 140px 100px; row-gap: 4px;">
-              <div>Stock Book Total</div><div id="pvEditTotalBookVal" style="text-align: right;">0.00</div>
-              <div>Physical Value Total</div><div id="pvEditTotalPhysVal" style="text-align: right;">0.00</div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; margin-bottom: 6px; gap: 16px; flex-wrap: wrap;">
+              <div style="display: grid; grid-template-columns: 110px auto; row-gap: 4px;">
+                <div>Report ID</div><div id="pvEditReportId">INPHVRPT01</div>
+                <div>Generated By</div><div id="pvEditGenBy">-</div>
+              </div>
+              <div style="display: grid; grid-template-columns: 65px 150px; row-gap: 4px;">
+                <div>Date</div><div id="pvEditDate"><?= date('F d, Y') ?></div>
+                <div>Time</div><div id="pvEditTime"><?= date('h:i:s A') ?></div>
+                <div>Page</div><div id="pvEditPageTop">Page 1 of 1</div>
+              </div>
             </div>
-            <div style="display: grid; grid-template-columns: 130px 100px; row-gap: 4px;">
-              <div>Surplus Total</div><div id="pvEditTotalSurplusVal" style="text-align: right;">0.00</div>
-              <div>Shortage Total</div><div id="pvEditTotalShortageVal" style="text-align: right;">0.00</div>
-            </div>
-          </div>
 
-          <div style="display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap;">
-            <div style="flex: 1.1; min-width: 320px; border: 1.2px solid #000; padding: 10px 12px;">
-              <div style="font-size: 11px; margin-bottom: 6px;">We do hereby certify that stocks are physically verified as per the given statement</div>
-              <div style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">Verifiers</div>
-              <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+            <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; height: 3px; margin: 6px 0;"></div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin: 6px 0; gap: 16px; flex-wrap: wrap;">
+              <div style="display: grid; grid-template-columns: 110px auto; row-gap: 4px;">
+                <div>Document Profile</div><div id="pvEditDocProfile">PHYSICAL VERIFICATION</div>
+                <div>Department ID</div><div id="pvEditCostCenter">-</div>
+              </div>
+              <div style="display: grid; grid-template-columns: 80px 160px; row-gap: 4px;">
+                <div>Sheet No</div><div id="pvEditSheetNo">-</div>
+                <div>Warehouse</div><div id="pvEditWarehouse">-</div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; height: 3px; margin: 6px 0 12px 0;"></div>
+
+            <div class="desk-table-wrapper" style="border: 1.5px solid #000; overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000;">
                 <thead>
-                  <tr>
-                    <th style="border: 1px solid #000; padding: 3px 6px; text-align: center; width: 34%;">Name</th>
-                    <th style="border: 1px solid #000; padding: 3px 6px; text-align: center; width: 33%;">Designation</th>
-                    <th style="border: 1px solid #000; padding: 3px 6px; text-align: center; width: 33%;">Signature</th>
+                  <tr style="border-bottom: 1px solid #000; background: #fff;">
+                    <th style="padding: 5px 8px; text-align: center; font-weight: 500; border-right: 2px solid #000; min-width: 260px;">Mat Code &amp; Name</th>
+                    <th style="padding: 5px 8px; text-align: center; font-weight: 500; border-right: 1px solid #000; width: 125px;">Batch</th>
+                    <th style="padding: 5px 6px; text-align: center; font-weight: 500; border-right: 1px solid #000; width: 65px; font-size: 10px;">Current Gr</th>
+                    <th style="padding: 5px 6px; text-align: center; font-weight: 500; border-right: 1px solid #000; width: 55px;">UOM</th>
+                    <th style="padding: 5px 8px; text-align: center; font-weight: 500; border-right: 1px solid #000; width: 75px;">UP</th>
+                    <th style="padding: 5px 6px; text-align: center; font-weight: 500; border-right: 1px solid #000; width: 90px;">Counted</th>
+                    <th style="padding: 5px 6px; text-align: center; font-weight: 500; border-right: 1px solid #000; width: 85px;">Damages</th>
+                    <th style="padding: 5px 6px; text-align: center; font-weight: 500; min-width: 120px;">Remarks</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr><td style="border: 1px solid #000; height: 20px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
-                  <tr><td style="border: 1px solid #000; height: 20px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
-                  <tr><td style="border: 1px solid #000; height: 20px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
-                </tbody>
+                <tbody id="pvEditTableBody"></tbody>
               </table>
             </div>
 
-            <div style="flex: 1; min-width: 320px; border: 1.2px solid #000; padding: 10px 12px; font-size: 10.5px;">
-              <div style="text-align: center; margin-bottom: 8px;">
-                <div>Agreed for the above physical verification</div>
-                <div style="margin-top: 8px;">..................................................</div>
-                <div style="font-size: 9.5px;">Signature of Stock Keeper / Electrical Superintendent</div>
+            <div style="display: flex; gap: 10px; margin-top: 12px; align-items: stretch; flex-wrap: wrap;">
+              <div style="flex: 1.65; min-width: 340px; border: 1.2px solid #000; padding: 10px 12px;">
+                <div style="font-size: 11px; margin-bottom: 8px;">We do hereby clarify the stocks were physically counted as per the given statement</div>
+                <div style="font-size: 10.5px; margin-bottom: 4px;">Verifires</div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; margin-bottom: 10px;">
+                  <thead>
+                    <tr>
+                      <th style="border: 1px solid #000; padding: 2px 6px; font-weight: 500; text-align: center; width: 34%;">Name</th>
+                      <th style="border: 1px solid #000; padding: 2px 6px; font-weight: 500; text-align: center; width: 33%;">Designation</th>
+                      <th style="border: 1px solid #000; padding: 2px 6px; font-weight: 500; text-align: center; width: 33%;">Signature</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="border: 1px solid #000; height: 19px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                    <tr><td style="border: 1px solid #000; height: 19px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                    <tr><td style="border: 1px solid #000; height: 19px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                  </tbody>
+                </table>
+
+                <div style="font-size: 10.5px; margin-bottom: 4px;">CEB Observation Team</div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 10.5px;">
+                  <tbody>
+                    <tr><td style="border: 1px solid #000; height: 19px; width: 34%;"></td><td style="border: 1px solid #000; width: 33%;"></td><td style="border: 1px solid #000; width: 33%;"></td></tr>
+                    <tr><td style="border: 1px solid #000; height: 19px;"></td><td style="border: 1px solid #000;"></td><td style="border: 1px solid #000;"></td></tr>
+                  </tbody>
+                </table>
               </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>
-                  <div style="font-weight: 700; margin-bottom: 3px;">Valued By</div>
-                  <div style="border: 1px solid #000; padding: 6px 8px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Name</span><span>........................</span></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Signature</span><span>........................</span></div>
-                  </div>
+
+              <div style="flex: 1; min-width: 240px; display: flex; flex-direction: column;">
+                <div style="margin-bottom: 8px; font-size: 12px;">
+                  <div style="text-align: center; letter-spacing: 1px; font-size: 10px;">==============</div>
+                  <div style="display: flex; justify-content: space-between;"><span>Total Quantity</span><strong id="pvEditTotalQty">0</strong></div>
+                  <div style="text-align: center; letter-spacing: 1px; font-size: 10px;">==============</div>
                 </div>
-                <div>
-                  <div style="font-weight: 700; margin-bottom: 3px;">Checked By</div>
-                  <div style="border: 1px solid #000; padding: 6px 8px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px;"><span>Name</span><span>........................</span></div>
-                    <div style="display: flex; justify-content: space-between;"><span>Signature</span><span>........................</span></div>
+
+                <div style="border: 1.2px solid #000; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div style="padding: 8px 10px; font-size: 10.5px;">
+                    <div style="margin-bottom: 6px;">Agreed for Above Physical Count</div>
+                    <div style="margin-bottom: 4px;">SK / ES</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><span>Name</span><span>............................................</span></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;"><span>Signature</span><span>............................................</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span>Approved Date</span><span>............................................</span></div>
                   </div>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+                    <tr>
+                      <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 4px 6px; width: 78px; vertical-align: top;">Notes for Remarks</td>
+                      <td style="border-top: 1px solid #000; padding: 4px 6px;"><strong>S:</strong> slow moving | <strong>N:</strong> non moving | <strong>D:</strong> Damage</td>
+                    </tr>
+                    <tr>
+                      <td style="border-top: 1px solid #000; border-right: 1px solid #000; padding: 4px 6px; vertical-align: top;">Notes to Stock Category</td>
+                      <td style="border-top: 1px solid #000; padding: 4px 6px;">1.Electrical items 2. Consumables 3.Fuel 4.Spare Parts 5. Goods in transit</td>
+                    </tr>
+                  </table>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div style="text-align: right; font-size: 11px; margin-top: 10px; padding-right: 24px;" id="pvEditPageBot">Page 1 of 1</div>
-        </div>
+            <div style="text-align: right; font-size: 11.5px; margin-top: 10px; padding-right: 24px;" id="pvEditPageBot">Page 1 of 1</div>
+          </div>
         </div>
       </div>
 

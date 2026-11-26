@@ -2516,12 +2516,17 @@ const Desk = {
 
           const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
           const selectedWh = document.getElementById('sheetWarehouse')?.value || 'Central Main Store';
+          const pageLabel = `Page ${Desk.currentPvEditPage} of ${totalSheets}`;
+          setTxt('pvEditReportId', meta.report_id || 'INPHVRPT01');
+          setTxt('pvEditGenBy', (meta.generated_by || 'SYSTEM').toUpperCase());
+          setTxt('pvEditDocProfile', `PHYSICAL VERIFICATION - ${(meta.station_name || 'POWER STATION').toUpperCase()} - ${meta.station_code || '000.00'}`);
           setTxt('pvEditWarehouse', selectedWh);
           setTxt('pvEditCostCenter', meta.department_id || meta.station_code || '-');
           setTxt('pvEditSheetNo', meta.sheet_no || '-');
           const subIdx = submittedPages.indexOf(Desk.currentPvEditPage) + 1;
           setTxt('pvEditPageBadge', `Sheet ${Desk.currentPvEditPage} (${subIdx} of ${submittedPages.length} Submitted)`);
-          setTxt('pvEditPageBot', `Page ${Desk.currentPvEditPage} of ${totalSheets}`);
+          setTxt('pvEditPageTop', pageLabel);
+          setTxt('pvEditPageBot', pageLabel);
 
           const pageSelect = document.getElementById('pvEditPageSelect');
           if (pageSelect) {
@@ -2532,8 +2537,12 @@ const Desk = {
             }).join('');
           }
 
-          tbody.innerHTML = Desk.buildAv1aRowsHtml(entries);
-          Desk.recalcPvEntryTotals('pvEditTableBody', 'pvEditTotal');
+          tbody.innerHTML = Desk.buildCountEntrySheetRowsHtml(entries, false);
+          let editTot = 0;
+          document.querySelectorAll('#pvEditTableBody .pv-phys-input').forEach(inp => {
+            editTot += parseFloat(inp.value || 0) || 0;
+          });
+          setTxt('pvEditTotalQty', editTot.toLocaleString('en-US', { maximumFractionDigits: 2 }));
         }
       });
   },
