@@ -2257,7 +2257,7 @@ const Desk = {
       const grade = String(e.grade || 'NEW').toUpperCase();
       const uom = String(e.uom || 'NO').toUpperCase();
       const up = parseFloat(e.unit_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const hasEntered = !!e.verified_by || readOnly;
+      const hasEntered = !!e.verified_by;
       const physQty = hasEntered && e.physical_quantity !== undefined && e.physical_quantity !== null ? e.physical_quantity : '';
       const dmgQty = (e.damages !== undefined && e.damages !== null && Number(e.damages) > 0) ? e.damages : '';
 
