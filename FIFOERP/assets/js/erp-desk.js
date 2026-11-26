@@ -2257,8 +2257,9 @@ const Desk = {
       const grade = String(e.grade || 'NEW').toUpperCase();
       const uom = String(e.uom || 'NO').toUpperCase();
       const up = parseFloat(e.unit_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const physQty = e.physical_quantity !== undefined && e.physical_quantity !== null ? e.physical_quantity : (e.book_quantity ?? 0);
-      const dmgQty = e.damages !== undefined && e.damages !== null ? e.damages : 0;
+      const hasEntered = !!e.verified_by || readOnly;
+      const physQty = hasEntered && e.physical_quantity !== undefined && e.physical_quantity !== null ? e.physical_quantity : '';
+      const dmgQty = (e.damages !== undefined && e.damages !== null && Number(e.damages) > 0) ? e.damages : '';
 
       return `
         <tr data-entry-id="${e.id}" data-book-qty="${e.book_quantity || 0}" data-cost="${e.unit_cost || 0}">
