@@ -126,7 +126,8 @@ try {
                     }
                 } catch (\Throwable $e) {}
 
-                $stWh = $central->query("SELECT code, name FROM departments WHERE status = 'active' ORDER BY name ASC");
+                $stWh = $central->prepare("SELECT code, name FROM departments WHERE status = 'active' AND location_id = :loc ORDER BY name ASC");
+                $stWh->execute([':loc' => $locationId]);
                 $depts = $stWh->fetchAll();
                 foreach ($depts as $d) {
                     $code = trim((string)($d['code'] ?? ''));

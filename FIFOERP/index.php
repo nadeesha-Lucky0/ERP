@@ -1671,7 +1671,14 @@ require_once __DIR__ . '/views/layouts/header.php';
         $pvActiveWarehouses = [];
         try {
           $pvDb = \App\Config\Database::getConnection();
-          $pvActiveWarehouses = $pvDb->query("SELECT code, name FROM departments WHERE status = 'active' ORDER BY name ASC")->fetchAll();
+          $pvLocId = $_SESSION['user']['location_id'] ?? null;
+          if (!empty($pvLocId)) {
+            $stPvWh = $pvDb->prepare("SELECT code, name FROM departments WHERE status = 'active' AND location_id = ? ORDER BY name ASC");
+            $stPvWh->execute([(int)$pvLocId]);
+            $pvActiveWarehouses = $stPvWh->fetchAll();
+          } else {
+            $pvActiveWarehouses = $pvDb->query("SELECT DISTINCT code, name FROM departments WHERE status = 'active' ORDER BY name ASC")->fetchAll();
+          }
         } catch (\Throwable $e) {}
         ?>
         <!-- Filter and Generate Parameters -->
