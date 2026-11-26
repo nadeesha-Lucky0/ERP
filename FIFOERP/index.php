@@ -1630,7 +1630,10 @@ require_once __DIR__ . '/views/layouts/header.php';
               <div style="font-weight: 700; font-size: 14px; color: var(--text-dark);">Warehouse / Branch Freeze Control</div>
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Select warehouses/departments below and freeze them before Physical Verification. Frozen warehouses cannot perform GRN or Material Issue transactions.</div>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <select id="freezeStationFilter" class="desk-form-control" style="display: none; width: auto; min-width: 220px; height: 32px; font-size: 12px; font-weight: 600;" onchange="Desk.loadWarehouseFreezeTables()">
+                <option value="all">All Power Stations</option>
+              </select>
               <button class="desk-btn desk-btn-default desk-btn-sm" onclick="Desk.loadWarehouseFreezeTables()">
                 <?= Icon::get('refresh', 13) ?> Refresh
               </button>
@@ -1646,6 +1649,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                   <th style="width: 40px; text-align: center;">
                     <input type="checkbox" id="freezeSelectAll" onchange="document.querySelectorAll('.freeze-wh-chk').forEach(c => { if(!c.disabled) c.checked = this.checked; })">
                   </th>
+                  <th>Power Station</th>
                   <th>Code</th>
                   <th>Department / Warehouse Name</th>
                   <th>Status</th>
@@ -1654,7 +1658,7 @@ require_once __DIR__ . '/views/layouts/header.php';
                 </tr>
               </thead>
               <tbody id="freezeWarehousesTableBody">
-                <tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Loading warehouses...</td></tr>
+                <tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 20px;">Loading warehouses...</td></tr>
               </tbody>
             </table>
           </div>

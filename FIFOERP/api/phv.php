@@ -808,21 +808,51 @@ try {
             $central = Database::getConnection();
             $central->exec("CREATE TABLE IF NOT EXISTS erp_warehouse_freeze (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                department_id INT NOT NULL UNIQUE,
+                location_id INT NOT NULL DEFAULT 1,
+                department_id INT NOT NULL,
                 department_code VARCHAR(50) DEFAULT '',
                 department_name VARCHAR(150) DEFAULT '',
                 is_frozen TINYINT(1) DEFAULT 0,
                 frozen_at DATETIME NULL,
-                frozen_by VARCHAR(100) NULL
+                frozen_by VARCHAR(100) NULL,
+                UNIQUE KEY uniq_loc_dept (location_id, department_id)
             )");
-            $rows = $central->query("
-                SELECT d.id, d.code, d.name, COALESCE(f.is_frozen, 0) as is_frozen, f.frozen_at, f.frozen_by
-                FROM departments d
-                LEFT JOIN erp_warehouse_freeze f ON f.department_id = d.id
-                WHERE d.status = 'active'
-                ORDER BY d.name ASC
-            ")->fetchAll();
-            Response::success('Warehouse freeze status loaded', ['warehouses' => $rows]);
+            $u = $_SESSION['user'] ?? [];
+            $isGlobal = empty($u['location_id']) || in_array($u['role_name'] ?? '', ['super_admin', 'technical_unit'], true);
+            $stations = $central->query("SELECT id, code, name FROM locations WHERE status = 'active' ORDER BY code ASC, name ASC")->fetchAll();
+            $reqLoc = $_GET['location_id'] ?? ($isGlobal ? 'all' : (string)$locationId);
+
+            if ($isGlobal && $reqLoc === 'all') {
+                $rows = $central->query("
+                    SELECT l.id as location_id, l.code as station_code, l.name as station_name,
+                           d.id, d.code, d.name,
+                           COALESCE(f.is_frozen, 0) as is_frozen, f.frozen_at, f.frozen_by
+                    FROM locations l
+                    CROSS JOIN departments d
+                    LEFT JOIN erp_warehouse_freeze f ON f.location_id = l.id AND f.department_id = d.id
+                    WHERE l.status = 'active' AND d.status = 'active'
+                    ORDER BY l.code ASC, d.name ASC
+                ")->fetchAll();
+            } else {
+                $targetLoc = $isGlobal ? (int)$reqLoc : $locationId;
+                $st = $central->prepare("
+                    SELECT l.id as location_id, l.code as station_code, l.name as station_name,
+                           d.id, d.code, d.name,
+                           COALESCE(f.is_frozen, 0) as is_frozen, f.frozen_at, f.frozen_by
+                    FROM locations l
+                    CROSS JOIN departments d
+                    LEFT JOIN erp_warehouse_freeze f ON f.location_id = l.id AND f.department_id = d.id
+                    WHERE l.id = :loc AND d.status = 'active'
+                    ORDER BY d.name ASC
+                ");
+                $st->execute([':loc' => $targetLoc]);
+                $rows = $st->fetchAll();
+            }
+            Response::success('Warehouse freeze status loaded', [
+                'warehouses' => $rows,
+                'stations' => $stations,
+                'is_global' => $isGlobal
+            ]);
             break;
 
         case 'freeze_warehouses':
@@ -830,18 +860,38 @@ try {
             $central = Database::getConnection();
             $central->exec("CREATE TABLE IF NOT EXISTS erp_warehouse_freeze (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                department_id INT NOT NULL UNIQUE,
+                location_id INT NOT NULL DEFAULT 1,
+                department_id INT NOT NULL,
                 department_code VARCHAR(50) DEFAULT '',
                 department_name VARCHAR(150) DEFAULT '',
                 is_frozen TINYINT(1) DEFAULT 0,
                 frozen_at DATETIME NULL,
-                frozen_by VARCHAR(100) NULL
+                frozen_by VARCHAR(100) NULL,
+                UNIQUE KEY uniq_loc_dept (location_id, department_id)
             )");
-            $rawIds = $_POST['department_ids'] ?? '';
-            $ids = is_array($rawIds) ? $rawIds : (json_decode($rawIds, true) ?: array_filter(explode(',', $rawIds)));
-            $ids = array_map('intval', $ids);
-            $ids = array_filter($ids, fn($v) => $v > 0);
-            if (empty($ids)) {
+
+            // Support per-station items [{location_id, department_id}] or legacy department_ids
+            $pairs = [];
+            if (!empty($_POST['items'])) {
+                $decoded = json_decode((string)$_POST['items'], true);
+                if (is_array($decoded)) {
+                    foreach ($decoded as $p) {
+                        $lid = (int)($p['location_id'] ?? $locationId);
+                        $did = (int)($p['department_id'] ?? 0);
+                        if ($lid > 0 && $did > 0) $pairs[] = ['location_id' => $lid, 'department_id' => $did];
+                    }
+                }
+            } else {
+                $rawIds = $_POST['department_ids'] ?? '';
+                $ids = is_array($rawIds) ? $rawIds : (json_decode($rawIds, true) ?: array_filter(explode(',', $rawIds)));
+                $reqLoc = (int)($_POST['location_id'] ?? $locationId);
+                foreach ($ids as $did) {
+                    $did = (int)$did;
+                    if ($did > 0) $pairs[] = ['location_id' => $reqLoc, 'department_id' => $did];
+                }
+            }
+
+            if (empty($pairs)) {
                 Response::error('Please select at least one warehouse/department.');
             }
             $isFreeze = ($action === 'freeze_warehouses') ? 1 : 0;
@@ -861,8 +911,8 @@ try {
             }
             $stDept = $central->prepare("SELECT id, code, name FROM departments WHERE id = ?");
             $stUpsert = $central->prepare("
-                INSERT INTO erp_warehouse_freeze (department_id, department_code, department_name, is_frozen, frozen_at, frozen_by)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO erp_warehouse_freeze (location_id, department_id, department_code, department_name, is_frozen, frozen_at, frozen_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     department_code = VALUES(department_code),
                     department_name = VALUES(department_name),
@@ -870,11 +920,14 @@ try {
                     frozen_at = VALUES(frozen_at),
                     frozen_by = VALUES(frozen_by)
             ");
-            foreach ($ids as $did) {
+            foreach ($pairs as $pair) {
+                $did = $pair['department_id'];
+                $lid = $pair['location_id'];
                 $stDept->execute([$did]);
                 $d = $stDept->fetch();
                 if ($d) {
                     $stUpsert->execute([
+                        $lid,
                         $did,
                         $d['code'] ?? '',
                         $d['name'] ?? '',

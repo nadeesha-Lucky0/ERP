@@ -115,7 +115,8 @@ try {
             try {
                 $frozenKeys = [];
                 try {
-                    $stFrozen = $central->query("SELECT department_code, department_name FROM erp_warehouse_freeze WHERE is_frozen = 1");
+                    $stFrozen = $central->prepare("SELECT department_code, department_name FROM erp_warehouse_freeze WHERE is_frozen = 1 AND location_id = :loc");
+                    $stFrozen->execute([':loc' => $locationId]);
                     foreach ($stFrozen->fetchAll() as $fr) {
                         $fc = strtolower(trim((string)($fr['department_code'] ?? '')));
                         $fn = strtolower(trim((string)($fr['department_name'] ?? '')));
