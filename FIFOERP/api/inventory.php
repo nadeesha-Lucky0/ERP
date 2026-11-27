@@ -527,6 +527,7 @@ try {
             // 4. Reorder level for this station/SKU
             $reorderLevel = 0;
             try {
+                $central = Database::getConnection();
                 $stReord = $central->prepare("
                     SELECT COALESCE(s.min_reorder_level, 0) 
                     FROM station_items s
@@ -537,7 +538,7 @@ try {
                 ");
                 $stReord->execute([':sku' => $sku, ':loc' => $locationId]);
                 $reorderLevel = (int)($stReord->fetchColumn() ?: 0);
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 $reorderLevel = 0;
             }
 
