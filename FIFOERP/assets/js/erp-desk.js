@@ -1155,7 +1155,7 @@ const Desk = {
           </td>
           <td>
             <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-              ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.openEditIssue(${d.id})" title="Edit quantities and job destination">Edit</button>` : ''}
+              ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue', 'Unposted Document Edit')" title="Edit unposted issue details in full form">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue')" title="Edit draft details in top form">Edit</button>` : ''}
               ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
               ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
