@@ -5979,18 +5979,20 @@ const Desk = {
       return;
     }
 
-    const width = Math.max(rect.width, 440);
-    let top = rect.bottom + 4;
-    let left = rect.left;
+    const width = rect.width;
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const actualHeight = dd.offsetHeight || 200;
 
+    let left = rect.left;
     if (left + width > window.innerWidth - 10) {
       left = window.innerWidth - width - 10;
     }
     if (left < 10) left = 10;
 
-    const approxHeight = 310;
-    if (top + approxHeight > window.innerHeight && rect.top > approxHeight) {
-      top = rect.top - approxHeight - 4;
+    let top = rect.bottom + 2;
+    if (spaceBelow < actualHeight && spaceAbove > spaceBelow) {
+      top = Math.max(8, rect.top - actualHeight - 2);
     }
 
     dd.style.top = `${top}px`;
@@ -6017,6 +6019,7 @@ const Desk = {
     triggerEl.classList.add('active');
 
     dd.style.display = 'block';
+    this.renderFloatingItemList(context, rowId, '');
     this.positionFloatingDropdown();
 
     const searchInput = dd.querySelector('#floatingItemSearchInput');
@@ -6024,8 +6027,6 @@ const Desk = {
       searchInput.value = '';
       setTimeout(() => searchInput.focus(), 50);
     }
-
-    this.renderFloatingItemList(context, rowId, '');
   },
 
   closeFloatingItemDropdown() {
