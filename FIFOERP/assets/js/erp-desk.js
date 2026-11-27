@@ -5793,11 +5793,12 @@ const Desk = {
           <td>
             ${(() => {
               const allowDec = this.isDecimalUom(row.uom);
-              const qtyVal = allowDec ? parseFloat(row.qty || 0).toFixed(3) : Math.round(parseFloat(row.qty || 0));
+              const isEmptyQty = row.qty === '' || row.qty === null || row.qty === undefined;
+              const qtyVal = isEmptyQty ? '' : (allowDec ? parseFloat(row.qty).toFixed(3) : Math.round(parseFloat(row.qty)));
               const stepVal = allowDec ? '0.001' : '1';
               const onChg = allowDec
-                ? `Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)`
-                : `const v = Math.max(0, Math.round(parseFloat(this.value)||0)); this.value = v; Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', v)`;
+                ? `const v = this.value === '' ? '' : (parseFloat(this.value)||0); Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', v)`
+                : `const v = this.value === '' ? '' : Math.max(0, Math.round(parseFloat(this.value)||0)); this.value = v; Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', v)`;
               const maxAttr = (context === 'issue' && row.avail_qty !== undefined) ? `max="${row.avail_qty}"` : '';
               return `<input type="number" step="${stepVal}" min="0" ${maxAttr} class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${qtyVal}" onchange="${onChg}">`;
             })()}
@@ -5843,7 +5844,7 @@ const Desk = {
       warehouse: defWh,
       item_code: '',
       item_name: '',
-      qty: 1.0,
+      qty: (typeof context !== 'undefined' ? context : (typeof ctx !== 'undefined' ? ctx : 'grn')) === 'issue' ? '' : 1.0,
       basic_rate: 0.0,
       uom: 'Nos'
     });
@@ -6577,7 +6578,7 @@ const Desk = {
           warehouse: defWh,
           item_code: mat.sku,
           item_name: mat.item_name,
-          qty: 1.0,
+          qty: (typeof context !== 'undefined' ? context : (typeof ctx !== 'undefined' ? ctx : 'grn')) === 'issue' ? '' : 1.0,
           basic_rate: parseFloat(mat.unit_price || 0),
           uom: mat.uom || 'Nos'
         });
@@ -6590,7 +6591,7 @@ const Desk = {
         warehouse: defWh,
         item_code: code,
         item_name: 'Custom / Scanned Item',
-        qty: 1.0,
+        qty: (typeof context !== 'undefined' ? context : (typeof ctx !== 'undefined' ? ctx : 'grn')) === 'issue' ? '' : 1.0,
         basic_rate: 0.0,
         uom: 'Nos'
       });
@@ -6695,7 +6696,7 @@ const Desk = {
             item_code: sku,
             item_name: name,
             uom: uom,
-            qty: 1.0,
+            qty: (typeof context !== 'undefined' ? context : (typeof ctx !== 'undefined' ? ctx : 'grn')) === 'issue' ? '' : 1.0,
             basic_rate: rate
           });
         }
@@ -7757,7 +7758,7 @@ const Desk = {
             item_code: newItem.sku,
             item_name: newItem.item_name,
             uom: newItem.uom || 'Nos',
-            qty: 1.0,
+            qty: (typeof context !== 'undefined' ? context : (typeof ctx !== 'undefined' ? ctx : 'grn')) === 'issue' ? '' : 1.0,
             basic_rate: parseFloat(newItem.unit_price || 0)
           });
         }
