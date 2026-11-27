@@ -1036,10 +1036,14 @@ const Desk = {
     let allDocs = this.cachedIssues || [];
     const filter = this.currentIssueFilter || 'Entry';
 
+    const issueState = this.stockEntryState ? this.stockEntryState['issue'] : null;
+    const isEditingIssue = !!(issueState && issueState.isEditing && issueState.editingDocId);
+    const showIssueEntry = (filter === 'Entry') || (filter === 'Unposted Document Edit' && isEditingIssue && issueState.editingFromFilter === 'Unposted Document Edit');
+
     const issueEntryCard = document.getElementById('bodyIssueEntryCard');
     if (issueEntryCard) {
-      issueEntryCard.style.display = (filter === 'Entry') ? 'block' : 'none';
-      if (filter === 'Entry') {
+      issueEntryCard.style.display = showIssueEntry ? 'block' : 'none';
+      if (showIssueEntry && !isEditingIssue) {
         this.initStockEntryForm('issue');
         this.populateTaskBatches();
         this.initIssueFormLookups();
@@ -1155,7 +1159,7 @@ const Desk = {
           </td>
           <td>
             <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-              ${canEdit ? `<button class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue', 'Unposted Document Edit')" title="Edit unposted issue details in full form">Edit</button>` : ''}
+              ${canEdit ? `<button type="button" class="desk-btn desk-btn-default desk-btn-sm" style="color: #0d9488; font-weight: 600;" onclick="event.stopPropagation(); Desk.editDraft(${d.id}, 'issue', 'Unposted Document Edit')" title="Edit unposted issue details in full form">Edit</button>` : ''}
               ${sLower === 'draft' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.editDraft(${d.id}, 'issue')" title="Edit draft details in top form">Edit</button>` : ''}
               ${(filter === 'Validation' || filter === 'All') && sLower === 'pending validation' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #2563eb; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Validated')" title="Validate document & send to Approval stage">✓ Validate</button>` : ''}
               ${(filter === 'Approval' || filter === 'All') && sLower === 'validated' ? `<button class="desk-btn desk-btn-primary desk-btn-sm" style="background: #0284c7; font-weight: 600;" onclick="Desk.updateDocStatus(${d.id}, 'Approved')" title="Chief Engineer sign-off & send to Posting stage">⭐ Approve</button>` : ''}
@@ -1371,7 +1375,9 @@ const Desk = {
       }
 
       // Smooth scroll to form
-      const formEl = document.getElementById(context === 'grn' ? 'formStockEntry_grn' : 'formStockEntry_issue');
+      const cardEl = document.getElementById(context === 'grn' ? 'bodyGrnEntryCard' : 'bodyIssueEntryCard');
+      if (cardEl) cardEl.style.display = 'block';
+      const formEl = document.getElementById(context === 'grn' ? 'formStockEntry_grn' : 'formStockEntry_issue') || cardEl;
       if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       this.showToast(`Document ${doc.doc_no} loaded! You can now edit and update.`);
