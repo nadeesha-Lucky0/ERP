@@ -4447,6 +4447,100 @@ require_once __DIR__ . '/views/layouts/header.php';
       </div>
     <?php endif; ?>
 
+    <!-- TEMPORARY DEMO TAB: FIFO PROCESS MONITOR -->
+    <div id="tab-fifo-monitor" class="tab-pane" style="display: none;">
+      <div class="desk-page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h1>FIFO Process Monitor <span class="desk-badge badge-draft" style="font-size:0.72rem; vertical-align:middle;">Live Demo View</span></h1>
+          <p>Visual demonstration of GRN &amp; Issue workflows, FIFO batch layers, and exact batch restoration on cancellation.</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <select id="fifoMonitorSkuFilter" class="desk-form-control" style="min-width:220px; height:36px;" onchange="Desk.loadFifoMonitor()">
+            <option value="">All Items (SKUs)</option>
+          </select>
+          <label style="display:flex; align-items:center; gap:6px; font-size:0.84rem; font-weight:600; color:#334155; cursor:pointer;">
+            <input type="checkbox" id="fifoMonitorAutoRefresh" onchange="Desk.toggleFifoMonitorAuto(this.checked)">
+            Auto-Refresh (5s)
+          </label>
+          <button type="button" class="desk-btn desk-btn-primary desk-btn-sm" onclick="Desk.loadFifoMonitor()">Refresh Now</button>
+        </div>
+      </div>
+
+      <!-- GRN & Issue All Sub-parts Flowcards -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:16px; margin-bottom:20px;">
+        <div class="desk-card" style="padding:18px;">
+          <h3 style="margin:0 0 10px 0; font-size:1rem; color:#0f172a;">1. GRN (Goods Receipt) — All Sub-parts Flow</h3>
+          <div id="monitorGrnPipeline" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:0.82rem;"></div>
+          <div style="margin-top:10px; font-size:0.78rem; color:#64748b;">
+            Side Flows: <strong>Unposted Document Edit</strong> &bull; <strong>Unposted Cancellation</strong> &bull; <strong>Posted Cancellation</strong>
+          </div>
+        </div>
+        <div class="desk-card" style="padding:18px;">
+          <h3 style="margin:0 0 10px 0; font-size:1rem; color:#0f172a;">2. Material Issue — All Sub-parts Flow</h3>
+          <div id="monitorIssuePipeline" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; font-size:0.82rem;"></div>
+          <div style="margin-top:10px; font-size:0.78rem; color:#64748b;">
+            Side Flows: <strong>Issue Edit</strong> &bull; <strong>Unposted Cancellation</strong> &bull; <strong>Posted Cancellation (Exact Batch Restore)</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live GRN Batch Layers -->
+      <div class="desk-card" style="margin-bottom:20px;">
+        <div class="desk-card-header">
+          <div>
+            <h3 class="desk-card-title">Live GRN FIFO Batch Queue (Oldest First &rarr; Issued First)</h3>
+            <p class="desk-card-subtitle">Original Received Qty never changes. Free/Remaining Qty updates on Issue and restores to exact batch on Cancel.</p>
+          </div>
+        </div>
+        <div class="desk-table-wrap">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Batch No</th>
+                <th>Received Date</th>
+                <th>SKU / Item</th>
+                <th style="text-align:right;">Original GRN Qty</th>
+                <th style="text-align:right;">Free / Remaining Qty</th>
+                <th style="text-align:right;">Unit Cost</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="monitorBatchesBody">
+              <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Issue -> GRN Batch Allocation Trace -->
+      <div class="desk-card">
+        <div class="desk-card-header">
+          <div>
+            <h3 class="desk-card-title">Live Issue &rarr; GRN Batch Allocation &amp; Cancellation Trace</h3>
+            <p class="desk-card-subtitle">Shows exact GRN batch deductions per Issue. Cancelled Issues restore quantities back to those exact batches.</p>
+          </div>
+        </div>
+        <div class="desk-table-wrap">
+          <table class="desk-table">
+            <thead>
+              <tr>
+                <th>Issue Doc No</th>
+                <th>SKU / Item</th>
+                <th>From GRN Batch (Date)</th>
+                <th style="text-align:right;">Qty Taken</th>
+                <th>Status</th>
+                <th>Created At</th>
+                <th>Cancelled At</th>
+              </tr>
+            </thead>
+            <tbody id="monitorAllocationsBody">
+              <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 

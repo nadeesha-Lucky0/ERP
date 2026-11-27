@@ -256,6 +256,9 @@ const Desk = {
       case 'tab-dashboard':
         this.loadDashboardData();
         break;
+      case 'tab-fifo-monitor':
+        this.loadFifoMonitor();
+        break;
       case 'tab-qoh':
         this.switchQohSubTab(qohSubTabToActivate || this.currentQohSubTab || sessionStorage.getItem('fifoerp_active_qoh_sub') || 'qoh-sub-batch');
         break;
@@ -592,6 +595,97 @@ const Desk = {
     }
     if (subTabId === 'pv-sub-freeze' || subTabId === 'pv-sub-unfreeze') {
       this.loadWarehouseFreezeTables();
+    }
+  },
+
+  toggleFifoMonitorAuto(enabled) {
+    if (this._fifoMonitorTimer) {
+      clearInterval(this._fifoMonitorTimer);
+      this._fifoMonitorTimer = null;
+    }
+    if (enabled) {
+      this._fifoMonitorTimer = setInterval(() => {
+        if (this.currentTab === 'tab-fifo-monitor') this.loadFifoMonitor();
+      }, 5000);
+    }
+  },
+
+  async loadFifoMonitor() {
+    const skuSel = document.getElementById('fifoMonitorSkuFilter');
+    const sku = skuSel ? skuSel.value : '';
+    try {
+      const res = await fetch(`${this.baseUrl}/api/inventory.php?action=get_fifo_monitor&sku=${encodeURIComponent(sku)}`);
+      const json = await res.json();
+      if (!json.success || !json.data) return;
+      const { doc_counts = {}, batches = [], allocations = [], skus = [] } = json.data;
+
+      if (skuSel && skus.length > 0) {
+        const cur = skuSel.value;
+        skuSel.innerHTML = '<option value="">All Items (SKUs)</option>' +
+          skus.map(s => `<option value="${this.escapeHtml(s.sku)}">${this.escapeHtml(s.sku)} - ${this.escapeHtml(s.item_name)}</option>`).join('');
+        skuSel.value = cur;
+      }
+
+      const renderPipe = (elId, counts) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        const steps = [
+          { label: '1. Entry (Draft)', val: counts['Draft'] || 0, bg: '#f1f5f9', col: '#334155' },
+          { label: '2. Validation', val: counts['Pending Validation'] || 0, bg: '#fef3c7', col: '#92400e' },
+          { label: '3. Approval', val: counts['Validated'] || 0, bg: '#dbeafe', col: '#1e40af' },
+          { label: '4. Ready to Post', val: counts['Approved'] || 0, bg: '#ede9fe', col: '#5b21b6' },
+          { label: '5. Posted (FIFO)', val: counts['Posted'] || 0, bg: '#dcfce7', col: '#166534' },
+          { label: 'Cancelled', val: counts['Cancelled'] || 0, bg: '#fee2e2', col: '#991b1b' }
+        ];
+        el.innerHTML = steps.map((s, idx) => `
+          <div style="background:${s.bg}; color:${s.col}; padding:8px 12px; border-radius:8px; font-weight:700;">
+            ${s.label}: <span style="font-size:1rem;">${s.val}</span>
+          </div>${idx < steps.length - 2 ? '<span style="color:#94a3b8;font-weight:700;">&rarr;</span>' : ''}
+        `).join('');
+      };
+      renderPipe('monitorGrnPipeline', doc_counts.GRN || {});
+      renderPipe('monitorIssuePipeline', doc_counts.ISSUE || {});
+
+      const bBody = document.getElementById('monitorBatchesBody');
+      if (bBody) {
+        bBody.innerHTML = batches.length ? batches.map(b => {
+          const isEx = Number(b.remaining_quantity) === 0;
+          const isFrz = b.freeze_status === 'frozen';
+          const badge = isFrz ? 'badge-danger' : (isEx ? 'badge-draft' : 'badge-approved');
+          const stTxt = isFrz ? 'FROZEN' : (isEx ? 'EXHAUSTED' : 'ACTIVE');
+          return `
+            <tr>
+              <td><code>${this.escapeHtml(b.batch_number)}</code></td>
+              <td><strong>${this.escapeHtml(b.received_date)}</strong></td>
+              <td><code>${this.escapeHtml(b.sku)}</code> - ${this.escapeHtml(b.item_name)}</td>
+              <td style="text-align:right; font-weight:600;">${Number(b.initial_quantity)}</td>
+              <td style="text-align:right; font-weight:700; color:${isEx ? '#94a3b8' : '#166534'};">${Number(b.remaining_quantity)}</td>
+              <td style="text-align:right;">${Number(b.unit_cost).toFixed(2)}</td>
+              <td><span class="desk-badge ${badge}">${stTxt}</span></td>
+            </tr>
+          `;
+        }).join('') : '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No FIFO batches found.</td></tr>';
+      }
+
+      const aBody = document.getElementById('monitorAllocationsBody');
+      if (aBody) {
+        aBody.innerHTML = allocations.length ? allocations.map(a => {
+          const isCanc = a.status === 'CANCELLED';
+          return `
+            <tr style="${isCanc ? 'background:#fef2f2;' : ''}">
+              <td><strong>${this.escapeHtml(a.document_no)}</strong></td>
+              <td><code>${this.escapeHtml(a.sku)}</code> - ${this.escapeHtml(a.item_name || '')}</td>
+              <td><code>${this.escapeHtml(a.batch_number || ('Batch #' + a.batch_id))}</code> (${this.escapeHtml(a.received_date || '-')})</td>
+              <td style="text-align:right; font-weight:700;">${Number(a.qty_deducted)}</td>
+              <td><span class="desk-badge ${isCanc ? 'badge-danger' : 'badge-approved'}">${isCanc ? 'CANCELLED (Restored)' : 'ACTIVE (Issued)'}</span></td>
+              <td style="font-size:0.8rem; color:#64748b;">${this.escapeHtml(a.created_at || '-')}</td>
+              <td style="font-size:0.8rem; color:#991b1b;">${this.escapeHtml(a.cancelled_at || '-')}</td>
+            </tr>
+          `;
+        }).join('') : '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">No Issue allocations recorded yet.</td></tr>';
+      }
+    } catch (e) {
+      console.error('Failed to load FIFO monitor:', e);
     }
   },
 

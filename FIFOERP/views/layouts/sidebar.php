@@ -63,6 +63,10 @@ $getActiveClass = function(string $tabId) use (&$firstActiveSet, $permModel, $ro
       <span class="sidebar-icon"><?= Icon::get('home') ?></span>
       <span>Home Desk</span>
     </button>
+    <button type="button" class="sidebar-nav-item" data-tab="tab-fifo-monitor">
+      <span class="sidebar-icon"><?= Icon::get('activity') ?></span>
+      <span>FIFO Process Monitor</span>
+    </button>
   <?php endif; ?>
 
   <?php

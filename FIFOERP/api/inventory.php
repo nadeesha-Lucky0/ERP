@@ -1055,6 +1055,67 @@ try {
             Response::success("Posted document {$docNo} has been CANCELLED and reversal noted.");
             break;
 
+        // -------------------------------------------------------------
+        // Temporary Client Demo: FIFO Process Monitor (GRN & Issue Flow)
+        // -------------------------------------------------------------
+        case 'get_fifo_monitor':
+            $skuFilter = trim($_GET['sku'] ?? '');
+            $docCounts = ['GRN' => [], 'ISSUE' => []];
+            $stCnt = $db->prepare("
+                SELECT doc_type, status, COUNT(*) AS cnt
+                FROM unposted_documents
+                WHERE location_id = :loc
+                GROUP BY doc_type, status
+            ");
+            $stCnt->execute([':loc' => $locationId]);
+            foreach ($stCnt->fetchAll() as $r) {
+                $docCounts[$r['doc_type']][$r['status']] = (int)$r['cnt'];
+            }
+
+            $skuSql = $skuFilter !== '' ? " AND b.sku = :sku" : "";
+            $stBatches = $db->prepare("
+                SELECT b.id, b.batch_number, b.sku, b.item_name, b.initial_quantity, b.remaining_quantity,
+                       b.unit_cost, b.received_date, b.status, b.freeze_status
+                FROM fifo_batches b
+                WHERE b.location_id = :loc {$skuSql}
+                ORDER BY b.received_date ASC, b.id ASC
+                LIMIT 100
+            ");
+            $bParams = [':loc' => $locationId];
+            if ($skuFilter !== '') $bParams[':sku'] = $skuFilter;
+            $stBatches->execute($bParams);
+            $batches = $stBatches->fetchAll();
+
+            $allocs = [];
+            try {
+                $aSql = $skuFilter !== '' ? " AND a.sku = :sku" : "";
+                $stAllocs = $db->prepare("
+                    SELECT a.id, a.document_no, a.batch_id, a.sku, a.qty_deducted, a.unit_cost, a.status,
+                           a.created_at, a.cancelled_at, b.batch_number, b.received_date, b.item_name
+                    FROM issue_grn_allocations a
+                    LEFT JOIN fifo_batches b ON b.id = a.batch_id
+                    WHERE a.location_id = :loc {$aSql}
+                    ORDER BY a.id DESC
+                    LIMIT 100
+                ");
+                $stAllocs->execute($bParams);
+                $allocs = $stAllocs->fetchAll();
+            } catch (\Throwable $e) {
+                // Table may not exist yet before first issue
+            }
+
+            $stSkus = $db->prepare("SELECT DISTINCT sku, item_name FROM fifo_batches WHERE location_id = :loc ORDER BY sku ASC");
+            $stSkus->execute([':loc' => $locationId]);
+            $skus = $stSkus->fetchAll();
+
+            Response::success('FIFO monitor loaded', [
+                'doc_counts' => $docCounts,
+                'batches' => $batches,
+                'allocations' => $allocs,
+                'skus' => $skus
+            ]);
+            break;
+
         default:
             Response::error('Invalid inventory action: ' . $action);
     }
