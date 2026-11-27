@@ -5739,7 +5739,7 @@ const Desk = {
     if (state.items.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="${context === 'issue' ? 9 : 6}" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
+          <td colspan="${context === 'issue' ? 8 : 6}" style="text-align: center; color: #8d99a6; padding: 20px; font-size: 13px;">
             No items in table. Click <strong>Add row</strong> or <strong>Add multiple</strong> to add items.
           </td>
         </tr>
@@ -5792,11 +5792,6 @@ const Desk = {
             <input type="text" readonly tabindex="-1" class="frappe-control"
               style="height: 30px; font-size: 12px; text-align: right; font-weight: 600; background: #f8fafc; cursor: default; color: ${row.item_code ? ((row.pending_qty || 0) > 0 ? '#d97706' : '#64748b') : '#94a3b8'};"
               value="${row.item_code ? (row.pending_qty !== undefined ? row.pending_qty : '...') : '-'}">
-          </td>
-          <td style="text-align: right; vertical-align: middle;">
-            <input type="text" readonly tabindex="-1" class="frappe-control"
-              style="height: 30px; font-size: 12px; text-align: right; font-weight: 600; background: #f8fafc; cursor: default; color: ${row.item_code ? '#334155' : '#94a3b8'};"
-              value="${row.item_code ? (row.reorder_level !== undefined ? row.reorder_level : '...') : '-'}">
           </td>` : ''}
           <td>
             ${(() => {
