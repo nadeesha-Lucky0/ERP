@@ -1078,10 +1078,19 @@ try {
                        b.unit_cost, b.received_date, b.status, b.freeze_status
                 FROM fifo_batches b
                 WHERE b.location_id = :loc {$skuSql}
+                  AND (
+                    b.batch_number IN (SELECT doc_no FROM unposted_documents WHERE location_id = :loc2)
+                    OR b.sku IN (
+                      SELECT DISTINCT di.sku
+                      FROM unposted_document_items di
+                      JOIN unposted_documents ud ON ud.id = di.document_id
+                      WHERE ud.location_id = :loc3
+                    )
+                  )
                 ORDER BY b.received_date ASC, b.id ASC
                 LIMIT 100
             ");
-            $bParams = [':loc' => $locationId];
+            $bParams = [':loc' => $locationId, ':loc2' => $locationId, ':loc3' => $locationId];
             if ($skuFilter !== '') $bParams[':sku'] = $skuFilter;
             $stBatches->execute($bParams);
             $batches = $stBatches->fetchAll();
@@ -1098,13 +1107,21 @@ try {
                     ORDER BY a.id DESC
                     LIMIT 100
                 ");
-                $stAllocs->execute($bParams);
+                $aParams = [':loc' => $locationId];
+                if ($skuFilter !== '') $aParams[':sku'] = $skuFilter;
+                $stAllocs->execute($aParams);
                 $allocs = $stAllocs->fetchAll();
             } catch (\Throwable $e) {
                 // Table may not exist yet before first issue
             }
 
-            $stSkus = $db->prepare("SELECT DISTINCT sku, item_name FROM fifo_batches WHERE location_id = :loc ORDER BY sku ASC");
+            $stSkus = $db->prepare("
+                SELECT DISTINCT di.sku, di.item_name
+                FROM unposted_document_items di
+                JOIN unposted_documents ud ON ud.id = di.document_id
+                WHERE ud.location_id = :loc
+                ORDER BY di.sku ASC
+            ");
             $stSkus->execute([':loc' => $locationId]);
             $skus = $stSkus->fetchAll();
 
