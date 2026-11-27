@@ -625,18 +625,29 @@ try {
             $docs = $stmt->fetchAll();
 
             $stDocItems = $db->prepare("SELECT sku, quantity FROM unposted_document_items WHERE document_id = :id");
+            $stAllocTot = $db->prepare("SELECT COALESCE(SUM(qty_deducted * unit_cost), 0) FROM issue_grn_allocations WHERE document_no = :doc AND location_id = :loc");
             foreach ($docs as &$d) {
-                if (($d['doc_type'] ?? '') === 'ISSUE' && !in_array($d['status'] ?? '', ['Posted', 'Cancelled'], true)) {
-                    $stDocItems->execute([':id' => $d['id']]);
-                    $dItems = $stDocItems->fetchAll();
-                    if (!empty($dItems)) {
-                        $fifoSum = 0.0;
-                        foreach ($dItems as $di) {
-                            $v = computeFifoValuation($db, $locationId, trim($di['sku'] ?? ''), (float)($di['quantity'] ?? 0));
-                            $fifoSum += $v['total_cost'];
-                        }
-                        if ($fifoSum > 0) {
-                            $d['invoice_total'] = $fifoSum;
+                if (($d['doc_type'] ?? '') === 'ISSUE') {
+                    if (in_array($d['status'] ?? '', ['Posted', 'Cancelled'], true)) {
+                        try {
+                            $stAllocTot->execute([':doc' => $d['doc_no'], ':loc' => $locationId]);
+                            $allocTot = round((float)$stAllocTot->fetchColumn(), 2);
+                            if ($allocTot > 0) {
+                                $d['invoice_total'] = $allocTot;
+                            }
+                        } catch (\Throwable $e) {}
+                    } else {
+                        $stDocItems->execute([':id' => $d['id']]);
+                        $dItems = $stDocItems->fetchAll();
+                        if (!empty($dItems)) {
+                            $fifoSum = 0.0;
+                            foreach ($dItems as $di) {
+                                $v = computeFifoValuation($db, $locationId, trim($di['sku'] ?? ''), (float)($di['quantity'] ?? 0));
+                                $fifoSum += $v['total_cost'];
+                            }
+                            if ($fifoSum > 0) {
+                                $d['invoice_total'] = $fifoSum;
+                            }
                         }
                     }
                 }
@@ -680,6 +691,13 @@ try {
                             ");
                             $stBd->execute([':doc' => $doc['doc_no'], ':loc' => $locationId, ':sku' => $itSku]);
                             $bd = $stBd->fetchAll();
+                            if (!empty($bd)) {
+                                $bdSum = array_sum(array_column($bd, 'subtotal'));
+                                $it['total_cost'] = round($bdSum, 2);
+                                if ($itQty > 0) {
+                                    $it['unit_cost'] = round($bdSum / $itQty, 4);
+                                }
+                            }
                         } catch (\Throwable $e) {}
                     } else if ($itQty > 0) {
                         $val = computeFifoValuation($db, $locationId, $itSku, $itQty);
@@ -693,8 +711,8 @@ try {
                     $recalcTotal += (float)($it['total_cost'] ?? 0);
                 }
                 unset($it);
-                if ($doc['status'] !== 'Posted' && $doc['status'] !== 'Cancelled' && $recalcTotal > 0) {
-                    $doc['invoice_total'] = $recalcTotal;
+                if ($recalcTotal > 0) {
+                    $doc['invoice_total'] = round($recalcTotal, 2);
                 }
             }
 
@@ -1156,8 +1174,9 @@ try {
                     );
                 }
             } else if ($doc['doc_type'] === 'ISSUE') {
+                $postedIssueTotal = 0.0;
                 foreach ($items as $item) {
-                    FifoEngine::issueStock(
+                    $issRes = FifoEngine::issueStock(
                         $locationId,
                         $item['sku'],
                         (int)$item['quantity'],
@@ -1166,6 +1185,11 @@ try {
                         $doc['department_code'],
                         Auth::id() ?? 1
                     );
+                    $postedIssueTotal += (float)($issRes['total_value'] ?? 0);
+                }
+                if ($postedIssueTotal > 0) {
+                    $db->prepare("UPDATE unposted_documents SET invoice_total = :tot WHERE id = :id")
+                       ->execute([':tot' => round($postedIssueTotal, 2), ':id' => $docId]);
                 }
             }
 
