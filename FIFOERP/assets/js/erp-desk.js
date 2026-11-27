@@ -6240,15 +6240,15 @@ const Desk = {
           row.reorder_level = 0;
         }
         this.renderStockEntryRows(context);
-        this.calculateStockEntryTotals(context);
+        if (typeof this.calculateStockEntryTotals === 'function') this.calculateStockEntryTotals(context);
       })
       .catch(err => {
         console.warn('get_stock_availability failed:', err);
         if (row.item_code !== sku) return;
         row._fetchingAvail = null;
-        row.avail_qty = 0;
-        row.pending_qty = 0;
-        row.reorder_level = 0;
+        if (row.avail_qty === undefined) row.avail_qty = 0;
+        if (row.pending_qty === undefined) row.pending_qty = 0;
+        if (row.reorder_level === undefined) row.reorder_level = 0;
         this.renderStockEntryRows(context);
       });
   },
@@ -6270,7 +6270,7 @@ const Desk = {
     }
 
     this.renderStockEntryRows(context);
-    this.calculateStockEntryTotals(context);
+    if (typeof this.calculateStockEntryTotals === 'function') this.calculateStockEntryTotals(context);
 
     if (context === 'issue' && sku) {
       this.fetchIssueRowAvailability(context, row, true);
@@ -6291,7 +6291,7 @@ const Desk = {
     row.reorder_level = undefined;
     this.closeFloatingItemDropdown();
     this.renderStockEntryRows(context);
-    this.calculateStockEntryTotals(context);
+    if (typeof this.calculateStockEntryTotals === 'function') this.calculateStockEntryTotals(context);
   },
 
   // Compatibility aliases
