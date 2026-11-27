@@ -9,7 +9,11 @@ use App\Config\Database;
 header('Content-Type: application/json; charset=utf-8');
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
-$locationId = (int)($_GET['location_id'] ?? $_POST['location_id'] ?? $_SESSION['location_id'] ?? ($_SESSION['user']['location_id'] ?? 1));
+$rawLoc = $_GET['location_id'] ?? $_POST['location_id'] ?? null;
+if ($rawLoc === null || $rawLoc === '' || (int)$rawLoc <= 0) {
+    $rawLoc = !empty($_SESSION['location_id']) ? $_SESSION['location_id'] : (!empty($_SESSION['user']['location_id']) ? $_SESSION['user']['location_id'] : 1);
+}
+$locationId = max(1, (int)$rawLoc);
 
 try {
     $db = Database::getStationConnection($locationId);

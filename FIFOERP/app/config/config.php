@@ -25,7 +25,7 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT'] ?? '');
 $realRoot = str_replace('\\', '/', ROOT_PATH);
 $subPath = '';
-if ($docRoot && strpos($realRoot, $docRoot) === 0) {
+if ($docRoot && stripos($realRoot, $docRoot) === 0) {
     $subPath = substr($realRoot, strlen($docRoot));
 }
 $subPath = '/' . trim($subPath, '/');
