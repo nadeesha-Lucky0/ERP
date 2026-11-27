@@ -1045,8 +1045,12 @@ try {
                 Response::error('Only POSTED documents can be reversed with Posted Cancellation.');
             }
 
-            // Update status to Cancelled
-            $db->prepare("UPDATE unposted_documents SET status = 'Cancelled' WHERE id = :id")->execute([':id' => $doc['id']]);
+            if ($doc['doc_type'] === 'ISSUE') {
+                FifoEngine::cancelIssue($locationId, $docNo, Auth::id() ?? 1);
+            }
+
+            // Update status to Cancelled (idempotent: only if still Posted)
+            $db->prepare("UPDATE unposted_documents SET status = 'Cancelled' WHERE id = :id AND status = 'Posted'")->execute([':id' => $doc['id']]);
 
             Response::success("Posted document {$docNo} has been CANCELLED and reversal noted.");
             break;

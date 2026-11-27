@@ -94,6 +94,38 @@ class FifoEngine {
                     ':uid' => $userId
                 ]);
 
+                // Record batch-level allocation for exact FIFO reversal on cancellation
+                $db->exec("CREATE TABLE IF NOT EXISTS issue_grn_allocations (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    location_id INT NOT NULL,
+                    document_no VARCHAR(80) NOT NULL,
+                    batch_id INT NOT NULL,
+                    sku VARCHAR(50) NOT NULL,
+                    qty_deducted INT NOT NULL,
+                    unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    status ENUM('ACTIVE','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
+                    created_by INT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    cancelled_by INT NULL,
+                    cancelled_at DATETIME NULL,
+                    INDEX idx_doc_loc (document_no, location_id, status),
+                    INDEX idx_batch (batch_id)
+                )");
+                $insAlloc = $db->prepare("
+                    INSERT INTO issue_grn_allocations
+                    (location_id, document_no, batch_id, sku, qty_deducted, unit_cost, status, created_by)
+                    VALUES (:loc, :doc_no, :batch_id, :sku, :qty, :price, 'ACTIVE', :uid)
+                ");
+                $insAlloc->execute([
+                    ':loc' => $locationId,
+                    ':doc_no' => $documentNo,
+                    ':batch_id' => $batch['id'],
+                    ':sku' => $sku,
+                    ':qty' => $deduct,
+                    ':price' => $unitCost,
+                    ':uid' => $userId
+                ]);
+
                 $allocations[] = [
                     'batch_id' => $batch['id'],
                     'batch_number' => $batch['batch_number'],
@@ -115,6 +147,102 @@ class FifoEngine {
                 'total_value' => $totalIssueValue,
                 'allocations' => $allocations
             ];
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Cancel a Posted Issue and restore quantities back to their exact original FIFO batches
+     */
+    public static function cancelIssue(int $locationId, string $documentNo, int $userId): array {
+        $db = Database::getConnection();
+        $db->beginTransaction();
+
+        try {
+            $db->exec("CREATE TABLE IF NOT EXISTS issue_grn_allocations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                location_id INT NOT NULL,
+                document_no VARCHAR(80) NOT NULL,
+                batch_id INT NOT NULL,
+                sku VARCHAR(50) NOT NULL,
+                qty_deducted INT NOT NULL,
+                unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                status ENUM('ACTIVE','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
+                created_by INT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                cancelled_by INT NULL,
+                cancelled_at DATETIME NULL,
+                INDEX idx_doc_loc (document_no, location_id, status),
+                INDEX idx_batch (batch_id)
+            )");
+
+            $stAlloc = $db->prepare("
+                SELECT * FROM issue_grn_allocations
+                WHERE document_no = :doc AND location_id = :loc AND status = 'ACTIVE'
+                FOR UPDATE
+            ");
+            $stAlloc->execute([':doc' => $documentNo, ':loc' => $locationId]);
+            $allocs = $stAlloc->fetchAll();
+
+            // Fallback for legacy issues posted before issue_grn_allocations existed
+            if (empty($allocs)) {
+                $stLegacy = $db->prepare("
+                    SELECT batch_id, sku, quantity AS qty_deducted, unit_price AS unit_cost
+                    FROM inventory_transactions
+                    WHERE document_no = :doc AND location_id = :loc AND transaction_type = 'MATERIAL_ISSUE' AND status = 'POSTED'
+                    FOR UPDATE
+                ");
+                $stLegacy->execute([':doc' => $documentNo, ':loc' => $locationId]);
+                $allocs = $stLegacy->fetchAll();
+            }
+
+            $restored = [];
+            foreach ($allocs as $a) {
+                $batchId = (int)$a['batch_id'];
+                $qty = (int)$a['qty_deducted'];
+                if ($qty <= 0) continue;
+
+                // Lock exact original batch
+                $stBatch = $db->prepare("SELECT id, item_name, remaining_quantity FROM fifo_batches WHERE id = :id FOR UPDATE");
+                $stBatch->execute([':id' => $batchId]);
+                $batch = $stBatch->fetch();
+                if (!$batch) continue;
+
+                $newRem = (int)$batch['remaining_quantity'] + $qty;
+                $db->prepare("UPDATE fifo_batches SET remaining_quantity = :rem, status = 'active' WHERE id = :id")
+                   ->execute([':rem' => $newRem, ':id' => $batchId]);
+
+                // Audit trail in inventory_transactions
+                $db->prepare("
+                    INSERT INTO inventory_transactions
+                    (location_id, batch_id, transaction_type, document_no, sku, item_name, quantity, unit_price, total_value, transaction_date, created_by, status)
+                    VALUES (:loc, :bid, 'ISSUE_REVERSAL', :doc, :sku, :name, :qty, :price, :val, CURDATE(), :uid, 'POSTED')
+                ")->execute([
+                    ':loc' => $locationId,
+                    ':bid' => $batchId,
+                    ':doc' => $documentNo,
+                    ':sku' => $a['sku'],
+                    ':name' => $batch['item_name'],
+                    ':qty' => $qty,
+                    ':price' => (float)$a['unit_cost'],
+                    ':val' => $qty * (float)$a['unit_cost'],
+                    ':uid' => $userId
+                ]);
+
+                $restored[] = ['batch_id' => $batchId, 'sku' => $a['sku'], 'restored_qty' => $qty];
+            }
+
+            // Mark allocations as CANCELLED (idempotency)
+            $db->prepare("
+                UPDATE issue_grn_allocations
+                SET status = 'CANCELLED', cancelled_by = :uid, cancelled_at = NOW()
+                WHERE document_no = :doc AND location_id = :loc AND status = 'ACTIVE'
+            ")->execute([':uid' => $userId, ':doc' => $documentNo, ':loc' => $locationId]);
+
+            $db->commit();
+            return ['success' => true, 'restored' => $restored];
         } catch (Exception $e) {
             $db->rollBack();
             throw $e;
