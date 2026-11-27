@@ -3704,6 +3704,13 @@ const Desk = {
     });
 
     tbody.innerHTML = html;
+    if (typeof context !== 'undefined' && context === 'issue' && typeof state !== 'undefined' && Array.isArray(state.items)) {
+      state.items.forEach(r => {
+        if (r.item_code && r.avail_qty === undefined && r._fetchingAvail !== r.item_code) {
+          this.fetchIssueRowAvailability('issue', r, !r.basic_rate);
+        }
+      });
+    }
   },
 
   copyItemCodeToClipboard(code) {
@@ -5798,6 +5805,13 @@ const Desk = {
     });
 
     tbody.innerHTML = html;
+    if (typeof context !== 'undefined' && context === 'issue' && typeof state !== 'undefined' && Array.isArray(state.items)) {
+      state.items.forEach(r => {
+        if (r.item_code && r.avail_qty === undefined && r._fetchingAvail !== r.item_code) {
+          this.fetchIssueRowAvailability('issue', r, !r.basic_rate);
+        }
+      });
+    }
   },
 
   addStockEntryRow(context, shouldRender = true) {
@@ -5874,6 +5888,10 @@ const Desk = {
     } else if (!sku) {
       row.item_name = '';
     }
+    row.avail_qty = undefined;
+    row.pending_qty = undefined;
+    row.reorder_level = undefined;
+    row._fetchingAvail = null;
     this.renderStockEntryRows(context);
   },
 
@@ -6203,10 +6221,12 @@ const Desk = {
   fetchIssueRowAvailability(context, row, updateRate = false) {
     if (context !== 'issue' || !row || !row.item_code) return;
     const sku = row.item_code;
+    row._fetchingAvail = sku;
     fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}`)
       .then(r => r.json())
       .then(res => {
         if (row.item_code !== sku) return;
+        row._fetchingAvail = null;
         if (res.success && res.data) {
           row.avail_qty = res.data.available_to_issue ?? 0;
           row.pending_qty = res.data.allocated_reserved ?? 0;
@@ -6222,8 +6242,10 @@ const Desk = {
         this.renderStockEntryRows(context);
         this.calculateStockEntryTotals(context);
       })
-      .catch(() => {
+      .catch(err => {
+        console.warn('get_stock_availability failed:', err);
         if (row.item_code !== sku) return;
+        row._fetchingAvail = null;
         row.avail_qty = 0;
         row.pending_qty = 0;
         row.reorder_level = 0;
