@@ -623,6 +623,26 @@ try {
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $docs = $stmt->fetchAll();
+
+            $stDocItems = $db->prepare("SELECT sku, quantity FROM unposted_document_items WHERE document_id = :id");
+            foreach ($docs as &$d) {
+                if (($d['doc_type'] ?? '') === 'ISSUE' && !in_array($d['status'] ?? '', ['Posted', 'Cancelled'], true)) {
+                    $stDocItems->execute([':id' => $d['id']]);
+                    $dItems = $stDocItems->fetchAll();
+                    if (!empty($dItems)) {
+                        $fifoSum = 0.0;
+                        foreach ($dItems as $di) {
+                            $v = computeFifoValuation($db, $locationId, trim($di['sku'] ?? ''), (float)($di['quantity'] ?? 0));
+                            $fifoSum += $v['total_cost'];
+                        }
+                        if ($fifoSum > 0) {
+                            $d['invoice_total'] = $fifoSum;
+                        }
+                    }
+                }
+            }
+            unset($d);
+
             Response::success('Documents loaded', ['documents' => $docs]);
             break;
 

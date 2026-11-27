@@ -1642,6 +1642,14 @@ const Desk = {
         const totalCost = parseFloat(item.total_cost || (qty * unitCost));
         totalQty += qty;
 
+        const hasSplit = Array.isArray(item.fifo_breakdown) && item.fifo_breakdown.length > 1;
+        const unitRateHtml = hasSplit
+          ? item.fifo_breakdown.map(b => `<div style="font-size: 11.5px; color: #0369a1; white-space: nowrap;">${Number(b.qty)} &times; <strong>Rs. ${Number(b.unit_cost).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong></div>`).join('')
+          : `Rs. ${unitCost.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+        const totalValHtml = hasSplit
+          ? item.fifo_breakdown.map(b => `<div style="font-size: 11px; color: #64748b; white-space: nowrap;">Rs. ${Number(b.subtotal).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>`).join('') + `<div style="border-top: 1px solid #e2e8f0; margin-top: 2px; padding-top: 2px;">Rs. ${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>`
+          : `Rs. ${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
         itemsHtml += `
           <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
             <td style="color: #64748b; font-weight: 600; text-align: center; font-size: 11.5px;">${idx + 1}</td>
@@ -1649,16 +1657,11 @@ const Desk = {
             <td>
               <strong style="color: #0f172a; font-size: 13px;">${item.item_name || 'Material Item'}</strong>
               ${item.specs ? `<div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">${item.specs}</div>` : ''}
-              ${Array.isArray(item.fifo_breakdown) && item.fifo_breakdown.length > 1 ? `
-                <div style="font-size: 11px; color: #0369a1; margin-top: 3px; background: #f0f9ff; padding: 3px 7px; border-radius: 4px; display: inline-block;">
-                  FIFO Split: ${item.fifo_breakdown.map(b => `${Number(b.qty)} &times; Rs.${Number(b.unit_cost).toFixed(2)}`).join(' + ')}
-                </div>
-              ` : ''}
             </td>
             <td><span class="desk-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; font-size: 11px;">${item.bin_location || 'Bay-01'}</span></td>
             <td style="text-align: right; font-weight: 700; color: #0f172a; font-size: 13px;">${qty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
-            <td style="text-align: right; color: #475569; font-size: 12.5px;">Rs. ${unitCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            <td style="text-align: right; font-weight: 700; color: #059669; font-size: 13px;">Rs. ${totalCost.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+            <td style="text-align: right; color: #475569; font-size: 12.5px;">${unitRateHtml}</td>
+            <td style="text-align: right; font-weight: 700; color: #059669; font-size: 13px;">${totalValHtml}</td>
           </tr>
         `;
       });
