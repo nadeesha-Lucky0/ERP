@@ -518,7 +518,7 @@ try {
                 WHERE udi.sku = :sku 
                   AND ud.location_id = :loc
                   AND ud.doc_type = 'ISSUE'
-                  AND ud.status IN ('Draft', 'Validated', 'Approved')
+                  AND ud.status IN ('Draft', 'Pending Validation', 'Validated', 'Approved')
             ");
             $stmtAlloc->execute([':sku' => $sku, ':loc' => $locationId]);
             $allocRow = $stmtAlloc->fetch();
@@ -841,6 +841,34 @@ try {
             }
             if ($doc['status'] === 'Posted') {
                 Response::error('Posted documents cannot be edited. Use Posted Cancellation instead.');
+            }
+
+            if (isset($_POST['items']) && $doc['doc_type'] === 'ISSUE') {
+                $chkItems = is_string($_POST['items']) ? json_decode($_POST['items'], true) : $_POST['items'];
+                foreach (($chkItems ?: []) as $chkItem) {
+                    $itemSku = trim($chkItem['sku'] ?? '');
+                    $reqQty = (float)($chkItem['quantity'] ?? 0);
+                    if ($reqQty <= 0) {
+                        Response::error("Required quantity for SKU '{$itemSku}' must be greater than 0.");
+                    }
+                    $sPhys = $db->prepare("SELECT COALESCE(SUM(remaining_quantity), 0) FROM fifo_batches WHERE sku = :sku AND location_id = :loc AND status = 'active'");
+                    $sPhys->execute([':sku' => $itemSku, ':loc' => $locationId]);
+                    $phys = (float)$sPhys->fetchColumn();
+
+                    $sAlloc = $db->prepare("
+                        SELECT COALESCE(SUM(udi.quantity), 0) FROM unposted_document_items udi
+                        JOIN unposted_documents ud ON udi.document_id = ud.id
+                        WHERE udi.sku = :sku AND ud.location_id = :loc AND ud.doc_type = 'ISSUE'
+                          AND ud.id != :doc_id AND ud.status IN ('Draft', 'Pending Validation', 'Validated', 'Approved')
+                    ");
+                    $sAlloc->execute([':sku' => $itemSku, ':loc' => $locationId, ':doc_id' => $docId]);
+                    $alloc = (float)$sAlloc->fetchColumn();
+                    $available = max(0, $phys - $alloc);
+
+                    if ($reqQty > $available) {
+                        Response::error("Cannot save Issue: Required quantity ({$reqQty}) for SKU '{$itemSku}' exceeds Available Quantity ({$available}).");
+                    }
+                }
             }
 
             $db->beginTransaction();

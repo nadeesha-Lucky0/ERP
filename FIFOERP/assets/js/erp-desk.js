@@ -5798,7 +5798,8 @@ const Desk = {
               const onChg = allowDec
                 ? `Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)`
                 : `const v = Math.max(0, Math.round(parseFloat(this.value)||0)); this.value = v; Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', v)`;
-              return `<input type="number" step="${stepVal}" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${qtyVal}" onchange="${onChg}">`;
+              const maxAttr = (context === 'issue' && row.avail_qty !== undefined) ? `max="${row.avail_qty}"` : '';
+              return `<input type="number" step="${stepVal}" min="0" ${maxAttr} class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${qtyVal}" onchange="${onChg}">`;
             })()}
           </td>
           <td>
@@ -5882,6 +5883,9 @@ const Desk = {
     const state = this.stockEntryState[context];
     const row = state.items.find(r => r.id === rowId);
     if (!row) return;
+    if (context === 'issue' && field === 'qty' && row.avail_qty !== undefined && value > Number(row.avail_qty)) {
+      this.showToast(`Required Quantity (${value}) cannot exceed Available Quantity (${row.avail_qty}).`, true);
+    }
     row[field] = value;
   },
 
@@ -6849,6 +6853,20 @@ const Desk = {
     const supplierRef = document.getElementById(`${context}SupplierRef`)?.value || '';
     const invoiceDate = document.getElementById(`${context}InvoiceDate`)?.value || '';
     const remarks = document.getElementById(`${context}Remarks`)?.value || '';
+
+    if (context === 'issue') {
+      for (const r of validItems) {
+        const q = parseFloat(r.qty) || 0;
+        if (q <= 0) {
+          this.showToast(`Required Quantity for ${r.item_code || 'item'} must be greater than 0.`, true);
+          return;
+        }
+        if (r.avail_qty !== undefined && q > Number(r.avail_qty)) {
+          this.showToast(`Cannot save Issue: Required Quantity (${q}) for ${r.item_code} exceeds Available Quantity (${r.avail_qty}).`, true);
+          return;
+        }
+      }
+    }
 
     let invTotal = 0;
     const formattedItems = validItems.map(r => {
