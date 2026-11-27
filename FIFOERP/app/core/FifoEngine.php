@@ -6,6 +6,25 @@ use PDO;
 use Exception;
 
 class FifoEngine {
+    private static function ensureAllocationsTable(PDO $db): void {
+        $db->exec("CREATE TABLE IF NOT EXISTS issue_grn_allocations (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            location_id INT NOT NULL,
+            document_no VARCHAR(80) NOT NULL,
+            batch_id INT NOT NULL,
+            sku VARCHAR(50) NOT NULL,
+            qty_deducted INT NOT NULL,
+            unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+            status ENUM('ACTIVE','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
+            created_by INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            cancelled_by INT NULL,
+            cancelled_at DATETIME NULL,
+            INDEX idx_doc_loc (document_no, location_id, status),
+            INDEX idx_batch (batch_id)
+        )");
+    }
+
     /**
      * Process Material Issue using strict First-In, First-Out (FIFO) queue
      */
@@ -19,6 +38,7 @@ class FifoEngine {
         ?int $userId = 1
     ): array {
         $db = Database::getStationConnection($locationId);
+        self::ensureAllocationsTable($db);
         $db->beginTransaction();
 
         try {
@@ -95,22 +115,6 @@ class FifoEngine {
                 ]);
 
                 // Record batch-level allocation for exact FIFO reversal on cancellation
-                $db->exec("CREATE TABLE IF NOT EXISTS issue_grn_allocations (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    location_id INT NOT NULL,
-                    document_no VARCHAR(80) NOT NULL,
-                    batch_id INT NOT NULL,
-                    sku VARCHAR(50) NOT NULL,
-                    qty_deducted INT NOT NULL,
-                    unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-                    status ENUM('ACTIVE','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
-                    created_by INT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    cancelled_by INT NULL,
-                    cancelled_at DATETIME NULL,
-                    INDEX idx_doc_loc (document_no, location_id, status),
-                    INDEX idx_batch (batch_id)
-                )");
                 $insAlloc = $db->prepare("
                     INSERT INTO issue_grn_allocations
                     (location_id, document_no, batch_id, sku, qty_deducted, unit_cost, status, created_by)
@@ -157,26 +161,25 @@ class FifoEngine {
      * Cancel a Posted Issue and restore quantities back to their exact original FIFO batches
      */
     public static function cancelIssue(int $locationId, string $documentNo, int $userId): array {
-        $db = Database::getConnection();
+        $db = Database::getStationConnection($locationId);
+        self::ensureAllocationsTable($db);
         $db->beginTransaction();
 
         try {
-            $db->exec("CREATE TABLE IF NOT EXISTS issue_grn_allocations (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                location_id INT NOT NULL,
-                document_no VARCHAR(80) NOT NULL,
-                batch_id INT NOT NULL,
-                sku VARCHAR(50) NOT NULL,
-                qty_deducted INT NOT NULL,
-                unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-                status ENUM('ACTIVE','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
-                created_by INT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                cancelled_by INT NULL,
-                cancelled_at DATETIME NULL,
-                INDEX idx_doc_loc (document_no, location_id, status),
-                INDEX idx_batch (batch_id)
-            )");
+            // Idempotency guard: prevent double cancellation
+            $chkCancelled = $db->prepare("
+                SELECT COUNT(*) FROM issue_grn_allocations
+                WHERE document_no = :doc AND location_id = :loc AND status = 'CANCELLED'
+            ");
+            $chkCancelled->execute([':doc' => $documentNo, ':loc' => $locationId]);
+            $chkRev = $db->prepare("
+                SELECT COUNT(*) FROM inventory_transactions
+                WHERE document_no = :doc AND location_id = :loc AND transaction_type = 'ISSUE_REVERSAL'
+            ");
+            $chkRev->execute([':doc' => $documentNo, ':loc' => $locationId]);
+            if ((int)$chkCancelled->fetchColumn() > 0 || (int)$chkRev->fetchColumn() > 0) {
+                throw new Exception("Issue {$documentNo} has already been cancelled.");
+            }
 
             $stAlloc = $db->prepare("
                 SELECT * FROM issue_grn_allocations
