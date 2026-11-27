@@ -1347,6 +1347,9 @@ const Desk = {
         this.addStockEntryRow(context, false);
       }
       this.renderStockEntryRows(context);
+      if (context === 'issue') {
+        state.items.forEach(r => { if (r.item_code) this.fetchIssueRowAvailability('issue', r, false); });
+      }
       if (context === 'grn') {
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? 0; };
         const setChk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!Number(val || 0); };
@@ -5818,6 +5821,9 @@ const Desk = {
 
     if (shouldRender) {
       this.renderStockEntryRows(context);
+      if (context === 'issue') {
+        state.items.forEach(r => { if (r.item_code) this.fetchIssueRowAvailability('issue', r, false); });
+      }
     }
   },
 
@@ -6194,6 +6200,37 @@ const Desk = {
     }
   },
 
+  fetchIssueRowAvailability(context, row, updateRate = false) {
+    if (context !== 'issue' || !row || !row.item_code) return;
+    const sku = row.item_code;
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}`)
+      .then(r => r.json())
+      .then(res => {
+        if (row.item_code !== sku) return;
+        if (res.success && res.data) {
+          row.avail_qty = res.data.available_to_issue ?? 0;
+          row.pending_qty = res.data.allocated_reserved ?? 0;
+          row.reorder_level = res.data.reorder_level ?? 0;
+          if ((updateRate || !row.basic_rate) && res.data.unit_cost !== undefined && parseFloat(res.data.unit_cost) > 0) {
+            row.basic_rate = parseFloat(res.data.unit_cost);
+          }
+        } else {
+          row.avail_qty = 0;
+          row.pending_qty = 0;
+          row.reorder_level = 0;
+        }
+        this.renderStockEntryRows(context);
+        this.calculateStockEntryTotals(context);
+      })
+      .catch(() => {
+        if (row.item_code !== sku) return;
+        row.avail_qty = 0;
+        row.pending_qty = 0;
+        row.reorder_level = 0;
+        this.renderStockEntryRows(context);
+      });
+  },
+
   selectItemCombo(context, rowId, sku) {
     const state = this.stockEntryState[context];
     const row = state?.items?.find(r => r.id === rowId);
@@ -6214,23 +6251,7 @@ const Desk = {
     this.calculateStockEntryTotals(context);
 
     if (context === 'issue' && sku) {
-      fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}`)
-        .then(r => r.json())
-        .then(res => {
-          if (res.success && res.data && row.item_code === sku) {
-            row.avail_qty = res.data.available_to_issue ?? 0;
-            row.pending_qty = res.data.allocated_reserved ?? 0;
-            row.reorder_level = res.data.reorder_level ?? 0;
-            if (res.data.unit_cost !== undefined && parseFloat(res.data.unit_cost) > 0) {
-              row.basic_rate = parseFloat(res.data.unit_cost);
-            }
-            this.renderStockEntryRows(context);
-            if (context === 'grn' && typeof this.recalcGrnInvoiceTotal === 'function') {
-        this.recalcGrnInvoiceTotal();
-      }
-          }
-        })
-        .catch(() => {});
+      this.fetchIssueRowAvailability(context, row, true);
     }
   },
 
@@ -6709,6 +6730,9 @@ const Desk = {
 
       input.value = '';
       this.renderStockEntryRows(context);
+      if (context === 'issue') {
+        state.items.forEach(r => { if (r.item_code) this.fetchIssueRowAvailability('issue', r, false); });
+      }
       this.showToast(`Successfully uploaded ${imported} items from CSV.`);
     };
     reader.readAsText(file);
