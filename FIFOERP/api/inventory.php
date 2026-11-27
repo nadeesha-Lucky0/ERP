@@ -15,6 +15,45 @@ if ($rawLoc === null || $rawLoc === '' || (int)$rawLoc <= 0) {
 }
 $locationId = max(1, (int)$rawLoc);
 
+function computeFifoValuation(PDO $db, int $locationId, string $sku, float $reqQty): array {
+    $st = $db->prepare("
+        SELECT id, batch_number, received_date, remaining_quantity, unit_cost
+        FROM fifo_batches
+        WHERE sku = :sku AND location_id = :loc AND remaining_quantity > 0 AND status = 'active'
+        ORDER BY received_date ASC, id ASC
+    ");
+    $st->execute([':sku' => $sku, ':loc' => $locationId]);
+    $batches = $st->fetchAll();
+
+    $need = max(0.0, $reqQty);
+    $totalCost = 0.0;
+    $breakdown = [];
+    foreach ($batches as $b) {
+        if ($need <= 0) break;
+        $avail = (float)$b['remaining_quantity'];
+        $take = min($need, $avail);
+        if ($take <= 0) continue;
+        $rate = (float)$b['unit_cost'];
+        $sub = round($take * $rate, 2);
+        $totalCost += $take * $rate;
+        $breakdown[] = [
+            'batch_number' => $b['batch_number'],
+            'received_date' => $b['received_date'],
+            'qty' => $take,
+            'unit_cost' => $rate,
+            'subtotal' => $sub
+        ];
+        $need -= $take;
+    }
+    $totalCost = round($totalCost, 2);
+    $weightedRate = $reqQty > 0 ? round($totalCost / $reqQty, 4) : 0.0;
+    return [
+        'total_cost' => $totalCost,
+        'weighted_rate' => $weightedRate,
+        'breakdown' => $breakdown
+    ];
+}
+
 try {
     $db = Database::getStationConnection($locationId);
 
@@ -546,15 +585,21 @@ try {
                 $reorderLevel = 0;
             }
 
+            $reqPreviewQty = isset($_GET['qty']) ? (float)$_GET['qty'] : 0.0;
+            $fifoPreview = ($reqPreviewQty > 0) ? computeFifoValuation($db, $locationId, $sku, $reqPreviewQty) : null;
+
             Response::success('Stock availability retrieved', [
                 'sku' => $sku,
                 'item_name' => $itemName,
-                'unit_cost' => $unitCost,
+                'unit_cost' => ($fifoPreview && $fifoPreview['weighted_rate'] > 0) ? $fifoPreview['weighted_rate'] : $unitCost,
                 'physical_on_hand' => $physicalQty,
                 'allocated_reserved' => $allocatedQty,
                 'available_to_issue' => $availableQty,
                 'reorder_level' => $reorderLevel,
-                'pending_doc_count' => $pendingDocsCount
+                'pending_doc_count' => $pendingDocsCount,
+                'fifo_total' => $fifoPreview ? $fifoPreview['total_cost'] : null,
+                'fifo_weighted_rate' => $fifoPreview ? $fifoPreview['weighted_rate'] : null,
+                'fifo_breakdown' => $fifoPreview ? $fifoPreview['breakdown'] : []
             ]);
             break;
 
@@ -596,6 +641,42 @@ try {
             $itemsStmt = $db->prepare("SELECT * FROM unposted_document_items WHERE document_id = :id");
             $itemsStmt->execute([':id' => $docId]);
             $items = $itemsStmt->fetchAll();
+
+            if ($doc['doc_type'] === 'ISSUE' && !empty($items)) {
+                $recalcTotal = 0.0;
+                foreach ($items as &$it) {
+                    $itSku = trim($it['sku'] ?? '');
+                    $itQty = (float)($it['quantity'] ?? 0);
+                    $bd = [];
+                    if ($doc['status'] === 'Posted' || $doc['status'] === 'Cancelled') {
+                        try {
+                            $stBd = $db->prepare("
+                                SELECT b.batch_number, b.received_date, a.qty_deducted AS qty, a.unit_cost,
+                                       ROUND(a.qty_deducted * a.unit_cost, 2) AS subtotal
+                                FROM issue_grn_allocations a
+                                LEFT JOIN fifo_batches b ON b.id = a.batch_id
+                                WHERE a.document_no = :doc AND a.location_id = :loc AND a.sku = :sku
+                                ORDER BY a.id ASC
+                            ");
+                            $stBd->execute([':doc' => $doc['doc_no'], ':loc' => $locationId, ':sku' => $itSku]);
+                            $bd = $stBd->fetchAll();
+                        } catch (\Throwable $e) {}
+                    } else if ($itQty > 0) {
+                        $val = computeFifoValuation($db, $locationId, $itSku, $itQty);
+                        $bd = $val['breakdown'];
+                        if ($val['total_cost'] > 0) {
+                            $it['unit_cost'] = $val['weighted_rate'];
+                            $it['total_cost'] = $val['total_cost'];
+                        }
+                    }
+                    $it['fifo_breakdown'] = $bd;
+                    $recalcTotal += (float)($it['total_cost'] ?? 0);
+                }
+                unset($it);
+                if ($doc['status'] !== 'Posted' && $doc['status'] !== 'Cancelled' && $recalcTotal > 0) {
+                    $doc['invoice_total'] = $recalcTotal;
+                }
+            }
 
             Response::success('Document details', ['document' => $doc, 'items' => $items]);
             break;
@@ -760,10 +841,17 @@ try {
             foreach ($items as $item) {
                 $sku = trim($item['sku'] ?? '');
                 $name = trim($item['item_name'] ?? '');
-                $qty = (int)($item['quantity'] ?? 1);
+                $qty = (float)($item['quantity'] ?? 1);
                 $cost = (float)($item['unit_cost'] ?? 0);
                 $bin = trim($item['bin_location'] ?? 'Bay A');
                 $subTotal = $qty * $cost;
+                if ($docType === 'ISSUE' && $qty > 0) {
+                    $fifoVal = computeFifoValuation($db, $locationId, $sku, $qty);
+                    if ($fifoVal['total_cost'] > 0) {
+                        $subTotal = $fifoVal['total_cost'];
+                        $cost = $fifoVal['weighted_rate'];
+                    }
+                }
                 $totalInvoice += $subTotal;
 
                 $insItem->execute([
@@ -936,6 +1024,13 @@ try {
                     $cost = (float)($item['unit_cost'] ?? 0);
                     $bin = trim($item['bin_location'] ?? 'Bay A');
                     $subTotal = $qty * $cost;
+                    if ($doc['doc_type'] === 'ISSUE' && $qty > 0) {
+                        $fifoVal = computeFifoValuation($db, $locationId, $sku, $qty);
+                        if ($fifoVal['total_cost'] > 0) {
+                            $subTotal = $fifoVal['total_cost'];
+                            $cost = $fifoVal['weighted_rate'];
+                        }
+                    }
                     $totalInvoice += $subTotal;
 
                     $insItem->execute([
@@ -950,7 +1045,7 @@ try {
                     ]);
                 }
 
-                if ($invTotalManual <= 0) {
+                if ($invTotalManual <= 0 || $doc['doc_type'] === 'ISSUE') {
                     $updTot = $db->prepare("UPDATE unposted_documents SET invoice_total = :tot WHERE id = :id");
                     $updTot->execute([':tot' => $totalInvoice, ':id' => $docId]);
                 }

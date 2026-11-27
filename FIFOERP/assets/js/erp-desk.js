@@ -1649,6 +1649,11 @@ const Desk = {
             <td>
               <strong style="color: #0f172a; font-size: 13px;">${item.item_name || 'Material Item'}</strong>
               ${item.specs ? `<div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">${item.specs}</div>` : ''}
+              ${Array.isArray(item.fifo_breakdown) && item.fifo_breakdown.length > 1 ? `
+                <div style="font-size: 11px; color: #0369a1; margin-top: 3px; background: #f0f9ff; padding: 3px 7px; border-radius: 4px; display: inline-block;">
+                  FIFO Split: ${item.fifo_breakdown.map(b => `${Number(b.qty)} &times; Rs.${Number(b.unit_cost).toFixed(2)}`).join(' + ')}
+                </div>
+              ` : ''}
             </td>
             <td><span class="desk-badge" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; font-size: 11px;">${item.bin_location || 'Bay-01'}</span></td>
             <td style="text-align: right; font-weight: 700; color: #0f172a; font-size: 13px;">${qty.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>
@@ -5808,6 +5813,11 @@ const Desk = {
               <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #6c7680;">Rs</span>
               <input type="number" step="0.01" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; padding-left: 28px;" value="${parseFloat(row.basic_rate || 0).toFixed(2)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'basic_rate', parseFloat(this.value)||0)">
             </div>
+            ${context === 'issue' && Array.isArray(row.fifo_breakdown) && row.fifo_breakdown.length > 1 ? `
+              <div style="font-size: 10.5px; color: #0369a1; text-align: right; margin-top: 2px;">
+                ${row.fifo_breakdown.map(b => `${Number(b.qty)}&times;${Number(b.unit_cost).toFixed(2)}`).join(' + ')} = <strong>Rs.${Number(row.fifo_total || 0).toLocaleString('en-US', {minimumFractionDigits:2})}</strong>
+              </div>
+            ` : ''}
           </td>
           <td style="text-align: center;">
             <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
@@ -5888,6 +5898,9 @@ const Desk = {
       this.showToast(`Required Quantity (${value}) cannot exceed Available Quantity (${row.avail_qty}).`, true);
     }
     row[field] = value;
+    if (context === 'issue' && field === 'qty' && row.item_code && Number(value) > 0) {
+      this.fetchIssueRowAvailability('issue', row, true);
+    }
   },
 
   onStockEntryItemSelect(context, rowId, sku) {
@@ -6242,7 +6255,7 @@ const Desk = {
     if (context !== 'issue' || !row || !row.item_code) return;
     const sku = row.item_code;
     row._fetchingAvail = sku;
-    fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}`)
+    fetch(`${this.baseUrl}/api/inventory.php?action=get_stock_availability&sku=${encodeURIComponent(sku)}&qty=${encodeURIComponent(row.qty || 0)}`)
       .then(r => r.json())
       .then(res => {
         if (row.item_code !== sku) return;
@@ -6251,6 +6264,8 @@ const Desk = {
           row.avail_qty = res.data.available_to_issue ?? 0;
           row.pending_qty = res.data.allocated_reserved ?? 0;
           row.reorder_level = res.data.reorder_level ?? 0;
+          row.fifo_breakdown = res.data.fifo_breakdown || [];
+          row.fifo_total = res.data.fifo_total ?? null;
           if ((updateRate || !row.basic_rate) && res.data.unit_cost !== undefined && parseFloat(res.data.unit_cost) > 0) {
             row.basic_rate = parseFloat(res.data.unit_cost);
           }
