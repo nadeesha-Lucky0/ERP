@@ -5708,6 +5708,12 @@ const Desk = {
     this.renderStockEntryRows(context);
   },
 
+  isDecimalUom(uom) {
+    const u = String(uom || '').trim().toUpperCase();
+    const decimalUoms = ['KG', 'KGS', 'G', 'GM', 'GRAM', 'GRAMS', 'MG', 'TON', 'MT', 'M', 'MTR', 'MTRS', 'METER', 'METERS', 'METRE', 'METRES', 'CM', 'MM', 'FT', 'IN', 'KM', 'L', 'LTR', 'LTRS', 'LITRE', 'LITRES', 'LITER', 'LITERS', 'ML', 'GAL', 'SQM', 'SQFT', 'CBM', 'CFT'];
+    return decimalUoms.includes(u);
+  },
+
   renderStockEntryRows(context) {
     const tbody = document.getElementById(`${context}ItemsBody`);
     if (!tbody) return;
@@ -5785,7 +5791,15 @@ const Desk = {
               value="${row.item_code ? (row.reorder_level !== undefined ? row.reorder_level : '...') : '-'}">
           </td>` : ''}
           <td>
-            <input type="number" step="0.001" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${parseFloat(row.qty || 0).toFixed(3)}" onchange="Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)">
+            ${(() => {
+              const allowDec = this.isDecimalUom(row.uom);
+              const qtyVal = allowDec ? parseFloat(row.qty || 0).toFixed(3) : Math.round(parseFloat(row.qty || 0));
+              const stepVal = allowDec ? '0.001' : '1';
+              const onChg = allowDec
+                ? `Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', parseFloat(this.value)||0)`
+                : `const v = Math.max(0, Math.round(parseFloat(this.value)||0)); this.value = v; Desk.updateStockEntryRow('${context}', ${row.id}, 'qty', v)`;
+              return `<input type="number" step="${stepVal}" min="0" class="frappe-control" style="height: 30px; font-size: 12px; text-align: right; font-weight: 600;" value="${qtyVal}" onchange="${onChg}">`;
+            })()}
           </td>
           <td>
             <div style="position: relative;">
